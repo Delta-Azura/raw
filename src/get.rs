@@ -33,14 +33,14 @@ pub fn get(pkg: &str) -> Result<()> {
     }
     env::set_current_dir("/var/cache/").unwrap();
     let metadata = download(&format!("{}/index.raw", url))?;
-    println!("{}", metadata);
-    if metadata.contains(&format!("{}", pkg)) {
-        let rawpkg = metadata.lines().any(|l| l.contains(&format!("/{}_", pkg)));
+    let index_raw = fs::read_to_string(metadata).context("Download failed")?;
+    if index_raw.contains(&format!("{}", pkg)) {
+        let rawpkg = index_raw.lines().any(|l| l.contains(&format!("/{}_", pkg)));
         if rawpkg != true {
             println!("Package doesn't exists");
             std::process::exit(1)
         }
-        let line = metadata.lines().find(|l| l.contains(&format!("/{}_", pkg))).unwrap();
+        let line = index_raw.lines().find(|l| l.contains(&format!("/{}_", pkg))).unwrap();
         let version = line.split_once('_').map(|(_, version)| version).unwrap().split_once('#').map(|(version, _)| version).unwrap();
         let release = line.split_once('#').map(|(_, release)| release).unwrap();
         let collection = line.split_once('/').map(|(collection, _)| collection).unwrap();
