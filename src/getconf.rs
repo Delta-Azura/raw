@@ -37,7 +37,7 @@ pub fn getconf() ->  Result<(String, String, String), String> {
                 return Ok(("binary".to_string(), repo, url));
             }
             if config.clone().contains("mode source") {
-                let root = config.clone().split_once("root=").map(|(_, root)| root).unwrap().to_string();
+                let root = config.lines().find(|c| c.starts_with("root=")).unwrap().split_once("root=").map(|(_, root)| root).unwrap().to_string();
                 println!("{}", root);
                 env::set_current_dir(&root.trim()).unwrap();//.context("Repertory doesn't exists")?;
                 return Ok(("source".to_string(), root.to_string(), String::new()));
