@@ -28,7 +28,6 @@ mod file_type;
 mod files;
 mod list;
 mod libs;
-mod depends;
 mod getconf;
 mod index;
 mod build;
@@ -37,7 +36,6 @@ use crate::get::get;
 use crate::build::build;
 use crate::index::index;
 use crate::getconf::getconf;
-use crate::depends::depends;
 use crate::libs::libs;
 use crate::list::list;
 use crate::files::files;
@@ -95,10 +93,6 @@ fn main() -> Result<()> {
     } 
     if args[1] == "libs" {
         libs(&args[2], args.get(3).map(|s| s.as_str()))?;
-        return Ok(())
-    }
-    if args[1] == "depends" {
-        depends(&args[2]);
         return Ok(())
     }
     if args[1] == "getconf" {
