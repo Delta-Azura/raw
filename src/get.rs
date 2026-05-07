@@ -56,8 +56,9 @@ pub fn get(pkg: &str) -> Result<()> {
             install(&tarball)?;
         }
         let dependencies = depends(pkg);
-        for i in dependencies {
-            get(&i);
+        //let deps: Vec<&str> = dependencies.split_whitespace().collect();
+        for i in &dependencies {
+            get(i)?;
         }
     } else {
         println!("Not found");
