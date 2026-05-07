@@ -45,6 +45,7 @@ pub fn get(pkg: &str) -> Result<()> {
         let collection = line.split_once('/').map(|(collection, _)| collection).unwrap();
         // %23 = #
         let path = format!("{}/{}/{}/{}.{}%23{}.raw.tar.gz", url, collection, pkg, pkg, version, release);
+        println!("{}", path);
         let tarball = download(&path)?;
         install(&tarball)?;
         let dependencies = depends(pkg);
