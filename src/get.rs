@@ -43,7 +43,8 @@ pub fn get(pkg: &str) -> Result<()> {
         let version = line.split_once('_').map(|(_, version)| version).unwrap().split_once('#').map(|(version, _)| version).unwrap();
         let release = line.split_once('#').map(|(_, release)| release).unwrap();
         let collection = line.split_once('/').map(|(collection, _)| collection).unwrap();
-        let path = format!("{}/{}/{}/{}.{}#{}.raw.tar.gz", url, collection, pkg, pkg, version, release);
+        // %23 = #
+        let path = format!("{}/{}/{}/{}.{}%23{}.raw.tar.gz", url, collection, pkg, pkg, version, release);
         let tarball = download(&path)?;
         install(&tarball)?;
         let dependencies = depends(pkg);
