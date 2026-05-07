@@ -33,6 +33,7 @@ pub fn get(pkg: &str) -> Result<()> {
     }
     env::set_current_dir("/var/cache/").unwrap();
     let metadata = download(&format!("{}/index.raw", url))?;
+    println!("{}", metadata);
     if metadata.contains(&format!("{}", pkg)) {
         let rawpkg = metadata.lines().any(|l| l.contains(&format!("/{}_", pkg)));
         if rawpkg != true {
