@@ -22,6 +22,8 @@ use crate::install::install;
 use std::fs;
 use std::env;
 use crate::depends::depends;
+use std::path::Path;
+use crate::update::update;
 
 
 
@@ -48,7 +50,11 @@ pub fn get(pkg: &str) -> Result<()> {
         let path = format!("{}/{}/{}/{}.{}%23{}.raw.tar.gz", url, collection, pkg, pkg, version, release);
         println!("{}", path);
         let tarball = download(&path)?;
-        install(&tarball)?;
+        if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
+            update(&tarball); 
+        } else {
+            install(&tarball)?;
+        }
         let dependencies = depends(pkg);
         for i in dependencies {
             get(&i);
