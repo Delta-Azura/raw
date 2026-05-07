@@ -32,6 +32,11 @@ use std::process::Command;
 
 
 pub fn build(to_build: &str) -> Result<()> {
+    let (mode, trash, url) = getconf().unwrap();
+    if mode != "source" {
+        println!("Raw is used in binary mode, cannot build");
+        std::process::exit(1);
+    }
     if let Ok(mode) = getconf() {
         let index = fs::read_to_string("index.raw").unwrap();
         let found = index.lines().find(|line| line.contains(to_build));

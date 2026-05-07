@@ -32,6 +32,7 @@ mod getconf;
 mod index;
 mod build;
 mod get;
+mod depends;
 use crate::get::get;
 use crate::build::build;
 use crate::index::index;
