@@ -37,7 +37,7 @@ pub fn depends(pkg: &str) -> Vec<String> {  //-> Result<(), String> {
         //let rawwpkg = format!("{}", rawpkg);
         if !Path::new(&format!("/var/lib/pkg/DB/{}/META", rawpkg)).exists() {
             println!("{} isn't installed", rawpkg);
-            std::process::exit(1)
+            //std::process::exit(1)
         }
         let META = std::fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", rawpkg)).unwrap();
         let meta = META.lines().find(|l| l.starts_with("R")).unwrap().split_once('R').map(|(_, meta)| meta).unwrap();
