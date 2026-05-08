@@ -1,5 +1,6 @@
 # What is RAW
 Raw is a project of a package manager from scratch for Onyx.
+It's designed to be quick, light and memory safe.
 
 # Features : 
 - Building packages from Pkgfiles
@@ -94,4 +95,5 @@ Take a look at :
 # Educational purpose
 My target is to be able to learn rust while building this projet.
 From all the tests i ran, not a single one is actually failing no matter what you are trying to do with it.
-I've just started rust, i'm still very young but i want to perform in this field.
+I built this is one week as a learning project.
+It's a fully functional package manager, 0 compilation error and it handles conflict detection, dependecy resolution and so on, please refer to the beggining of the README.
