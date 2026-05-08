@@ -121,7 +121,7 @@ fn main() -> Result<()> {
         return Ok(())
     }
     if args[1] == "bootstrap" {
-        bootstrap(&args[2], &args[3]);
+        bootstrap(&args[2], &args[3])?;
         return Ok(())
     }
     return Ok(());
