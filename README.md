@@ -61,6 +61,20 @@ pkgname.post-install
 pkgname.pre-install
 
 
+# How to build it ? 
+Download the latest release, uncompress the tarball and enter the directory.
+Run :
+``` bash 
+cargo build --release
+sudo cp target/release/raw /usr/bin/
+sudo touch /etc/raw.conf
+``` 
+You're now all set ! 
+
+# Where to find already working Pkgfiles for my lfs system ? 
+Take a look at :
+<https://github.com/Delta-Azura/onyx>
+
 # Educational purpose
 My target is to be able to learn rust while building this projet, it will maybe never be able to be usable for Onyx.
 I've just started rust, i'm still very young but i want to perform in this field.
