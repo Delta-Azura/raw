@@ -71,6 +71,21 @@ sudo touch /etc/raw.conf
 ``` 
 You're now all set ! 
 
+# Basic usage :
+``` bash
+raw package # Build a package being in a repertory containing a valid Pkgfile
+sudo raw install htop.3.5.1#1.raw.tar.gz # Install the generated package
+raw info htop # To get the basic informations
+raw query /usr/bin/htop # To know who this file belongs to
+raw libs htop # To list every libraries owned by htop
+raw libs systemd all # To list every libraries owned by systemd including the /security libs
+raw list # List every packages installed
+sudo raw update htop.3.5.1#1.raw.tar.gz # To update htop
+raw index # In source mode it allows you to generate an index that will be useful for the next command
+raw build htop # Will work no matter the path you are at and will propose to install/update it 
+sudo raw upgrade # Allows you to upgrade your systemd if you are using a remote binary repo
+sudo raw get htop # Allows you to install packages from a remote binary repo and handles dependencies
+
 # Where to find already working Pkgfiles for my lfs system ? 
 Take a look at :
 <https://github.com/Delta-Azura/onyx>
