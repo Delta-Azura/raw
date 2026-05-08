@@ -55,7 +55,7 @@ pub fn bootstrap(rawpkg: &String, bootstrap_path: &str) -> Result<()> {
     } else {
         println!("No pre-installation required");
     }
-    copy_recursive(Path::new("."), Path::new("/"), &opts).unwrap();
+    copy_recursive(Path::new("."), Path::new(bootstrap_path), &opts).unwrap();
     println!("running ldconfig.....");
     Command::new("bash")
     .args(["-c", "ldconfig"])
