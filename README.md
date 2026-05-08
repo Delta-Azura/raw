@@ -19,7 +19,7 @@ Raw is a project of a package manager from scratch for Onyx.
 
 
 # Pkgfile exemple :
-'''bash
+``` bash
 description=" The Nano package contains a small, simple text editor which aims to replace Pico, the default editor in the Pine package. "
 name=nano
 version=9.0
@@ -37,10 +37,10 @@ make
 make DESTDIR=$PKG install
 install -v -m644 doc/{nano.html,sample.nanorc} $PKG/usr/share/doc/nano-${version}
 }
-''' 
+```
 
 # Example of raw.conf 
-''bash 
+``` bash 
 alexis [ ~/Onyx ]$ cat /etc/raw.conf 
 mode binary
 
@@ -54,7 +54,7 @@ mode source
 
 root=/home/alexis/Onyx
 alexis [ ~/Onyx ]$ 
-'''
+```
 
 # Example of post/pre-installation file name 
 pkgname.post-install
