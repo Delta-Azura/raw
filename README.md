@@ -85,6 +85,7 @@ raw index # In source mode it allows you to generate an index that will be usefu
 raw build htop # Will work no matter the path you are at and will propose to install/update it 
 sudo raw upgrade # Allows you to upgrade your systemd if you are using a remote binary repo
 sudo raw get htop # Allows you to install packages from a remote binary repo and handles dependencies
+```
 
 # Where to find already working Pkgfiles for my lfs system ? 
 Take a look at :
