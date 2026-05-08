@@ -22,6 +22,8 @@ use std::path::Path;
 use crate::file_type::file_type;
 use flate2::read::GzDecoder;
 use tar::Archive;
+use std::thread;
+use std::time::Duration;
 
 
 pub fn conflict(rawpkg: &String) {
@@ -42,7 +44,14 @@ pub fn conflict(rawpkg: &String) {
     for e in fs::read_dir("/var/lib/pkg/DB/.").unwrap().filter_map(|e| e.ok()) {
         let directory_tmp = e.file_name();
         let directory = directory_tmp.to_str().unwrap();
-        let target = fs::read_to_string(format!("/var/lib/pkg/DB/{}/files", directory)).unwrap();
+        let files_path = format!("/var/lib/pkg/DB/{}/files", directory);
+        // checking corrupted packages
+        if !Path::new(&files_path).exists() { 
+            println!("\x1b[31mPlease be careful {} is corrupted\x1b[0m", files_path);
+            thread::sleep(Duration::from_secs(10));
+            continue; 
+        }
+        let target = fs::read_to_string(&files_path).unwrap();
         println!("{}", compare);
         for lines in target.lines() {
             //let release = variables.next().unwrap();
@@ -65,12 +74,16 @@ pub fn conflict(rawpkg: &String) {
             }
         }
     }
+/// File conflict
     for i in compare.lines() {
         let r = format!("/{}", i);
         if file_type(&r) == true {
-            if Path::new(&r).exists() {
-                println!("File {} already present on the system", i);
-                std::process::exit(1)
+            if r != "/usr/share/info/dir" {
+                if Path::new(&r).exists() {
+                    println!("File {} already present on the system", i);
+                    std::process::exit(1)
+            }
+
             }
         }
     }
