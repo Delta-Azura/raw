@@ -34,6 +34,8 @@ mod build;
 mod get;
 mod depends;
 mod upgrade;
+mod bootstrap;
+use crate::bootstrap::bootstrap;
 use crate::get::get;
 use crate::build::build;
 use crate::index::index;
@@ -116,6 +118,10 @@ fn main() -> Result<()> {
     }
     if args[1] == "upgrade" {
         upgrade()?;
+        return Ok(())
+    }
+    if args[1] == "bootstrap" {
+        bootstrap(&args[2], &args[3]);
         return Ok(())
     }
     return Ok(());
