@@ -91,5 +91,6 @@ Take a look at :
 <https://github.com/Delta-Azura/onyx>
 
 # Educational purpose
-My target is to be able to learn rust while building this projet, it will maybe never be able to be usable for Onyx.
+My target is to be able to learn rust while building this projet.
+From all the tests i ran, not a single one is actually failing no matter what you are trying to do with it.
 I've just started rust, i'm still very young but i want to perform in this field.
