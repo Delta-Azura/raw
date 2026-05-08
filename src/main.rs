@@ -33,6 +33,7 @@ mod index;
 mod build;
 mod get;
 mod depends;
+mod upgrade;
 use crate::get::get;
 use crate::build::build;
 use crate::index::index;
@@ -47,6 +48,7 @@ use crate::remove::remove;
 use crate::update::update;
 use crate::package::package;
 use anyhow::{Result};
+use crate::upgrade::upgrade;
 
 
 
@@ -110,6 +112,10 @@ fn main() -> Result<()> {
     }
     if args[1] == "get" {
         get(&args[2])?;
+        return Ok(())
+    }
+    if args[1] == "upgrade" {
+        upgrade()?;
         return Ok(())
     }
     return Ok(());

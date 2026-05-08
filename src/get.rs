@@ -30,7 +30,7 @@ use crate::update::update;
 pub fn get(pkg: &str) -> Result<()> {
     let (mode, trash, url) = getconf().unwrap();
     if mode != "binary" {
-        println!("Raw is used in binary mode, cannot connect to the repo");
+        println!("Raw isn't used in binary mode, cannot connect to the repo");
         std::process::exit(1);
     }
     env::set_current_dir("/var/cache/").unwrap();
