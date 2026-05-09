@@ -128,31 +128,107 @@ pub fn package() -> Result<()> {
     env::set_current_dir(&building)?;
     //let extracted = Path::new("{}/{}", collection, tarball)
     env::set_current_dir(&collection)?;
-    match Command::new("bash")
-    .args(["-c", "fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && build'"])
-    .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
-    .env("CFLAGS", "-O2 -pipe")
-    .env("CXXFLAGS", "-O2 -pipe")
-    //.status()
-    .status() {
-        // need if s.success because of the type of answer from status
-        Ok(s) if s.success() => {
-            println!("Build succeded");
-            env::set_current_dir(&collection).unwrap();
-            fs::remove_dir_all("work").unwrap();
-        }
-        Ok(s) => {
+    let prepare = fs::read_to_string("Pkgfile")?;
+    //.unwrap();
+    match (prepare.contains("prepare"), prepare.contains("package")) {
+        (true, true) => {
+            match Command::new("bash")
+            .args(["-c", "fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && build && package'"])
+            .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
+            .env("CFLAGS", "-O2 -pipe")
+            .env("CXXFLAGS", "-O2 -pipe")
+            .status() {
+            // need if s.success because of the type of answer from status
+            Ok(s) if s.success() => {
+                println!("Build succeded");
+                env::set_current_dir(&collection).unwrap();
+                fs::remove_dir_all("work").unwrap();
+            }
+            Ok(s) => {
             // Don't ask
-            println!("The build failed (code {:?})", s.code());
-            std::process::exit(1);
+                println!("The build failed (code {:?})", s.code());
+                std::process::exit(1);
+            }
+            Err(e) => {
+                println!("The build failed {e}");
+                std::process::exit(1);
+            }
+            }
         }
-        Err(e) => {
-            println!("The build failed {e}");
-            std::process::exit(1);
+        (true, false) => {
+            match Command::new("bash")
+            .args(["-c", "fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && build'"])
+            .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
+            .env("CFLAGS", "-O2 -pipe")
+            .env("CXXFLAGS", "-O2 -pipe")
+            .status() {
+            // need if s.success because of the type of answer from status
+            Ok(s) if s.success() => {
+                println!("Build succeded");
+                env::set_current_dir(&collection).unwrap();
+                fs::remove_dir_all("work").unwrap();
+            }
+            Ok(s) => {
+            // Don't ask
+                println!("The build failed (code {:?})", s.code());
+                std::process::exit(1);
+            }
+            Err(e) => {
+                println!("The build failed {e}");
+                std::process::exit(1);
+            }
+            }
+        }
+        (false, true) => {
+            match Command::new("bash")
+            .args(["-c", "fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && build && package'"])
+            .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
+            .env("CFLAGS", "-O2 -pipe")
+            .env("CXXFLAGS", "-O2 -pipe")
+            .status() {
+            // need if s.success because of the type of answer from status
+            Ok(s) if s.success() => {
+                println!("Build succeded");
+                env::set_current_dir(&collection).unwrap();
+                fs::remove_dir_all("work").unwrap();
+            }
+            Ok(s) => {
+            // Don't ask
+                println!("The build failed (code {:?})", s.code());
+                std::process::exit(1);
+            }
+            Err(e) => {
+                println!("The build failed {e}");
+                std::process::exit(1);
+            }
+            }
+        }
+        (false, false) => {
+            match Command::new("bash")
+            .args(["-c", "fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && build'"])
+            .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
+            .env("CFLAGS", "-O2 -pipe")
+            .env("CXXFLAGS", "-O2 -pipe")
+            .status() {
+            // need if s.success because of the type of answer from status
+            Ok(s) if s.success() => {
+                println!("Build succeded");
+                env::set_current_dir(&collection).unwrap();
+                fs::remove_dir_all("work").unwrap();
+            }
+            Ok(s) => {
+            // Don't ask
+                println!("The build failed (code {:?})", s.code());
+                std::process::exit(1);
+            }
+            Err(e) => {
+                println!("The build failed {e}");
+                std::process::exit(1);
+            }
+            }
         }
 
     }
-
     let prepare = format!("{}/pkg", collection);
     
     //env::set_current_dir(&prepare).unwrap();
