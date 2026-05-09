@@ -19,7 +19,7 @@ It's designed to be quick, light and memory safe.
 - Pre and post installation support
 
 
-# Pkgfile exemple :
+# Pkgfile example :
 ``` bash
 description=" The Nano package contains a small, simple text editor which aims to replace Pico, the default editor in the Pine package. "
 name=nano
