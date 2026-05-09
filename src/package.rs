@@ -130,8 +130,8 @@ pub fn package() -> Result<()> {
     env::set_current_dir(&collection)?;
     let prepare = fs::read_to_string("Pkgfile")?;
     //.unwrap();
-    match (prepare.contains("prepare"), prepare.contains("package")) {
-        (true, true) => {
+    match (prepare.contains("prepare"), prepare.contains("package"), prepare.contains("build()")) {
+        (true, true, true) => {
             match Command::new("bash")
             .args(["-c", "fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && build && package'"])
             .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
@@ -155,7 +155,7 @@ pub fn package() -> Result<()> {
             }
             }
         }
-        (true, false) => {
+        (true, false, true) => {
             match Command::new("bash")
             .args(["-c", "fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && build'"])
             .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
@@ -179,7 +179,7 @@ pub fn package() -> Result<()> {
             }
             }
         }
-        (false, true) => {
+        (false, true, true) => {
             match Command::new("bash")
             .args(["-c", "fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && build && package'"])
             .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
@@ -203,7 +203,7 @@ pub fn package() -> Result<()> {
             }
             }
         }
-        (false, false) => {
+        (false, false, true) => {
             match Command::new("bash")
             .args(["-c", "fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && build'"])
             .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
@@ -227,7 +227,264 @@ pub fn package() -> Result<()> {
             }
             }
         }
+        (true, true, false) => {
+            match prepare.contains("build=") {
+                true => {
+                    let build_style = prepare.lines().find(|b| b.starts_with("build=")).unwrap();
+                    let style = build_style.split_once("=").map(|(_, style)| style);
+                    if let Some(style) = style {
+                        if Path::new(&format!("/etc/raw.d/{}", style)).exists() {
+                            let execute = format!("chmod u+x /etc/raw.d/{} && fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && ./etc/raw.d/{}'", style, style);
+                            match Command::new("bash")
+                            .args(["-c", &execute])
+                            .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
+                            .env("CFLAGS", "-O2 -pipe")
+                            .env("CXXFLAGS", "-O2 -pipe")
+                            .status() { 
+            // need if s.success because of the type of answer from status
+                            Ok(s) if s.success() => {
+                            println!("Build succeded");
+                            env::set_current_dir(&collection).unwrap();
+                            fs::remove_dir_all("work").unwrap();
+                            }
+                            Ok(s) => {
+                                println!("The build failed (code {:?})", s.code());
+                                std::process::exit(1);
+                            }
+                            Err(e) => {
+                                println!("The build failed {e}");
+                                std::process::exit(1);
+                            }
+                            }
+                        } else {
+                            println!("No build style available for {}", build_style);
+                            std::process::exit(1)
+                        }
+                    }
+                }   
+                false => {
+                    if Path::new("/etc/raw.d/build-default").exists() {
+                        let execute = format!("chmod u+x /etc/raw.d/build-default && fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && ./etc/raw.d/build-default'");
+                        match Command::new("bash")
+                            .args(["-c", &execute])
+                            .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
+                            .env("CFLAGS", "-O2 -pipe")
+                            .env("CXXFLAGS", "-O2 -pipe")
+                            .status() { 
+            // need if s.success because of the type of answer from status
+                            Ok(s) if s.success() => {
+                            println!("Build succeded");
+                            env::set_current_dir(&collection).unwrap();
+                            fs::remove_dir_all("work").unwrap();
+                            }
+                            Ok(s) => {
+                                println!("The build failed (code {:?})", s.code());
+                                std::process::exit(1);
+                            }
+                            Err(e) => {
+                                println!("The build failed {e}");
+                                std::process::exit(1);
+                            }
+                            }
+                            
+                    }
+   
+                }
+            }
+        }
+        (true, false, false) => {
+            match prepare.contains("build=") {
+                true => {
+                    let build_style = prepare.lines().find(|b| b.starts_with("build=")).unwrap();
+                    let style = build_style.split_once("=").map(|(_, style)| style);
+                    if let Some(style) = style {
+                        if Path::new(&format!("/etc/raw.d/{}", style)).exists() {
+                            let execute = format!("chmod u+x /etc/raw.d/{} && fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && ./etc/raw.d/{}'", style, style);
+                            match Command::new("bash")
+                            .args(["-c", &execute])
+                            .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
+                            .env("CFLAGS", "-O2 -pipe")
+                            .env("CXXFLAGS", "-O2 -pipe")
+                            .status() { 
+            // need if s.success because of the type of answer from status
+                            Ok(s) if s.success() => {
+                            println!("Build succeded");
+                            env::set_current_dir(&collection).unwrap();
+                            fs::remove_dir_all("work").unwrap();
+                            }
+                            Ok(s) => {
+                                println!("The build failed (code {:?})", s.code());
+                                std::process::exit(1);
+                            }
+                            Err(e) => {
+                                println!("The build failed {e}");
+                                std::process::exit(1);
+                            }
+                            }
+                        } else {
+                            println!("No build style available for {}", build_style);
+                            std::process::exit(1)
+                        }
+                    }
+                }   
+                false => {
+                    if Path::new("/etc/raw.d/build-default").exists() {
+                        let execute = format!("chmod u+x /etc/raw.d/build-default && fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && ./etc/raw.d/build-default'");
+                        match Command::new("bash")
+                            .args(["-c", &execute])
+                            .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
+                            .env("CFLAGS", "-O2 -pipe")
+                            .env("CXXFLAGS", "-O2 -pipe")
+                            .status() { 
+            // need if s.success because of the type of answer from status
+                            Ok(s) if s.success() => {
+                            println!("Build succeded");
+                            env::set_current_dir(&collection).unwrap();
+                            fs::remove_dir_all("work").unwrap();
+                            }
+                            Ok(s) => {
+                                println!("The build failed (code {:?})", s.code());
+                                std::process::exit(1);
+                            }
+                            Err(e) => {
+                                println!("The build failed {e}");
+                                std::process::exit(1);
+                            }
+                            }
+                            
+                    }
+   
+                }
+            }
+        }
+        (false, true, false) => {
+            match prepare.contains("build=") {
+                true => {
+                    let build_style = prepare.lines().find(|b| b.starts_with("build=")).unwrap();
+                    let style = build_style.split_once("=").map(|(_, style)| style);
+                    if let Some(style) = style {
+                        if Path::new(&format!("/etc/raw.d/{}", style)).exists() {
+                            let execute = format!("chmod u+x /etc/raw.d/{} && fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && ./etc/raw.d/{} && package'", style, style);
+                            match Command::new("bash")
+                            .args(["-c", &execute])
+                            .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
+                            .env("CFLAGS", "-O2 -pipe")
+                            .env("CXXFLAGS", "-O2 -pipe")
+                            .status() { 
+            // need if s.success because of the type of answer from status
+                            Ok(s) if s.success() => {
+                            println!("Build succeded");
+                            env::set_current_dir(&collection).unwrap();
+                            fs::remove_dir_all("work").unwrap();
+                            }
+                            Ok(s) => {
+                                println!("The build failed (code {:?})", s.code());
+                                std::process::exit(1);
+                            }
+                            Err(e) => {
+                                println!("The build failed {e}");
+                                std::process::exit(1);
+                            }
+                            }
+                        } else {
+                            println!("No build style available for {}", build_style);
+                            std::process::exit(1)
+                        }
+                    }
+                }   
+                false => {
+                    if Path::new("/etc/raw.d/build-default").exists() {
+                        let execute = format!("chmod u+x /etc/raw.d/build-default && fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && ./etc/raw.d/build-default && package'");
+                        match Command::new("bash")
+                            .args(["-c", &execute])
+                            .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
+                            .env("CFLAGS", "-O2 -pipe")
+                            .env("CXXFLAGS", "-O2 -pipe")
+                            .status() { 
+            // need if s.success because of the type of answer from status
+                            Ok(s) if s.success() => {
+                            println!("Build succeded");
+                            env::set_current_dir(&collection).unwrap();
+                            fs::remove_dir_all("work").unwrap();
+                            }
+                            Ok(s) => {
+                                println!("The build failed (code {:?})", s.code());
+                                std::process::exit(1);
+                            }
+                            Err(e) => {
+                                println!("The build failed {e}");
+                                std::process::exit(1);
+                            }
+                            }
 
+                    }               
+                    
+   
+                }
+            }
+        }
+        (false, false, false) => {
+            match prepare.contains("build=") {
+                true => {
+                    let build_style = prepare.lines().find(|b| b.starts_with("build=")).unwrap();
+                    let style = build_style.split_once("=").map(|(_, style)| style);
+                    if let Some(style) = style {
+                        if Path::new(&format!("/etc/raw.d/{}", style)).exists() {
+                            let execute = format!("chmod u+x /etc/raw.d/{} && fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && ./etc/raw.d/{}'", style, style);
+                            match Command::new("bash")
+                            .args(["-c", &execute])
+                            .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
+                            .env("CFLAGS", "-O2 -pipe")
+                            .env("CXXFLAGS", "-O2 -pipe")
+                            .status() { 
+            // need if s.success because of the type of answer from status
+                            Ok(s) if s.success() => {
+                            println!("Build succeded");
+                            env::set_current_dir(&collection).unwrap();
+                            fs::remove_dir_all("work").unwrap();
+                            }
+                            Ok(s) => {
+                                println!("The build failed (code {:?})", s.code());
+                                std::process::exit(1);
+                            }
+                            Err(e) => {
+                                println!("The build failed {e}");
+                                std::process::exit(1);
+                            }
+                            }
+                        } else {
+                            println!("No build style available for {}", build_style);
+                            std::process::exit(1)
+                        }
+                    }
+                }  
+                false => {
+                    if Path::new("/etc/raw.d/build-default").exists() {
+                        let execute = format!("chmod u+x /etc/raw.d/build-default && fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && ./etc/raw.d/build-default'");
+                        match Command::new("bash")
+                            .args(["-c", &execute])
+                            .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
+                            .env("CFLAGS", "-O2 -pipe")
+                            .env("CXXFLAGS", "-O2 -pipe")
+                            .status() { 
+                            Ok(s) if s.success() => {
+                            println!("Build succeded");
+                            env::set_current_dir(&collection).unwrap();
+                            fs::remove_dir_all("work").unwrap();
+                            }
+                            Ok(s) => {
+                                println!("The build failed (code {:?})", s.code());
+                                std::process::exit(1);
+                            }
+                            Err(e) => {
+                                println!("The build failed {e}");
+                                std::process::exit(1);
+                            }
+                            }
+                    }
+                }
+            } 
+        }
     }
     let prepare = format!("{}/pkg", collection);
     
