@@ -17,6 +17,7 @@ It's designed to be quick, light and memory safe.
 - Some locks to not mess up your installation.
 - Only linked to the kernel, glibc and xz at runtime
 - Pre and post installation support
+- Support of the prepare and package functions alongside with the build=something type of Pkgfiles
 
 
 # Pkgfile example :
@@ -61,6 +62,44 @@ alexis [ ~/Onyx ]$
 pkgname.post-install
 pkgname.pre-install
 
+# Example of build=something Pkgfile : 
+``` bash
+alexis [ ~/htop ]$ cat Pkgfile 
+description=" The htop package provides a TUI [1] system monitor and has became well-known for its ease-of-use and comprehensive features. "
+name=htop
+version=3.5.1
+release=1
+packager=alexis
+depends="nano"
+source=("https://github.com/htop-dev/htop/releases/download/${version}/htop-${version}.tar.xz")
+```
+If this space is left empty, raw will therefore search in the /etc/raw.d/ directory for a file named build-default, it should look like this : 
+''' bash
+alexis [ ~/htop ]$ cat /etc/raw.d/build-default 
+cd $name-$version
+./configure --prefix=/usr &&
+make
+make DESTDIR=$PKG install 
+```
+
+You can also use this template of Pkgfile : 
+``` bash 
+alexis [ ~/htop ]$ cat Pkgfile 
+description=" The htop package provides a TUI [1] system monitor and has became well-known for its ease-of-use and comprehensive features. "
+name=htop
+version=3.5.1
+release=1
+packager=alexis
+depends="nano"
+source=("https://github.com/htop-dev/htop/releases/download/${version}/htop-${version}.tar.xz")
+
+build=make
+``` 
+In this case, raw will try to look at make, defined by build here, in the /etc/raw.d/make file.
+
+
+# WARNING 
+Raw automatically detects if a function prepare or package is present on the Pkgfile, however, do not leave a package or prepare or build function with a '#' at the start of the line, raw will not detect it, run the function commented and the build will fail.
 
 # How to build it ? 
 Download the latest release, uncompress the tarball and enter the directory.
