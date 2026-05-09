@@ -35,6 +35,7 @@ mod get;
 mod depends;
 mod upgrade;
 mod bootstrap;
+mod search;
 use crate::bootstrap::bootstrap;
 use crate::get::get;
 use crate::build::build;
@@ -51,6 +52,7 @@ use crate::update::update;
 use crate::package::package;
 use anyhow::{Result};
 use crate::upgrade::upgrade;
+use crate::search::search;
 
 
 
@@ -122,6 +124,10 @@ fn main() -> Result<()> {
     }
     if args[1] == "bootstrap" {
         bootstrap(&args[2], &args[3])?;
+        return Ok(())
+    }
+    if args[1] == "search" {
+        search(&args[2])?;
         return Ok(())
     }
     return Ok(());

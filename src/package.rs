@@ -160,9 +160,9 @@ pub fn package() -> Result<()> {
         println!("Removing actual footprint");
         fs::remove_file(format!("{}.footprint", name))?;
     }
-    if Path::new(&format!("{}.{}.raw.tar.gz", name, version)).exists() {
+    if Path::new(&format!("{}.{}#raw.tar.gz", name, version)).exists() {
         println!("Removing the previous generated package");
-        fs::remove_file(format!("{}.{}.raw.tar.gz", name, version))?;
+        fs::remove_file(format!("{}.{}#raw.tar.gz", name, version))?;
     }
     println!("Generating footprint");
     let mut footprint = File::create(format!("{}.footprint", name)).unwrap();
