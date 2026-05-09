@@ -74,7 +74,7 @@ depends="nano"
 source=("https://github.com/htop-dev/htop/releases/download/${version}/htop-${version}.tar.xz")
 ```
 If this space is left empty, raw will therefore search in the /etc/raw.d/ directory for a file named build-default, it should look like this : 
-''' bash
+``` bash
 alexis [ ~/htop ]$ cat /etc/raw.d/build-default 
 cd $name-$version
 ./configure --prefix=/usr &&
