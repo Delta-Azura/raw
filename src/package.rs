@@ -35,6 +35,7 @@ use anyhow::{Result, Context};
 
 const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
+const GREEN: &str = "\x1b[0;32m";
 
 pub fn package() -> Result<()> {
         match File::create("/var/cache/raw.tmp") {
@@ -263,7 +264,7 @@ pub fn package() -> Result<()> {
     .status() {
             // need if s.success because of the type of answer from status
     Ok(s) if s.success() => {
-        println!("Build succeded");
+        println!("{} Build succeded {}", GREEN, RESET);
         env::set_current_dir(&collection).unwrap();
         fs::remove_dir_all("work").unwrap();
     }
@@ -312,12 +313,12 @@ pub fn package() -> Result<()> {
         } else {
             for line in existing.lines() {
                 if !footprint.lines().any(|l| l == line) {
-                    println!("MISSING : {}", line);
+                    println!("{} MISSING : {} {}", RED, line, RESET);
                 }
             }
             for line in footprint.lines() {
                 if !existing.lines().any(|l| l == line) {
-                    println!("NEW : {}", line);
+                    println!("{} NEW : {} {}", GREEN, line, RESET);
                 }
             }
 
