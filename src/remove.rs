@@ -33,11 +33,7 @@ pub fn remove(rawpkg: &String) -> Result<()> {
         let file = fs::read_to_string(format!("/var/lib/pkg/DB/{}/files", rawpkg))?;
         let content = file.lines();
         fs::remove_dir_all(format!("/var/lib/pkg/DB/{}", rawpkg));
-        let protected = if Path::new("/").exists() {
-            vec!["bin", "lib", "lib64", "sbin", "usr/share/info/dir"]
-        } else {
-            vec!["bin", "lib", "lib64", "sbin", "usr/share/info/dir"]
-        };
+        let protected = vec!["bin", "lib", "lib64", "sbin", "usr/share/info/dir"];
         for i in content {
             let to_remove = i.split_whitespace().next().unwrap();
             if !protected.contains(&to_remove) {
