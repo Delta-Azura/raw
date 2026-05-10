@@ -18,6 +18,8 @@ It's designed to be quick, light and memory safe.
 - Only linked to the kernel, glibc and xz at runtime
 - Pre and post installation support
 - Support of the prepare and package functions alongside with the build=something type of Pkgfiles
+- /etc preserved
+- Display symlinks in footprints
 
 
 # Pkgfile example :
