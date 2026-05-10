@@ -35,9 +35,10 @@ pub fn remove(rawpkg: &String) -> Result<()> {
         fs::remove_dir_all(format!("/var/lib/pkg/DB/{}", rawpkg));
         let protected = ["bin", "lib", "lib64", "sbin", "usr/share/info/dir"];
         for i in content {
-            if !protected.contains(&i) {
-                let _ = fs::remove_file(format!("/{}", i));
-                let _ = fs::remove_dir(format!("/{}", i));
+            let to_remove = i.split_whitespace().next().unwrap();
+            if !protected.contains(&to_remove) {
+                let _ = fs::remove_file(format!("/{}", to_remove));
+                let _ = fs::remove_dir(format!("/{}", to_remove));
             }
             //println!("Package has been correctly uninstalled !");
         } 

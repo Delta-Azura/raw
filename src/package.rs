@@ -33,7 +33,8 @@ use flate2::Compression;
 use flate2::write::GzEncoder;
 use anyhow::{Result, Context};
 
-
+const RED: &str = "\x1b[1;31m";
+const RESET: &str = "\x1b[0m";
 
 pub fn package() -> Result<()> {
         match File::create("/var/cache/raw.tmp") {
@@ -56,9 +57,12 @@ pub fn package() -> Result<()> {
         }
     }
     let output = Command::new("bash")
-        .args(["-c", "source Pkgfile && echo $version && echo $name && echo $packager && echo $release && echo $description && echo $depends && echo ${source[@]}"])
+        .args(["-c", "set -e && source Pkgfile && echo $version && echo $name && echo $packager && echo $release && echo $description && echo $depends && echo ${source[@]}"])
         .output()
-        .unwrap();
+        .unwrap_or_else(|e| {
+            println!("{} [!] : ERROR CHECK THE PKGFILE : {} {}", RED, e, RESET);
+            std::process::exit(1)
+        });
     let stdout = String::from_utf8(output.stdout).unwrap();
     let mut variables  = stdout.lines();
     let version = variables.next().unwrap();
@@ -265,36 +269,80 @@ pub fn package() -> Result<()> {
     }
     Ok(s) => {
             // Don't ask
-        println!("The build failed (code {:?})", s.code());
+        println!("{} [!] : ERROR : The build failed (code {:?}) {}", RED, s.code(), RESET);
         std::process::exit(1);
     }
     Err(e) => {
-        println!("The build failed {e}");
+        println!("{} [!] : ERROR The build failed {} {}", RED, e, RESET);
         std::process::exit(1);
     }
     }
     let prepare = format!("{}/pkg", collection);
-    
-    //env::set_current_dir(&prepare).unwrap();
-    if Path::new(&format!("{}.footprint", name)).exists() {
-        println!("Removing actual footprint");
-        fs::remove_file(format!("{}.footprint", name))?;
-    }
+
     if Path::new(&format!("{}.{}#raw.tar.gz", name, version)).exists() {
         println!("Removing the previous generated package");
         fs::remove_file(format!("{}.{}#raw.tar.gz", name, version))?;
     }
-    println!("Generating footprint");
-    let mut footprint = File::create(format!("{}.footprint", name)).unwrap();
-    for entry in WalkDir::new(&prepare).follow_links(false) {
-        let foot = entry.unwrap().path().display().to_string();
-        let pathpkg = foot.split_once(&prepare).map(|(_,pathpkg)| pathpkg).unwrap().to_string();
-        if pathpkg.is_empty() { continue; }
-        let list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
+    println!("Generating footprint and looking for changes");
+    if Path::new(&format!("{}.footprint", name)).exists() {
+        let existing = fs::read_to_string(format!("{}.footprint", name)).unwrap();
+        fs::remove_file(format!("{}.footprint", name))?;
+        let mut footprint = File::create(format!("{}.footprint", name)).unwrap();
+        for entry in WalkDir::new(&prepare).follow_links(false) {
+            let entry = entry?;
+            let foot = entry.path().display().to_string();
+            let pathpkg = foot.split_once(&prepare).map(|(_,pathpkg)| pathpkg).context("Not found")?.to_string();
+            if pathpkg.is_empty() { continue; }
+                let list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
+                if entry.file_type().is_symlink() {
+                    let list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
+                    let link = fs::read_link(entry.path())?;
+                    writeln!(footprint, "{} -> {}", list, link.display())?;
+                } else {
+                    let list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
+                writeln!(footprint, "{}", list)?;
+            }
         //if list.is_empty() { continue; }
         //let mut footprint = format!("{}", foot);
-        writeln!(footprint, "{}", list).unwrap();
+        //writeln!(footprint, "{}", list).unwrap();
+        }
+        let footprint = fs::read_to_string(format!("{}.footprint", name)).unwrap();
+        if existing == footprint {
+            println!("Same")
+        } else {
+            for line in existing.lines() {
+                if !footprint.lines().any(|l| l == line) {
+                    println!("MISSING : {}", line);
+                }
+            }
+            for line in footprint.lines() {
+                if !existing.lines().any(|l| l == line) {
+                    println!("NEW : {}", line);
+                }
+            }
+
+        }
+    } else {
+        let mut footprint = File::create(format!("{}.footprint", name)).unwrap();
+            for entry in WalkDir::new(&prepare).follow_links(false) {
+                let entry = entry?;
+                let foot = entry.path().display().to_string();
+                let pathpkg = foot.split_once(&prepare).map(|(_,pathpkg)| pathpkg).context("Not found")?.to_string();
+                if pathpkg.is_empty() { continue; }
+                    let list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
+                    if entry.file_type().is_symlink() {
+                        let list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
+                        let link = fs::read_link(entry.path())?;
+                        writeln!(footprint, "{} -> {}", list, link.display())?;
+                    } else {
+                        let list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
+                        writeln!(footprint, "{}", list)?;
+                    }
+            }
     }
+        //if list.is_empty() { continue; }
+        //let mut footprint = format!("{}", foot);
+        //writeln!(footprint, "{}", list).unwrap();
     fs::copy("META", "pkg/META").unwrap();
     fs::remove_file("META").unwrap();
     fs::copy(format!("{}.footprint", name), format!("pkg/{}.footprint", name)).unwrap();

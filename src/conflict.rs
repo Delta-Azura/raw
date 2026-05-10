@@ -40,7 +40,9 @@ pub fn conflict(rawpkg: &String) {
         let mut archive = Archive::new(GzDecoder::new(file));
         archive.unpack(".").unwrap();
     }
+    //let compare = fs::read_to_string(format!("/tmp/{}/{}.footprint", pkg, pkg)).unwrap().split_whitespace().next().unwrap();
     let compare = fs::read_to_string(format!("/tmp/{}/{}.footprint", pkg, pkg)).unwrap();
+    //let compare = binding.split_whitespace().next().unwrap();
     for e in fs::read_dir("/var/lib/pkg/DB/.").unwrap().filter_map(|e| e.ok()) {
         let directory_tmp = e.file_name();
         let directory = directory_tmp.to_str().unwrap();
@@ -51,12 +53,14 @@ pub fn conflict(rawpkg: &String) {
             thread::sleep(Duration::from_secs(10));
             continue; 
         }
-        let target = fs::read_to_string(&files_path).unwrap();
-        println!("{}", compare);
+        let target = fs::read_to_string(&files_path).unwrap();//.split_whitespace().next().unwrap();
+        //let target = temp.split_whitespace().next().unwrap();
         for lines in target.lines() {
+            let lines = lines.split_whitespace().next().unwrap_or("");
             //let release = variables.next().unwrap();
             for line in compare.lines() {
-                if  line == lines {
+                let line = line.split_whitespace().next().unwrap_or("");
+                if line.split_whitespace().next().unwrap_or("") == lines {                    
                     let list = format!("{}", lines);
                     if list.is_empty() { continue; }
                     //file_type(&list);
@@ -76,6 +80,7 @@ pub fn conflict(rawpkg: &String) {
     }
 /// File conflict
     for i in compare.lines() {
+        let i = i.split_whitespace().next().unwrap_or("");
         let r = format!("/{}", i);
         if file_type(&r) == true {
             if r != "/usr/share/info/dir" {
