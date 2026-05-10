@@ -41,7 +41,8 @@ pub fn build(to_build: &str) -> Result<()> {
         let index = fs::read_to_string("index.raw").unwrap();
         let found = index.lines().find(|line| line.contains(to_build));
         if let Some(building) = found {
-            env::set_current_dir(&building).unwrap();
+            let chrp = found.unwrap().split_once("Pkgfile").map(|(chrp, _)| chrp).unwrap();
+            env::set_current_dir(&chrp).unwrap();
             package()?;
             let question = Question::new("Do you want to install the new package ? [yes/no] : ")
                 .yes_no()

@@ -55,7 +55,7 @@ pub fn install(rawpkg: &String) -> Result<()> {
         std::process::exit(1);
     }
     let opts = CopyOptions {
-        overwrite: true,
+        overwrite: false,
         follow_symlinks: false,
         restrict_symlinks: false,
         content_only: false,

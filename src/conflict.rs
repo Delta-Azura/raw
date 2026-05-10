@@ -67,9 +67,10 @@ pub fn conflict(rawpkg: &String) {
                     if file_type(&list) == true {
                         let test = format!("/{}", &list);
                         if test != "/usr/share/info/dir" {
-                            let owner = query(&test);
-                        //println!("{}"owner);
-                            std::process::exit(1)
+                            if !test.starts_with("/etc") {
+                                let owner = query(&test);
+                                std::process::exit(1)
+                            }
 
                         }
                         
@@ -84,11 +85,12 @@ pub fn conflict(rawpkg: &String) {
         let r = format!("/{}", i);
         if file_type(&r) == true {
             if r != "/usr/share/info/dir" {
-                if Path::new(&r).exists() {
-                    println!("File {} already present on the system", i);
-                    std::process::exit(1)
-            }
-
+                if !r.starts_with("/etc")  {
+                    if Path::new(&r).exists() {
+                        println!("File {} already present on the system", i);
+                        std::process::exit(1)
+                    }
+                }
             }
         }
     }

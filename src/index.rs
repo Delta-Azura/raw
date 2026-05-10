@@ -41,19 +41,27 @@ pub fn index() -> Result <()> {
                 if question == Some(Answer::YES) {
                     fs::remove_file("index.raw").unwrap();
                     let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
-                    for entry in WalkDir::new(&path.trim()).max_depth(2).min_depth(2) {
+                    for entry in WalkDir::new(&path.trim()).max_depth(3).min_depth(2) {
                         File::open("index.raw").unwrap();
                         let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string().split_once("/").map(|(_, remove)| remove).unwrap().to_string();
-                        writeln!(rawfile,"{}", entries).unwrap();
+                        if entries.contains("Pkgfile") {
+                            writeln!(rawfile,"{}", entries).unwrap();
+                        } else {
+                            continue;
+                        }
                     }
                 }
                 
             } else {
                 let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
-                for entry in WalkDir::new(&path.trim()).max_depth(2).min_depth(2) {
+                for entry in WalkDir::new(&path.trim()).max_depth(3).min_depth(2) {
                     File::open("index.raw").unwrap();
                     let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string().split_once("/").map(|(_, remove)| remove).unwrap().to_string();
-                    writeln!(rawfile,"{}", entries).unwrap();
+                    if entries.contains("Pkgfile") {
+                        writeln!(rawfile,"{}", entries).unwrap();
+                    } else {
+                        continue;
+                    }
                 }
             }
         } else {
@@ -68,26 +76,34 @@ pub fn index() -> Result <()> {
                 if question == Some(Answer::YES) {
                     fs::remove_file("index.raw").unwrap();
                     let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
-                    for entry in WalkDir::new(&path.trim()).max_depth(2).min_depth(2) {
+                    for entry in WalkDir::new(&path.trim()).max_depth(3).min_depth(2) {
                         let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string().split_once("/").map(|(_, remove)| remove).unwrap().to_string();
                         //println!("{}", entries)
+                        if entries.contains("Pkgfile") {
+                            let pkgfile = fs::read_to_string(&format!("{}/Pkgfile", entries)).unwrap_or("".to_string());
+                            let mut content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
+                            let version = content.iter().find(|version| version.starts_with("version")).unwrap_or(&"version=unknown".to_string()).to_string().split_once("version=").map(|(_, version)| version).unwrap().to_string();
+                            let release = content.iter().find(|release| release.starts_with("release")).unwrap_or(&"release=1".to_string()).to_string().split_once("release=").map(|(_, version)| version).unwrap().to_string();
+                            writeln!(rawfile, "{}", &format!("{}_{}#{}", entries, version, release));
+                        } else {
+                            continue;
+                        }
+                    }
+                }
+            } else {
+                let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
+                for entry in WalkDir::new(&path.trim()).max_depth(3).min_depth(2) {
+                    let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string().split_once("/").map(|(_, remove)| remove).unwrap().to_string();
+                    //println!("{}", entries);
+                    if entries.contains("Pkgfile") {
                         let pkgfile = fs::read_to_string(&format!("{}/Pkgfile", entries)).unwrap_or("".to_string());
                         let mut content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
                         let version = content.iter().find(|version| version.starts_with("version")).unwrap_or(&"version=unknown".to_string()).to_string().split_once("version=").map(|(_, version)| version).unwrap().to_string();
                         let release = content.iter().find(|release| release.starts_with("release")).unwrap_or(&"release=1".to_string()).to_string().split_once("release=").map(|(_, version)| version).unwrap().to_string();
                         writeln!(rawfile, "{}", &format!("{}_{}#{}", entries, version, release));
+                    } else {
+                        continue;
                     }
-                }
-            } else {
-                let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
-                for entry in WalkDir::new(&path.trim()).max_depth(2).min_depth(2) {
-                    let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string().split_once("/").map(|(_, remove)| remove).unwrap().to_string();
-                    //println!("{}", entries);
-                    let pkgfile = fs::read_to_string(&format!("{}/Pkgfile", entries)).unwrap_or("".to_string());
-                    let mut content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
-                    let version = content.iter().find(|version| version.starts_with("version")).unwrap_or(&"version=unknown".to_string()).to_string().split_once("version=").map(|(_, version)| version).unwrap().to_string();
-                    let release = content.iter().find(|release| release.starts_with("release")).unwrap_or(&"release=1".to_string()).to_string().split_once("release=").map(|(_, version)| version).unwrap().to_string();
-                    writeln!(rawfile, "{}", &format!("{}_{}#{}", entries, version, release));
                 }
             }
 
