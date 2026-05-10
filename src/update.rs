@@ -27,9 +27,9 @@ pub fn update(rawpkg: &String) {
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap().to_string();
     //println!("{}", pkg);
     if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
+        File::create("/tmp/conflict").unwrap();
         println!("removing previous package");
         remove(&pkg);
-        File::create("/tmp/conflict").unwrap();
         conflict(&rawpkg);
         println!("Installing the new one");
         install(&rawpkg);
