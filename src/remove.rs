@@ -21,6 +21,7 @@ use std::path::Path;
 use std::env::current_dir;
 use anyhow::{Result, Context};
 use std::fs::File;
+use std::process::Command;
 
 
 pub fn remove(rawpkg: &String) -> Result<()> {
@@ -30,8 +31,29 @@ pub fn remove(rawpkg: &String) -> Result<()> {
     let check = format!("/var/lib/pkg/DB/{}", rawpkg);
     if Path::new(&check).exists() {
         env::set_current_dir(format!("/var/lib/pkg/DB/{}", rawpkg))?;
+        if Path::new(&format!("/var/lib/pkg/DB/{}/{}.pre-remove", rawpkg, rawpkg)).exists() {
+            let pre_remove = format!("chmod u+x {}.pre-remove && ./{}.pre-remove", rawpkg, rawpkg);
+            println!("Starting pre-removal.");
+            Command::new("bash")
+            .args(["-c", &pre_remove])
+            .status()
+            .unwrap();
+        } else {
+            println!("No pre-removal required");
+        }
+        let post_remove = match Path::new(&format!("/var/lib/pkg/DB/{}/{}.post-remove", rawpkg, rawpkg)).exists() {
+            true => {
+                fs::copy(format!("/var/lib/pkg/DB/{}/{}.post-remove", rawpkg, rawpkg), format!("/tmp/{}.post-remove", rawpkg)).unwrap();
+                format!("chmod u+x {}.post-remove && ./{}.post-remove", rawpkg, rawpkg)
+            }
+            false => {
+                println!("no post removal required");
+                format!("no")
+            }
+        };
         let file = fs::read_to_string(format!("/var/lib/pkg/DB/{}/files", rawpkg))?;
         let content = file.lines();
+        env::set_current_dir("/tmp")?;
         fs::remove_dir_all(format!("/var/lib/pkg/DB/{}", rawpkg));
         let protected = vec!["bin", "lib", "lib64", "sbin", "usr/share/info/dir"];
         for i in content {
@@ -45,7 +67,14 @@ pub fn remove(rawpkg: &String) -> Result<()> {
                 }
             }
             //println!("Package has been correctly uninstalled !");
-        } 
+        }
+        if post_remove != "no" {
+            println!("Executing post-remove trigger");
+            Command::new("bash")
+            .args(["-c", &post_remove])
+            .status()
+            .unwrap();
+        }
     } else {
             println!("This package isn't installed, can't remove it");
     }

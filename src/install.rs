@@ -91,6 +91,12 @@ pub fn install(rawpkg: &String) -> Result<()> {
     }
     fs::remove_dir_all(format!("/var/lib/pkg/DB/{}", pkg)).unwrap();
     fs::create_dir(format!("/var/lib/pkg/DB/{}", pkg)).unwrap();
+    if Path::new(&format!("/{}.pre-remove", pkg)).exists() {
+        fs::copy(format!("/{}.pre-remove", pkg), format!("/var/lib/pkg/DB/{}/{}.pre-remove", pkg, pkg)).unwrap();
+    }
+    if Path::new(&format!("/{}.post-remove", pkg)).exists() {
+        fs::copy(format!("/{}.post-remove", pkg), format!("/var/lib/pkg/DB/{}/{}.post-remove", pkg, pkg)).unwrap();
+    }
     fs::copy("/META", format!("/var/lib/pkg/DB/{}/META", pkg)).unwrap();
     fs::copy(format!("/{}.footprint", pkg), format!("/var/lib/pkg/DB/{}/files", pkg)).unwrap();
     fs::remove_file("/META").unwrap();
