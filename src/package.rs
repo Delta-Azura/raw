@@ -32,6 +32,9 @@ use liblzma::write::XzEncoder;
 use flate2::Compression;
 use flate2::write::GzEncoder;
 use anyhow::{Result, Context};
+use crate::getconf::getconf;
+use crate::get::get;
+use crate::build::build;
 
 const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
@@ -58,7 +61,7 @@ pub fn package() -> Result<()> {
         }
     }
     let output = Command::new("bash")
-        .args(["-c", "set -e && source Pkgfile && echo $version && echo $name && echo $packager && echo $release && echo $description && echo $depends && echo ${source[@]}"])
+        .args(["-c", "set -e && source Pkgfile && echo $version && echo $name && echo $packager && echo $release && echo $description && echo $depends && echo ${source[@]} && echo ${makedepends[@]}"])
         .output()
         .unwrap_or_else(|e| {
             println!("{} [!] : ERROR CHECK THE PKGFILE : {} {}", RED, e, RESET);
@@ -73,8 +76,7 @@ pub fn package() -> Result<()> {
     let description = variables.next().unwrap();
     let depends = variables.next().unwrap();
     let source = variables.next().unwrap();
-    //let makedepends = variables.next().unwrap();
-    //if makedepends == "none" {
+    let makedepends: Vec<String> = variables.next().unwrap().split_whitespace().map(|s| s.to_string()).collect();    //if makedepends == "none" {
     //    println!("No makedepends");
     //} else {
     //    for i makedepends.lines() {
@@ -104,6 +106,27 @@ pub fn package() -> Result<()> {
     //if Path::new("config").exists() {
     //    fs::copy("config", "work/config").unwrap();
     //}
+    println!("makedepends: {:?}", makedepends);
+    if !makedepends.is_empty() {
+        for i in makedepends {
+            if Path::new(&format!("/var/lib/pkg/DB/{}", i)).exists() {
+                println!("Package is installed")
+            } else {
+                let (mode, trash, url) = getconf().unwrap();
+                if mode != "source" {
+                    get(&i);
+                }
+                if mode == "source" {
+                    if let Err(e) = build(&i) {
+                        println!("{} not found", i)
+                    } else {
+                        println!("Installing next package");
+                    }
+                }
+                
+            }
+        }
+    }
     let building = format!("{}/work", collection);
     println!("Switching to the work directory {}", building);
     for src in source.split_whitespace() {
@@ -130,19 +153,20 @@ pub fn package() -> Result<()> {
             env::set_current_dir(&building)?;
         }
     }
+
     env::set_current_dir(&building)?;
     //let extracted = Path::new("{}/{}", collection, tarball)
     env::set_current_dir(&collection)?;
     let prepare = fs::read_to_string("Pkgfile")?;
     let cmd = match (prepare.contains("prepare()"), prepare.contains("package()"), prepare.contains("build()")) {
         (true, true, true) => {
-            format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && build && package'")
+            format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && cd .. && build && cd .. && package'")
         }
         (true, false, true) => {
-            format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && build'")
+            format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && cd .. && build'")
         }
         (false, true, true) => {
-            format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && build && package'")
+            format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && build && cd .. && package'")
         }
         (false, false, true) => {
             format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && build'")
@@ -157,7 +181,7 @@ pub fn package() -> Result<()> {
                     });;
 
                     if Path::new(&format!("/etc/raw.d/{}", style)).exists() {
-                        format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && source /etc/raw.d/{} && package'", style)
+                        format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && cd .. && source /etc/raw.d/{} && cd .. && package'", style)
                     } else {
                         println!("No build style available for {}", build_style);
                         std::process::exit(1)
@@ -165,7 +189,7 @@ pub fn package() -> Result<()> {
                 }   
                 false => {
                     if Path::new("/etc/raw.d/build-default").exists() {
-                        format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && source /etc/raw.d/build-default && package'")
+                        format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && cd .. && source /etc/raw.d/build-default && cd .. && package'")
                     } else {
                         println!("No default build style set in /etc/raw.d/build-default : aborting");
                         std::process::exit(1)
@@ -184,7 +208,7 @@ pub fn package() -> Result<()> {
                     });;
 
                     if Path::new(&format!("/etc/raw.d/{}", style)).exists() {
-                        format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && source /etc/raw.d/{}'", style)
+                        format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && cd .. && source /etc/raw.d/{}'", style)
                     } else {
                         println!("No build style available for {}", build_style);
                         std::process::exit(1)
@@ -192,7 +216,7 @@ pub fn package() -> Result<()> {
                 }   
                 false => {
                     if Path::new("/etc/raw.d/build-default").exists() {
-                        format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && source /etc/raw.d/build-default'")      
+                        format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && prepare && cd .. && source /etc/raw.d/build-default'")      
                     } else {
                         println!("No default build style set in /etc/raw.d/build-default : aborting");
                         std::process::exit(1)
@@ -211,7 +235,7 @@ pub fn package() -> Result<()> {
                     });;
                  
                     if Path::new(&format!("/etc/raw.d/{}", style)).exists() {
-                        format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && source /etc/raw.d/{} && package'", style)
+                        format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && source /etc/raw.d/{} && cd .. && package'", style)
                     } else {
                         println!("No build style available for {}", build_style);
                         std::process::exit(1)
@@ -219,7 +243,7 @@ pub fn package() -> Result<()> {
                 }   
                 false => {
                     if Path::new("/etc/raw.d/build-default").exists() {
-                        format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && source /etc/raw.d/build-default && package'")
+                        format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && cd work && source /etc/raw.d/build-default && cd .. && package'")
                     } else {
                         println!("No default build style set");
                         std::process::exit(1)

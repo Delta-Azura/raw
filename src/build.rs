@@ -30,11 +30,14 @@ use std::process::Command;
 
 //use users::switch::switch_user_group;
 
+const RED: &str = "\x1b[1;31m";
+const RESET: &str = "\x1b[0m";
+const GREEN: &str = "\x1b[0;32m";
 
 pub fn build(to_build: &str) -> Result<()> {
     let (mode, trash, url) = getconf().unwrap();
     if mode != "source" {
-        println!("Raw is used in binary mode, cannot build");
+        println!("{} Raw is used in binary mode, cannot build {}", RED, RESET);
         std::process::exit(1);
     }
     if let Ok(mode) = getconf() {
@@ -57,7 +60,7 @@ pub fn build(to_build: &str) -> Result<()> {
                     if Path::new("/usr/bin/sudo").exists() {
                         Command::new("sudo").args(["raw", "update", &content.unwrap()]).status().unwrap();
                     } else {
-                        println!("sudo isn't installed, please go to the build directory to install {}", to_build);
+                        println!("{} sudo isn't installed, please go to the build directory to install {} {}", RED, to_build, RESET);
                     }
                     //drop(guard);
                 } else {
@@ -65,13 +68,13 @@ pub fn build(to_build: &str) -> Result<()> {
                     if Path::new("/usr/bin/sudo").exists() {
                         Command::new("sudo").args(["raw", "install", &content.unwrap()]).status().unwrap();
                     } else {
-                        println!("sudo isn't installed, please go to the build directory to install {}", to_build);
+                        println!("{} sudo isn't installed, please go to the build directory to install {} {}", RED, to_build, RESET);
                     }
                 }
             }
 
         } else {
-            println!("Not found, try running raw index to update the repo database");
+            println!("{} {} not found, try running raw index to update the repo database {}", RED, to_build, RESET);
             std::process::exit(1)
         }
     }
