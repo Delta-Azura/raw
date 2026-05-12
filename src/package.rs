@@ -61,7 +61,7 @@ pub fn package() -> Result<()> {
         }
     }
     let output = Command::new("bash")
-        .args(["-c", "set -e && source Pkgfile && echo $version && echo $name && echo $packager && echo $release && echo $description && echo $depends && echo ${source[@]} && echo ${makedepends[@]}"])
+        .args(["-c", "set -e && source Pkgfile && echo $version && echo $name && echo $packager && echo $release && echo $description && echo $rundepends && echo ${source[@]} && echo ${makedepends[@]}"])
         .output()
         .unwrap_or_else(|e| {
             println!("{} [!] : ERROR CHECK THE PKGFILE : {} {}", RED, e, RESET);
