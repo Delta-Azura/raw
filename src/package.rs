@@ -39,6 +39,7 @@ use crate::build::build;
 const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
 const GREEN: &str = "\x1b[0;32m";
+const YELLOW: &str = "\x1b[33m";
 
 pub fn package() -> Result<()> {
         match File::create("/var/cache/raw.tmp") {
@@ -106,11 +107,11 @@ pub fn package() -> Result<()> {
     //if Path::new("config").exists() {
     //    fs::copy("config", "work/config").unwrap();
     //}
-    println!("makedepends: {:?}", makedepends);
     if !makedepends.is_empty() {
+        println!("{}Checking for makedepends: {:?}{}", YELLOW, makedepends, RESET);
         for i in makedepends {
             if Path::new(&format!("/var/lib/pkg/DB/{}", i)).exists() {
-                println!("Package is installed")
+                println!("{}{} is installed{}", GREEN, i, RESET)
             } else {
                 let (mode, trash, url) = getconf().unwrap();
                 if mode != "source" {
@@ -380,6 +381,16 @@ pub fn package() -> Result<()> {
         fs::copy(format!("{}.post-install", name), format!("pkg/{}.post-install", name))?;
     } else {
         println!("No need to prepare post-installation");
+    }
+    if Path::new(&format!("{}/{}.pre-remove", collection, name)).exists() {
+        fs::copy(format!("{}.pre-remove", name), format!("pkg/{}.pre-remove", name))?;
+    } else {
+        println!("No need to prepare pre-remove");
+    }
+    if Path::new(&format!("{}/{}.post-remove", collection, name)).exists() {
+        fs::copy(format!("{}.post-remove", name), format!("pkg/{}.post-remove", name))?;
+    } else {
+        println!("No need to prepare pre-remove");
     }
     //let packagename = format!("{}", name);
     println!("Generating package");
