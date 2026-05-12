@@ -41,7 +41,7 @@ pub fn index() -> Result <()> {
                 if question == Some(Answer::YES) {
                     fs::remove_file("index.raw").unwrap();
                     let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
-                    for entry in WalkDir::new(&path.trim()).max_depth(3).min_depth(2) {
+                    for entry in WalkDir::new(&path.trim()).max_depth(5).min_depth(2) {
                         File::open("index.raw").unwrap();
                         let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string().split_once("/").map(|(_, remove)| remove).unwrap().to_string();
                         if entries.contains("Pkgfile") {
@@ -54,7 +54,7 @@ pub fn index() -> Result <()> {
                 
             } else {
                 let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
-                for entry in WalkDir::new(&path.trim()).max_depth(3).min_depth(2) {
+                for entry in WalkDir::new(&path.trim()).max_depth(5).min_depth(2) {
                     File::open("index.raw").unwrap();
                     let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string().split_once("/").map(|(_, remove)| remove).unwrap().to_string();
                     if entries.contains("Pkgfile") {
@@ -76,7 +76,7 @@ pub fn index() -> Result <()> {
                 if question == Some(Answer::YES) {
                     fs::remove_file("index.raw").unwrap();
                     let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
-                    for entry in WalkDir::new(&path.trim()).max_depth(3).min_depth(2) {
+                    for entry in WalkDir::new(&path.trim()).max_depth(5).min_depth(2) {
                         let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string().split_once("/").map(|(_, remove)| remove).unwrap().to_string();
                         //println!("{}", entries)
                         if entries.contains("Pkgfile") {
@@ -92,7 +92,7 @@ pub fn index() -> Result <()> {
                 }
             } else {
                 let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
-                for entry in WalkDir::new(&path.trim()).max_depth(3).min_depth(2) {
+                for entry in WalkDir::new(&path.trim()).max_depth(5).min_depth(2) {
                     let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string().split_once("/").map(|(_, remove)| remove).unwrap().to_string();
                     //println!("{}", entries);
                     if entries.contains("Pkgfile") {
