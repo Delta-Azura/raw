@@ -24,6 +24,7 @@ use anyhow::{Context, Result};
 use std::path::Path;
 use question::{Answer, Question};
 use std::fs;
+use std::env;
 
 
 
@@ -43,7 +44,15 @@ pub fn index() -> Result <()> {
                     let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
                     for entry in WalkDir::new(&path.trim()).min_depth(2) {
                         File::open("index.raw").unwrap();
-                        let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string();//.split_once("/").map(|(_, remove)| remove).unwrap().to_string();
+                        let entry = entry.unwrap();
+                        let entries = match path.ends_with("/") {
+                            true => {
+                                entry.path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string()//.split_once("/").map(|(_, remove)| remove).unwrap().to_string();
+                            }
+                            false => {
+                                entry.path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string().split_once("/").map(|(_, remove)| remove).unwrap().to_string()
+                            }
+                        };
                         if entries.contains("Pkgfile") {
                             writeln!(rawfile,"{}", entries).unwrap();
                         } else {
