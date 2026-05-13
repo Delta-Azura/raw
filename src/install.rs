@@ -41,6 +41,7 @@ pub fn install(rawpkg: &String) -> Result<()> {
     } else {
         conflict(&rawpkg);
     }
+    fs::copy(rawpkg, format!("/var/lib/pkg/{}", rawpkg))?;
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap();
     fs::create_dir(format!("/var/lib/pkg/DB/{}", pkg)).unwrap();
     println!("Copying {} to /var/lib/pkg/DB/{}/{}", rawpkg, pkg, rawpkg);

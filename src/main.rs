@@ -36,6 +36,7 @@ mod depends;
 mod upgrade;
 mod bootstrap;
 mod search;
+mod remove_cache;
 use crate::bootstrap::bootstrap;
 use crate::get::get;
 use crate::build::build;
@@ -53,6 +54,7 @@ use crate::package::package;
 use anyhow::{Result};
 use crate::upgrade::upgrade;
 use crate::search::search;
+use crate::remove_cache::remove_cache;
 
 
 
@@ -128,6 +130,10 @@ fn main() -> Result<()> {
     }
     if args[1] == "search" {
         search(&args[2])?;
+        return Ok(())
+    }
+    if args[1] == "rmcache" {
+        remove_cache()?;
         return Ok(())
     }
     return Ok(());
