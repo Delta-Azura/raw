@@ -47,6 +47,30 @@ pub fn build(to_build: &str) -> Result<()> {
             let chrp = found.unwrap().split_once("Pkgfile").map(|(chrp, _)| chrp).unwrap();
             println!("{}", chrp);
             env::set_current_dir(&chrp).unwrap();
+            let potential_package: Vec<String> = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).filter_map(|e| e.file_name().into_string().ok()).collect();
+            for i in potential_package {
+                if i.contains(".raw.") {
+                    let question = Question::new(&format!("{} already exists, do you want to install it ?", i))
+                        .yes_no()
+                        .until_acceptable()
+                        .default(Answer::YES)
+                        .show_defaults()
+                        .clarification("Please enter either 'y' or 'n' \n")
+                        .ask();
+                    if question == Some(Answer::YES) {
+                        if !Path::new(&format!("/var/lib/pkg/DB/{}", &to_build)).exists() {
+                            Command::new("sudo")
+                            .args(["raw", "install", &i])
+                            .status();
+                        //install(&i)?;
+                            std::process::exit(0)
+                        } else {
+                            println!("{}{} already installed{}", GREEN, i, RESET);
+                            std::process::exit(0)
+                        }
+                    }
+                }
+            }
             package()?;
             let question = Question::new("Do you want to install the new package ? [yes/no] : ")
                 .yes_no()
