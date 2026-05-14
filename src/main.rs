@@ -136,7 +136,7 @@ fn main() -> Result<()> {
         return Ok(())
     }
     if args[1] == "build" {
-        build(&args[2])?;
+        build(&args[2], args.get(3).map(|s| s.as_str()))?;
         return Ok(())
     }
     if args[1] == "get" {

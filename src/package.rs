@@ -118,7 +118,7 @@ pub fn package() -> Result<()> {
                     get(&i);
                 }
                 if mode == "source" {
-                    if let Err(e) = build(&i) {
+                    if let Err(e) = build(&i, None) {
                         println!("{} not found", i)
                     } else {
                         println!("Installing next package");
@@ -390,7 +390,7 @@ pub fn package() -> Result<()> {
     if Path::new(&format!("{}/{}.post-remove", collection, name)).exists() {
         fs::copy(format!("{}.post-remove", name), format!("pkg/{}.post-remove", name))?;
     } else {
-        println!("No need to prepare pre-remove");
+        println!("No need to prepare post-remove");
     }
     //let packagename = format!("{}", name);
     println!("Generating package");

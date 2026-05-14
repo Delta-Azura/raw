@@ -34,7 +34,7 @@ const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
 const GREEN: &str = "\x1b[0;32m";
 
-pub fn build(to_build: &str) -> Result<()> {
+pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
     let (mode, trash, url) = getconf().unwrap();
     if mode != "source" {
         println!("{} Raw is used in binary mode, cannot build {}", RED, RESET);
@@ -48,38 +48,33 @@ pub fn build(to_build: &str) -> Result<()> {
             println!("{}", chrp);
             env::set_current_dir(&chrp).unwrap();
             let potential_package: Vec<String> = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).filter_map(|e| e.file_name().into_string().ok()).collect();
-            for i in potential_package {
-                if i.contains(".raw.") {
-                    let question = Question::new(&format!("{} already exists, do you want to install it ?", i))
-                        .yes_no()
-                        .until_acceptable()
-                        .default(Answer::YES)
-                        .show_defaults()
-                        .clarification("Please enter either 'y' or 'n' \n")
-                        .ask();
-                    if question == Some(Answer::YES) {
-                        if !Path::new(&format!("/var/lib/pkg/DB/{}", &to_build)).exists() {
-                            Command::new("sudo")
-                            .args(["raw", "install", &i])
-                            .status();
+            if option == Some("-y") {
+                for i in potential_package {
+                    if i.contains(".raw.") {
+                        let question = Question::new(&format!("{} already exists, do you want to install it ?", i))
+                            .yes_no()
+                            .until_acceptable()
+                            .default(Answer::YES)
+                            .show_defaults()
+                            .clarification("Please enter either 'y' or 'n' \n")
+                            .ask();
+                        if question == Some(Answer::YES) {
+                            if !Path::new(&format!("/var/lib/pkg/DB/{}", &to_build)).exists() {
+                                Command::new("sudo")
+                                .args(["raw", "install", &i])
+                                .status();
                         //install(&i)?;
-                            std::process::exit(0)
-                        } else {
-                            println!("{}{} already installed{}", GREEN, i, RESET);
-                            std::process::exit(0)
+                                std::process::exit(0)
+                            } else {
+                                println!("{}{} already installed{}", GREEN, i, RESET);
+                                std::process::exit(0)
+                            }
                         }
                     }
                 }
             }
             package()?;
-            let question = Question::new("Do you want to install the new package ? [yes/no] : ")
-                .yes_no()
-                .until_acceptable()
-                .default(Answer::YES)
-                .show_defaults()
-                .clarification("Please enter either 'yes' or 'no'\n")
-                .ask();
-            if question == Some(Answer::YES) {
+            if option == Some("-y") {
                 if Path::new(&format!("/var/lib/pkg/DB/{}", to_build)).exists() {
                     let content = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).map(|e| e.file_name().to_str().unwrap().to_owned()).find(|name| name.contains("raw"));
                     if Path::new("/usr/bin/sudo").exists() {
@@ -96,6 +91,9 @@ pub fn build(to_build: &str) -> Result<()> {
                         println!("{} sudo isn't installed, please go to the build directory to install {} {}", RED, to_build, RESET);
                     }
                 }
+            } else {
+                println!("{}Build succeded{}", GREEN, RESET);
+                std::process::exit(0)
             }
 
         } else {
