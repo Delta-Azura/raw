@@ -37,6 +37,8 @@ mod upgrade;
 mod bootstrap;
 mod search;
 mod remove_cache;
+mod help;
+use crate::help::help;
 use crate::bootstrap::bootstrap;
 use crate::get::get;
 use crate::build::build;
@@ -60,6 +62,27 @@ use crate::remove_cache::remove_cache;
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
+    if args.len() < 2 {
+        help();
+        std::process::exit(0)
+    }
+    if args[1] == "help" {
+        help();
+        std::process::exit(0)
+    
+    }
+    if args[1] == "--help" {
+        help();
+        std::process::exit(0)
+    }
+    if args[1] == "-help" {
+        help();
+        std::process::exit(0)
+    }
+    if args[1] == "h" {
+        help();
+        std::process::exit(0)
+    }
     if args[1] == "package" {
         package()?;
         return Ok(());
