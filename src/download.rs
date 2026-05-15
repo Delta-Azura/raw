@@ -27,7 +27,10 @@ pub fn download(url: &str) -> Result<String> {
     // Setting up the first variable to get the answer
     // Checking lenght of the answer
     // Setting the progress bar style (random settings)
-    let mut answer = reqwest::blocking::get(url)?;
+    let client = reqwest::blocking::Client::builder()
+    .user_agent("raw/0.2.6")
+    .build()?;
+    let mut answer = client.get(url).send()?;
     let progress = answer.content_length().unwrap_or(0);
     let pb = ProgressBar::new(progress);
      pb.set_style(
