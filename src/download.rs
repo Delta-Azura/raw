@@ -31,6 +31,9 @@ pub fn download(url: &str) -> Result<String> {
     .user_agent("raw/0.2.6")
     .build()?;
     let mut answer = client.get(url).send()?;
+    if !answer.status().is_success() {
+       anyhow::bail!("ERROR {} while downloading {}", answer.status(), url);
+    }
     let progress = answer.content_length().unwrap_or(0);
     let pb = ProgressBar::new(progress);
      pb.set_style(
