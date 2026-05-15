@@ -73,7 +73,7 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
                     }
                 }
             }
-            package()?;
+            package(None)?;
             if option == Some("-y") {
                 if Path::new(&format!("/var/lib/pkg/DB/{}", to_build)).exists() {
                     let content = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).map(|e| e.file_name().to_str().unwrap().to_owned()).find(|name| name.contains("raw"));

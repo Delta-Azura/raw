@@ -28,7 +28,7 @@ pub fn help() {
     println!("raw remove packagename {}#to remove it{}", GREEN, RESET);
     println!("raw update packagename {}#to update the package individually{}", GREEN, RESET);
     println!("raw index {}#to update/create the index{}", GREEN, RESET);
-    println!("raw build {}#allows you to build a package regardless the directory you are in{}", GREEN, RESET);
+    println!("raw build {}#allows you to build a package regardless the directory you are in, add -y to install it afterwards{}", GREEN, RESET);
     println!("raw list {}#to list every packages installed{}", GREEN, RESET);
     println!("raw info packagename {}#to display informations about a package{}", GREEN, RESET);
     println!("raw libs packagename {}#to list its libraries{}", GREEN, RESET);
@@ -38,4 +38,5 @@ pub fn help() {
     println!("raw upgrade {}#to upgrade your system, only in binary mode{}", YELLOW, RESET);
     println!("raw query filename {}#to know who this file belongs to{}", GREEN, RESET);
     println!("raw package {}#to build the package being in the directory containing it's pkgfile{}", GREEN, RESET);
+    println!("raw orphans {}to list every orphans remaining on the system and their number{}", GREEN, RESET);
 }

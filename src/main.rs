@@ -86,7 +86,11 @@ fn main() -> Result<()> {
         std::process::exit(0)
     }
     if args[1] == "package" {
-        package()?;
+        if args.len() < 2 {
+            package(None)?;
+        } else {
+            package(Some("--clean"))?;
+        }
         return Ok(());
     } 
 

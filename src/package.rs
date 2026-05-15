@@ -41,7 +41,7 @@ const RESET: &str = "\x1b[0m";
 const GREEN: &str = "\x1b[0;32m";
 const YELLOW: &str = "\x1b[33m";
 
-pub fn package() -> Result<()> {
+pub fn package(option: Option<(&str)>) -> Result<()> {
         match File::create("/var/cache/raw.tmp") {
         Ok(_) => {
             println!("You are building as root !");
@@ -109,7 +109,7 @@ pub fn package() -> Result<()> {
     //}
     if !makedepends.is_empty() {
         println!("{}Checking for makedepends: {:?}{}", YELLOW, makedepends, RESET);
-        for i in makedepends {
+        for i in &makedepends {
             if Path::new(&format!("/var/lib/pkg/DB/{}", i)).exists() {
                 println!("{}{} is installed{}", GREEN, i, RESET)
             } else {
@@ -118,7 +118,7 @@ pub fn package() -> Result<()> {
                     get(&i);
                 }
                 if mode == "source" {
-                    if let Err(e) = build(&i, None) {
+                    if let Err(e) = build(&i, Some("y")) {
                         println!("{} not found", i)
                     } else {
                         println!("Installing next package");
@@ -391,6 +391,14 @@ pub fn package() -> Result<()> {
         fs::copy(format!("{}.post-remove", name), format!("pkg/{}.post-remove", name))?;
     } else {
         println!("No need to prepare post-remove");
+    }
+    if option == Some("--clean") {
+        println!("{}Removing makedepends{}", YELLOW, RESET);
+        for i in &makedepends {
+            Command::new("sudo")
+                .args(["remove", &i])
+                .status();
+        }
     }
     //let packagename = format!("{}", name);
     println!("Generating package");
