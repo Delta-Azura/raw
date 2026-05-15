@@ -396,7 +396,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
         println!("{}Removing makedepends{}", YELLOW, RESET);
         for i in &makedepends {
             Command::new("sudo")
-                .args(["remove", &i])
+                .args(["raw", "remove", &i])
                 .status();
         }
     }

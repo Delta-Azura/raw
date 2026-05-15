@@ -60,6 +60,10 @@ use crate::upgrade::upgrade;
 use crate::search::search;
 use crate::remove_cache::remove_cache;
 
+const RED: &str = "\x1b[1;31m";
+const RESET: &str = "\x1b[0m";
+const GREEN: &str = "\x1b[0;32m";
+const YELLOW: &str = "\x1b[33m";
 
 
 fn main() -> Result<()> {
@@ -86,10 +90,14 @@ fn main() -> Result<()> {
         std::process::exit(0)
     }
     if args[1] == "package" {
-        if args.len() < 2 {
+        if args.len() < 3 {
             package(None)?;
         } else {
-            package(Some("--clean"))?;
+            if args[2] == "--clean" {
+                package(Some("--clean"))?;
+            } else {
+                println!("{}Unknown option, did you mean raw package --clean ? {}", RED, RESET);
+            }
         }
         return Ok(());
     } 
