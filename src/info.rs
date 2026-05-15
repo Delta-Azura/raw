@@ -19,6 +19,8 @@ use std::fs;
 use std::env;
 use anyhow::{Result};
 use anyhow::Context;
+use std::path::Path;
+
 
 
 pub fn info(rawpkg: &String) -> Result<()> {
@@ -45,5 +47,10 @@ pub fn info(rawpkg: &String) -> Result<()> {
     println!("Packager = {}", packager);
     let collection = content.iter().find(|l| l.starts_with('c')).unwrap().to_string().split_once('c').map(|(_, collection)| collection).unwrap().to_string();
     println!("Collection = {}", collection);
+    if Path::new(&format!("/var/lib/pkg/DB/{}/automatic", rawpkg)).exists() {
+        println!("Manual Installation : NO");
+    } else {
+        println!("Manual Installation : YES");
+    }
     Ok(()) 
 }
