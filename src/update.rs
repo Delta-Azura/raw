@@ -32,7 +32,7 @@ pub fn update(rawpkg: &String) {
         remove(&pkg);
         conflict(&rawpkg);
         println!("Installing the new one");
-        install(&rawpkg);
+        install(&rawpkg, None);
         fs::remove_file("/tmp/conflict");
 
     } else {

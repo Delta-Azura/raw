@@ -104,7 +104,11 @@ fn main() -> Result<()> {
 
     if args[1] == "install" {
         let argument = format!("{}", args[2]);
-        install(&argument)?;
+        if args[3] == "-f" {
+            install(&argument, Some("-f"))?;
+        } else {
+            install(&argument, None)?;
+        }
         return Ok(());
     }
 

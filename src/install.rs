@@ -32,14 +32,18 @@ use crate::file_type::file_type;
 
 
 
-pub fn install(rawpkg: &String) -> Result<()> {
+pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
     //let pkg_name = rawpkg.split_once(".raw").map(|(name, _)| name).unwrap_or(rawpkg);
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
     fs::remove_file("/var/cache/tmp.raw").unwrap();
     if Path::new("/tmp/conflict").exists() {
         fs::remove_file("/tmp/conflict").unwrap();
     } else {
-        conflict(&rawpkg);
+        if Some("-f") == option {
+            println!("overwriting");
+        } else {
+            conflict(&rawpkg);
+        }
     }
     fs::copy(rawpkg, format!("/var/lib/pkg/{}", rawpkg))?;
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap();
@@ -55,12 +59,21 @@ pub fn install(rawpkg: &String) -> Result<()> {
         println!("No package in the format required : ABORTING");
         std::process::exit(1);
     }
-    let opts = CopyOptions {
-        overwrite: false,
-        follow_symlinks: false,
-        restrict_symlinks: false,
-        content_only: false,
-        ..Default::default()
+    let opts = match option {
+        Some("-f") => CopyOptions {
+            overwrite: true,
+            follow_symlinks: false,
+            restrict_symlinks: false,
+            content_only: false,
+            ..Default::default()
+        },
+        _ => CopyOptions {
+            overwrite: false,
+            follow_symlinks: false,
+            restrict_symlinks: false,
+            content_only: false,
+            ..Default::default()
+        },
     };
     if Path::new(&format!("{}.pre-install", pkg)).exists() {
         let pre_install = format!("chmod u+x {}.pre-install && ./{}.pre-install", pkg, pkg);

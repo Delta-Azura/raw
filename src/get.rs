@@ -53,7 +53,7 @@ pub fn get(pkg: &str) -> Result<()> {
         if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
             update(&tarball); 
         } else {
-            install(&tarball)?;
+            install(&tarball, None)?;
         }
         let dependencies = depends(pkg);
         //let deps: Vec<&str> = dependencies.split_whitespace().collect();
