@@ -64,10 +64,10 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
                                 .args(["raw", "install", &i])
                                 .status();
                         //install(&i)?;
-                                std::process::exit(0)
+                                //std::process::exit(0)
                             } else {
                                 println!("{}{} already installed{}", GREEN, i, RESET);
-                                std::process::exit(0)
+                                //std::process::exit(0)
                             }
                         }
                     }
@@ -93,7 +93,7 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
                 }
             } else {
                 println!("{}Build succeded{}", GREEN, RESET);
-                std::process::exit(0)
+                //std::process::exit(0)
             }
 
         } else {
