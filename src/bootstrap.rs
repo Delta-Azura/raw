@@ -39,8 +39,8 @@ pub fn bootstrap(rawpkg: &String, bootstrap_path: &str) -> Result<()> {
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
     fs::remove_file("/var/cache/tmp.raw").unwrap();
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap();
-    fs::create_dir_all(format!("{}/var/lib/pkg/DB/{}/{}", bootstrap_path, pkg, rawpkg)).unwrap();
-    println!("Copying {} to /var/lib/pkg/DB/{}/{} in bootstrap directory", rawpkg, pkg, rawpkg);
+    fs::create_dir_all(format!("{}/var/lib/pkg/DB/{}/", bootstrap_path, pkg)).unwrap();
+    println!("Copying {} to /var/lib/pkg/DB/{}/ in bootstrap directory", rawpkg, pkg);
     fs::copy(rawpkg, format!("{}/var/lib/pkg/DB/{}/{}", bootstrap_path, pkg, rawpkg)).unwrap();
     env::set_current_dir(format!("{}/var/lib/pkg/DB/{}", bootstrap_path, pkg)).unwrap();
     if rawpkg.ends_with(".tar.gz") || rawpkg.ends_with(".tgz") {
