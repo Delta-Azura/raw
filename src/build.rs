@@ -42,7 +42,8 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
     }
     if let Ok(mode) = getconf() {
         let index = fs::read_to_string("index.raw").unwrap();
-        let found = index.lines().find(|line| line.contains(to_build));
+        let test = format!("/{}/", to_build);
+        let found = index.lines().find(|line| line.contains(&test));
         if let Some(building) = found {
             let chrp = found.unwrap().split_once("Pkgfile").map(|(chrp, _)| chrp).unwrap();
             println!("{}", chrp);
