@@ -24,6 +24,7 @@ use std::env;
 use crate::depends::depends;
 use std::path::Path;
 use crate::update::update;
+use std::fs::File;
 
 
 
@@ -59,6 +60,7 @@ pub fn get(pkg: &str) -> Result<()> {
         //let deps: Vec<&str> = dependencies.split_whitespace().collect();
         for i in &dependencies {
             get(i)?;
+            File::create(format!("/var/lib/pkg/DB/{}/automatic", i)).unwrap();
         }
     } else {
         println!("Not found");

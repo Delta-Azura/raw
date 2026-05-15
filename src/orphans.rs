@@ -18,6 +18,7 @@
 
 
 use anyhow::{Result, Context};
+use std::path::Path;
 use std::fs;
 const RESET: &str = "\x1b[0m";
 const GREEN: &str = "\x1b[0;32m";
@@ -40,7 +41,11 @@ pub fn orphans() -> Result<()> {
     }
     for x in &packages {
         if !required.contains(x) {
-            orphans_list.push(x.to_string());
+            if Path::new(&format!("/var/lib/pkg/DB/{}/automatic", x)).exists() {
+                orphans_list.push(x.to_string());
+            } else {
+                continue;
+            }
         }
     }
     for x in &orphans_list {
