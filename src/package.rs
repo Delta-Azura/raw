@@ -118,7 +118,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
                     get(&i);
                 }
                 if mode == "source" {
-                    if let Err(e) = build(&i, Some("y")) {
+                    if let Err(e) = build(&i, Some("-y")) {
                         println!("{} not found", i)
                     } else {
                         println!("Installing next package");

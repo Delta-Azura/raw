@@ -48,7 +48,7 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
             println!("{}", chrp);
             env::set_current_dir(&chrp).unwrap();
             let potential_package: Vec<String> = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).filter_map(|e| e.file_name().into_string().ok()).collect();
-            if option == Some("-y") {
+            if option != Some("-y") {
                 for i in potential_package {
                     if i.contains(".raw.") {
                         let question = Question::new(&format!("{} already exists, do you want to install it ?", i))
@@ -64,11 +64,13 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
                                 .args(["raw", "install", &i])
                                 .status();
                         //install(&i)?;
-                                //std::process::exit(0)
+                                std::process::exit(0)
                             } else {
                                 println!("{}{} already installed{}", GREEN, i, RESET);
-                                //std::process::exit(0)
+                                std::process::exit(0)
                             }
+                        } else {
+                            continue
                         }
                     }
                 }
