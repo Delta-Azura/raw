@@ -38,6 +38,8 @@ mod bootstrap;
 mod search;
 mod remove_cache;
 mod help;
+mod orphans;
+use crate::orphans::orphans;
 use crate::help::help;
 use crate::bootstrap::bootstrap;
 use crate::get::get;
@@ -157,6 +159,10 @@ fn main() -> Result<()> {
     }
     if args[1] == "rmcache" {
         remove_cache()?;
+        return Ok(())
+    }
+    if args[1] == "orphans" {
+        orphans();
         return Ok(())
     }
     return Ok(());
