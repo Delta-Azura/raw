@@ -60,14 +60,16 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
                             .clarification("Please enter either 'y' or 'n' \n")
                             .ask();
                         if question == Some(Answer::YES) {
-                            if !Path::new(&format!("/var/lib/pkg/DB/{}", &to_build)).exists() {
+                            if Path::new(&format!("/var/lib/pkg/DB/{}", &to_build)).exists() {
                                 Command::new("sudo")
-                                .args(["raw", "install", &i])
+                                .args(["raw", "update", &i])
                                 .status();
                         //install(&i)?;
                                 std::process::exit(0)
                             } else {
-                                println!("{}{} already installed{}", GREEN, i, RESET);
+                                Command::new("sudo")
+                                .args(["raw", "install", &i])
+                                .status();
                                 std::process::exit(0)
                             }
                         } else {
