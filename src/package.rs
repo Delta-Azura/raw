@@ -284,7 +284,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
         }
     };
     if !Path::new(&format!("{}/.local/share/raw/", env::var("HOME").unwrap())).exists() {
-        fs::create_dir(format!("{}/.local/share/raw/", env::var("HOME").unwrap())).unwrap()
+        fs::create_dir_all(format!("{}/.local/share/raw/", env::var("HOME").unwrap())).unwrap()
     }
     let log_path = format!("{}/.local/share/raw/raw.log", env::var("HOME").unwrap());
     if Path::new(&log_path).exists() {
