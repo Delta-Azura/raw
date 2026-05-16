@@ -293,7 +293,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
     } else {
         File::create(&log_path).context("Failed to  create log file")?;
     }
-    let cmd = format!("{} 2>&1 | tee /var/log/raw.log", cmd);
+    let cmd = format!("{} 2>&1 | tee {}/.local/share/raw/", cmd, env::var("HOME").unwrap());
     let output_build = match Command::new("bash")
     .args(["-c", &cmd])
     .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
