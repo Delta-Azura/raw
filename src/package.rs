@@ -122,16 +122,23 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
                 }
                 if mode == "source" {
                     env::set_current_dir(trash).context("Failed")?;
-                    let path_automatic = search(i)?;
-                    let path_automatic = path_automatic.split_once("/Pkgfile").map(|(path_automatic, _)| path_automatic).unwrap();
-                    env::set_current_dir(path_automatic).unwrap();
-                    let mut pkgfile_automatic = OpenOptions::new()
-                        .append(true)
-                        .write(true)
-                        .open("Pkgfile")
-                        .context("Failed to open pkgfile")?;
-                    let automatic_mention = format!("mkdir -p $PKG/var/lib/pkg/DB/{} && touch $PKG/var/lib/pkg/DB/{}/automatic", i, i);
-                    writeln!(pkgfile_automatic, "{}", automatic_mention).context("Failed to write in pkgfile");
+                    let index_raw = fs::read_to_string("index.raw").context("Index.raw doesn't exists, run raw index to create it")?;
+                    let test = format!("/{}/", i);
+                    let found = index_raw.lines().find(|line| line.contains(&test));
+                    let chrp = found.unwrap().split_once("Pkgfile").map(|(chrp, _)| chrp).unwrap();
+                    //println!("{}", chrp);
+                    env::set_current_dir(format!("{}", chrp)).unwrap();
+                    //let mut path_automatic = path_automatic.split_once("/Pkgfile").map(|(path_automatic, _)| path_automatic).unwrap();
+                    let collection = std::env::current_dir().unwrap();
+                    let current = collection.file_name().unwrap().to_str().unwrap().to_string();
+                    let collection = collection.display().to_string();
+                    //let mut path_automatic = path_automatic.lines();
+                    //let mut path_automatic = path_automatic.find(|l| l.contains(&format!("{}", i))).unwrap().split_once("Package found here : ").map(|(_, path)| path).unwrap().split_once("/Pkgfile").map(|(path_automatic, _)| path_automatic).unwrap();
+                    println!("{}", collection);
+
+                    //println!("{}", path_automatic);
+                    //env::set_current_dir(path_automatic).unwrap();
+                    File::create("automatic").context("Failed to create the automatic file, be careful while removing orphans")?;
                     if let Err(e) = build(&i, Some("-y")) {
                         println!("{} not found", i)
                     } else {
@@ -418,6 +425,9 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
     fs::copy("META", "pkg/META").unwrap();
     fs::remove_file("META").unwrap();
     fs::copy(format!("{}.footprint", name), format!("pkg/{}.footprint", name)).unwrap();
+    if Path::new("automatic").exists() {
+        fs::copy("automatic", "pkg/automatic")?;
+    }
     if Path::new(&format!("{}/{}.pre-install", collection, name)).exists() {
         fs::copy(format!("{}.pre-install", name), format!("pkg/{}.pre-install", name)).unwrap();
     } else {
