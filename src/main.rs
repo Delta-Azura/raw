@@ -39,6 +39,8 @@ mod search;
 mod remove_cache;
 mod help;
 mod orphans;
+mod template;
+use crate::template::template;
 use crate::orphans::orphans;
 use crate::help::help;
 use crate::bootstrap::bootstrap;
@@ -88,6 +90,14 @@ fn main() -> Result<()> {
     if args[1] == "h" {
         help();
         std::process::exit(0)
+    }
+    if args[1] == "template" {
+        if args.len() < 2 {
+            println!("Not pkgname specified")
+        } else {
+            template(&args[2])?;
+        }
+        return Ok(());
     }
     if args[1] == "package" {
         if args.len() < 3 {
