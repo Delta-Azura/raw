@@ -5,6 +5,7 @@ use std::fs::File;
 use std::env;
 use std::fs;
 use crate::getconf;
+use std::path::Path;
 
 
 pub fn template(pkg: &str) -> Result<()> {
@@ -26,7 +27,9 @@ pub fn template(pkg: &str) -> Result<()> {
             env::set_current_dir(pwd).unwrap();
         }
     }
-
+    if Path::new(pkg).exists() {
+        fs::remove_dir_all(pkg)?;
+    }
     fs::create_dir(pkg).context("Needs to be root, cannot initiate as packages needs to be built as non-root")?;
     env::set_current_dir(pkg).context("Invalid directory")?;
     File::create("Pkgfile").context("Failed to create PKgfile")?;
