@@ -92,6 +92,7 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
     .args(["-c", "ldconfig"])
     .status()
     .unwrap();
+    let automatic = Path::new("automatic").exists();
     if Path::new(&format!("{}.post-install", pkg)).exists() {
         let post_install = format!("chmod u+x {}.post-install && ./{}.post-install", pkg, pkg);
         println!("Starting post-installation.");
@@ -110,6 +111,9 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
     }
     if Path::new(&format!("/{}.post-remove", pkg)).exists() {
         fs::copy(format!("/{}.post-remove", pkg), format!("/var/lib/pkg/DB/{}/{}.post-remove", pkg, pkg)).unwrap();
+    }
+    if automatic == true {
+        fs::copy("/automatic", format!("/var/lib/pkg/DB/{}/automatic", pkg)).unwrap();
     }
     fs::copy("/META", format!("/var/lib/pkg/DB/{}/META", pkg)).unwrap();
     fs::copy(format!("/{}.footprint", pkg), format!("/var/lib/pkg/DB/{}/files", pkg)).unwrap();
