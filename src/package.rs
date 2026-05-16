@@ -283,11 +283,12 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
             } 
         }
     };
-    if Path::new("/var/log/raw.log").exists() {
-        fs::remove_file("/var/log/raw.log").unwrap();
-        File::create("/var/log/raw.log").context("Failed to create log file")?;
+    let log_path = format!("{}/.local/share/raw/raw.log", env::var("HOME").unwrap());
+    if Path::new(&log_path).exists() {
+        fs::remove_file(&log_path).unwrap();
+        File::create(&log_path).context("Failed to create log file")?;
     } else {
-        File::create("/var/log/raw.log").context("Failed to  create log file")?;
+        File::create(&log_path).context("Failed to  create log file")?;
     }
     let cmd = format!("{} 2>&1 | tee /var/log/raw.log", cmd);
     let output_build = match Command::new("bash")
