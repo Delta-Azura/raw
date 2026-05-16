@@ -22,7 +22,7 @@ use crate::download::download;
 use crate::getconf;
 
 
-pub fn search(pkg: &str) -> Result<()> {
+pub fn search(pkg: &str) -> Result<(String)> {
     let (mode, path, url) = getconf().unwrap(); 
     if mode != "binary" {
         env::set_current_dir(path)?;
@@ -31,8 +31,13 @@ pub fn search(pkg: &str) -> Result<()> {
         for e in file {
             if e.contains(pkg) {
                 println!("Package found here : {}", e);
+                return Ok(e.to_string())
+            }
+            else {
+                return Err(anyhow::anyhow!("Package not found"));
             }
         }
+    return Err(anyhow::anyhow!("Package not found"));
     } else {
         let index = download(&format!("{}/index.raw", url))?;
         let content = fs::read_to_string("index.raw")?.to_string();
@@ -40,8 +45,11 @@ pub fn search(pkg: &str) -> Result<()> {
         for e in file {
             if e.contains(pkg) {
                 println!("Package found here : {}", e);
+                return Ok(e.to_string())
+            } else {
+                return Err(anyhow::anyhow!("Package not found"));
             }
-        }  
+        }
+        return Err(anyhow::anyhow!("Package not found"));
     }
-    Ok(())
 }

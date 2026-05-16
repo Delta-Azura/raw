@@ -36,6 +36,8 @@ use anyhow::{Result, Context};
 use crate::getconf::getconf;
 use crate::get::get;
 use crate::build::build;
+use crate::search;
+
 
 const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
@@ -119,10 +121,28 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
                     get(&i);
                 }
                 if mode == "source" {
+                    let makedepends_path = search(i)?;
+                    let configuration = fs::read_to_string("/etc/raw.conf").context("Configuration file doesn't exist")?;
+                    let path = if configuration.lines().any(|l| l.starts_with("root=")) {
+                        configuration.lines().find(|l| l.starts_with("root=")).map(|l| l.trim_start_matches("root=")).expect("DIDN'T FIND A LINE STARTING WITH ROOT").split_once("root=").map(|(_, path)| path).unwrap()
+                    } else {
+                        &format!("false")
+                    };
+                    if path == "false" {
+                        println!("We aren't able to mark {} as an automatic installation", i)
+                    } else {
+                        env::set_current_dir(path).unwrap();
+                        let mut pkgfile_automatic = OpenOptions::new()
+                        .append(true)
+                        .write(true)
+                        .open("Pkgfile")
+                        .context("Failed to open pkgfile")?;
+                        let automatic_mention = format!("mkdir -p $PKG/var/lib/pkg/DB/{} && touch $PKG/var/lib/pkg/DB/{}/automatic", i, i);
+                        writeln!(pkgfile_automatic, "{}", automatic_mention).context("Failed to write in pkgfile");
+                    }
                     if let Err(e) = build(&i, Some("-y")) {
                         println!("{} not found", i)
                     } else {
-                        File::create(format!("/var/lib/pkg/DB/{}/automatic", &i)).context("Installation failed")?;
                         println!("Installing next package");
                     }
                 }
