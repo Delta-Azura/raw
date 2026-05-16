@@ -33,9 +33,6 @@ pub fn search(pkg: &str) -> Result<(String)> {
                 println!("Package found here : {}", e);
                 return Ok(e.to_string())
             }
-            else {
-                return Err(anyhow::anyhow!("Package not found"));
-            }
         }
     return Err(anyhow::anyhow!("Package not found"));
     } else {
@@ -46,9 +43,7 @@ pub fn search(pkg: &str) -> Result<(String)> {
             if e.contains(pkg) {
                 println!("Package found here : {}", e);
                 return Ok(e.to_string())
-            } else {
-                return Err(anyhow::anyhow!("Package not found"));
-            }
+            } 
         }
         return Err(anyhow::anyhow!("Package not found"));
     }
