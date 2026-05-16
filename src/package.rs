@@ -73,13 +73,13 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
         });
     let stdout = String::from_utf8(output.stdout).unwrap();
     let mut variables  = stdout.lines();
-    let version = variables.next().unwrap();
-    let name = variables.next().unwrap(); 
-    let packager = variables.next().unwrap();
-    let release = variables.next().unwrap();
-    let description = variables.next().unwrap();
-    let depends = variables.next().unwrap();
-    let source = variables.next().unwrap();
+    let version = variables.next().context("The pkgfile may be missing something, check out for the version")?;
+    let name = variables.next().context("The name or something else might be incorrect")?; 
+    let packager = variables.next().context("Packager name or something else might be broken")?;
+    let release = variables.next().context("Release or something else might be broken")?;
+    let description = variables.next().context("Description or something else might not be valid")?;
+    let depends = variables.next().context("Depends might not be correct, check your pkgfile")?;
+    let source = variables.next().context("The source might not be correct, check your pkgfile")?;
     let makedepends: Vec<String> = variables.next().unwrap().split_whitespace().map(|s| s.to_string()).collect();    //if makedepends == "none" {
     //    println!("No makedepends");
     //} else {
@@ -139,11 +139,12 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
                     //println!("{}", path_automatic);
                     //env::set_current_dir(path_automatic).unwrap();
                     File::create("automatic").context("Failed to create the automatic file, be careful while removing orphans")?;
-                    if let Err(e) = build(&i, Some("-y")) {
-                        println!("{} not found", i)
-                    } else {
-                        println!("Installing next package");
-                    }
+                    build(&i, Some("-y"))?;
+                        //println!("{}Something might be wrong with {}, please check the index and the pkgfile{}", RED, i, RESET);
+                        //std::process::exit(1)
+                    //} else {
+                    //    println!("Installing next package");
+                    //}
                 }
                 
             }

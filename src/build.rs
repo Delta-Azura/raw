@@ -78,7 +78,7 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
                     }
                 }
             }
-            package(None)?;
+            package(None).context("Build style or any other thing in the pkgfile might be incorrect. Try running package to know what's going on")?;
             if option == Some("-y") {
                 if Path::new(&format!("/var/lib/pkg/DB/{}", to_build)).exists() {
                     let content = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).map(|e| e.file_name().to_str().unwrap().to_owned()).find(|name| name.contains("raw"));
