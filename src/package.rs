@@ -21,6 +21,7 @@ use std::io::Write;
 use std::path::Path;
 //use crate::fs;
 use std::fs;
+use std::fs::OpenOptions;
 //use crate::env;
 use std::env;
 use std::process::Command;
@@ -121,6 +122,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
                     if let Err(e) = build(&i, Some("-y")) {
                         println!("{} not found", i)
                     } else {
+                        File::create(format!("/var/lib/pkg/DB/{}/automatic", &i)).context("Installation failed")?;
                         println!("Installing next package");
                     }
                 }
@@ -281,7 +283,14 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
             } 
         }
     };
-    match Command::new("bash")
+    if Path::new("/var/log/raw.log").exists() {
+        fs::remove_file("/var/log/raw.log").unwrap();
+        File::create("/var/log/raw.log").context("Failed to create log file")?;
+    } else {
+        File::create("/var/log/raw.log").context("Failed to  create log file")?;
+    }
+    let cmd = format!("{} 2>&1 | tee /var/log/raw.log", cmd);
+    let output_build = match Command::new("bash")
     .args(["-c", &cmd])
     .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
     .env("CFLAGS", "-O2 -pipe")
@@ -289,20 +298,39 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
     .status() {
             // need if s.success because of the type of answer from status
     Ok(s) if s.success() => {
+        let mut log_file = format!("{} Build succeded {}", GREEN, RESET);
         println!("{} Build succeded {}", GREEN, RESET);
+        let mut logfile = OpenOptions::new()
+        .append(true)
+        .open("/var/log/raw.log")
+        .context("Failed to open log file")?;
+        writeln!(logfile, "{:#?}", log_file);
         env::set_current_dir(&collection).unwrap();
         fs::remove_dir_all("work").unwrap();
     }
     Ok(s) => {
             // Don't ask
         println!("{} [!] : ERROR : The build failed (code {:?}) {}", RED, s.code(), RESET);
+        let log_file = format!("{} [!] : ERROR : The build failed (code {:?}) {}", RED, s.code(), RESET);
+        let mut logfile = OpenOptions::new()
+        .append(true)
+        .open("/var/log/raw.log")
+        .context("Failed to open log file")?;
+        let mut logfile = File::open("/var/log/raw.log").context("Failed to open log file")?;
+        writeln!(logfile, "{:#?}", log_file);
         std::process::exit(1);
     }
     Err(e) => {
+        let log_file = format!("{} [!] : ERROR The build failed {} {}", RED, e, RESET);
         println!("{} [!] : ERROR The build failed {} {}", RED, e, RESET);
+        let mut logfile = OpenOptions::new()
+        .append(true)
+        .open("/var/log/raw.log")
+        .context("Failed to open log file")?;
+        writeln!(logfile, "{:#?}", log_file);
         std::process::exit(1);
     }
-    }
+    };
     let prepare = format!("{}/pkg", collection);
 
     if Path::new(&format!("{}.{}#raw.tar.gz", name, version)).exists() {
