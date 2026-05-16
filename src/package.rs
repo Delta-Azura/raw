@@ -306,7 +306,8 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
         println!("{} Build succeded {}", GREEN, RESET);
         let mut logfile = OpenOptions::new()
         .append(true)
-        .open("/var/log/raw.log")
+        .write(true)
+        .open(format!("{}/.local/share/raw/raw.log", env::var("HOME").unwrap()))
         .context("Failed to open log file")?;
         writeln!(logfile, "{:#?}", log_file);
         env::set_current_dir(&collection).unwrap();
@@ -318,9 +319,9 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
         let log_file = format!("{} [!] : ERROR : The build failed (code {:?}) {}", RED, s.code(), RESET);
         let mut logfile = OpenOptions::new()
         .append(true)
-        .open("/var/log/raw.log")
+        .write(true)
+        .open(format!("{}/.local/share/raw/raw.log", env::var("HOME").unwrap()))
         .context("Failed to open log file")?;
-        let mut logfile = File::open("/var/log/raw.log").context("Failed to open log file")?;
         writeln!(logfile, "{:#?}", log_file);
         std::process::exit(1);
     }
@@ -329,7 +330,8 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
         println!("{} [!] : ERROR The build failed {} {}", RED, e, RESET);
         let mut logfile = OpenOptions::new()
         .append(true)
-        .open("/var/log/raw.log")
+        .write(true)
+        .open(format!("{}/.local/share/raw/raw.log", env::var("HOME").unwrap()))
         .context("Failed to open log file")?;
         writeln!(logfile, "{:#?}", log_file);
         std::process::exit(1);
