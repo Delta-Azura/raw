@@ -161,7 +161,6 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
             if src.ends_with("rpm") {
                 let tarball = download(src)?;
                 fs::remove_dir("work/").unwrap();
-                //env::set_current_dir("/home/alexis/vivaldi")?;
                 extract(&tarball)
             } else {
                 env::set_current_dir(&building)?;
@@ -176,13 +175,13 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
                 }
             }
         } else {
+            env::set_current_dir(&collection)?;
             fs::copy(src, format!("work/{}", src))?;
-            env::set_current_dir(&building)?;
         }
     }
-
+    env::set_current_dir(&collection)?;
     //let extracted = Path::new("{}/{}", collection, tarball)
-    let prepare = fs::read_to_string("Pkgfile")?;
+    let prepare = fs::read_to_string("Pkgfile").unwrap();
     let cmd = match (prepare.contains("prepare()"), prepare.contains("package()"), prepare.contains("build()")) {
         (true, true, true) => {
             format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && prepare && cd $SRC && build && cd $SRC && package'")
