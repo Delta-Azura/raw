@@ -87,13 +87,13 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
                             Command::new("sudo")
                             .args(["raw", "update", &i])
                             .status();
-                            std::process::exit(0);
+                            //std::process::exit(0);
                         //install(&i)?;
                         } else {
                             Command::new("sudo")
                             .args(["raw", "install", &i])
                             .status();
-                            std::process::exit(0);
+                            //std::process::exit(0);
                         }
                     
                     } else {
