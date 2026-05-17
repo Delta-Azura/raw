@@ -75,6 +75,8 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
                         } else {
                             package(None).context("Build style or any other thing in the pkgfile might be incorrect. Try running package to know what's going on")?;
                         }
+                    } else {
+                        package(None)?;
                     }
                 }
             } else {
