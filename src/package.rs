@@ -139,7 +139,8 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
                     //println!("{}", path_automatic);
                     //env::set_current_dir(path_automatic).unwrap();
                     File::create("automatic").context("Failed to create the automatic file, be careful while removing orphans")?;
-                    build(&i, Some("-y"))?;
+                    install(&i, None)?;
+                    //build(&i, Some("-y"))?;
                         //println!("{}Something might be wrong with {}, please check the index and the pkgfile{}", RED, i, RESET);
                         //std::process::exit(1)
                     //} else {
@@ -182,7 +183,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
     let prepare = fs::read_to_string("Pkgfile")?;
     let cmd = match (prepare.contains("prepare()"), prepare.contains("package()"), prepare.contains("build()")) {
         (true, true, true) => {
-            format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && prepare && cd SRC && build && cd $SRC && package'")
+            format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && prepare && cd $SRC && build && cd $SRC && package'")
         }
         (true, false, true) => {
             format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && prepare && cd $SRC && build'")
