@@ -50,7 +50,7 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
             env::set_current_dir(&chrp).unwrap();
             let potential_package: Vec<String> = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).filter_map(|e| e.file_name().into_string().ok()).collect();
             if option != Some("-y") {
-                for i in potential_package {
+                for i in &potential_package {
                     if i.contains(".raw.") {
                         let question = Question::new(&format!("{} already exists, do you want to install it ?", i))
                             .yes_no()
@@ -73,34 +73,51 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
                                 std::process::exit(0)
                             }
                         } else {
-                            continue
+                            package(None).context("Build style or any other thing in the pkgfile might be incorrect. Try running package to know what's going on")?;
                         }
                     }
                 }
             }
-            package(None).context("Build style or any other thing in the pkgfile might be incorrect. Try running package to know what's going on")?;
-            if option == Some("-y") {
-                if Path::new(&format!("/var/lib/pkg/DB/{}", to_build)).exists() {
-                    let content = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).map(|e| e.file_name().to_str().unwrap().to_owned()).find(|name| name.contains("raw"));
-                    if Path::new("/usr/bin/sudo").exists() {
-                        Command::new("sudo").args(["raw", "update", &content.unwrap()]).status().unwrap();
-                    } else {
-                        println!("{} sudo isn't installed, please go to the build directory to install {} {}", RED, to_build, RESET);
-                    }
+            if potential_package.contains(&format!(".raw.")) {
+                if option == Some("-y") {
+                    if Path::new(&format!("/var/lib/pkg/DB/{}", to_build)).exists() {
+                        let content = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).map(|e| e.file_name().to_str().unwrap().to_owned()).find(|name| name.contains("raw"));
+                        if Path::new("/usr/bin/sudo").exists() {
+                            Command::new("sudo").args(["raw", "update", &content.unwrap()]).status().unwrap();
+                        } else {
+                            println!("{} sudo isn't installed, please go to the build directory to install {} {}", RED, to_build, RESET);
+                        }
                     //drop(guard);
-                } else {
-                    let content = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).map(|e| e.file_name().to_str().unwrap().to_owned()).find(|name| name.contains("raw"));
-                    if Path::new("/usr/bin/sudo").exists() {
-                        Command::new("sudo").args(["raw", "install", &content.unwrap()]).status().unwrap();
                     } else {
-                        println!("{} sudo isn't installed, please go to the build directory to install {} {}", RED, to_build, RESET);
+                        let content = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).map(|e| e.file_name().to_str().unwrap().to_owned()).find(|name| name.contains("raw"));
+                        if Path::new("/usr/bin/sudo").exists() {
+                            Command::new("sudo").args(["raw", "install", &content.unwrap()]).status().unwrap();
+                        } else {
+                            println!("{} sudo isn't installed, please go to the build directory to install {} {}", RED, to_build, RESET);
+                        }
+                    }
+
+                    package(None).context("Build style or any other thing in the pkgfile might be incorrect. Try running package to know what's going on")?;
+                    println!("{}Build succeded{}", GREEN, RESET);
+                    if Path::new(&format!("/var/lib/pkg/DB/{}", to_build)).exists() {
+                        let content = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).map(|e| e.file_name().to_str().unwrap().to_owned()).find(|name| name.contains("raw"));
+                        if Path::new("/usr/bin/sudo").exists() {
+                            Command::new("sudo").args(["raw", "update", &content.unwrap()]).status().unwrap();
+                        } else {
+                            println!("{} sudo isn't installed, please go to the build directory to install {} {}", RED, to_build, RESET);
+                        }
+                    //drop(guard);
+                    } else {
+                        let content = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).map(|e| e.file_name().to_str().unwrap().to_owned()).find(|name| name.contains("raw"));
+                        if Path::new("/usr/bin/sudo").exists() {
+                            Command::new("sudo").args(["raw", "install", &content.unwrap()]).status().unwrap();
+                        } else {
+                            println!("{} sudo isn't installed, please go to the build directory to install {} {}", RED, to_build, RESET);
+                        }
                     }
                 }
-            } else {
-                println!("{}Build succeded{}", GREEN, RESET);
                 //std::process::exit(0)
             }
-
         } else {
             println!("{} {} not found, try running raw index to update the repo database {}", RED, to_build, RESET);
             std::process::exit(1)
