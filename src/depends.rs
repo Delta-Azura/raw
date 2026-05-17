@@ -20,6 +20,8 @@ use std::collections::HashSet;
 use anyhow::Context;
 use std::path::Path;
 use crate::get::get;
+use crate::install;
+
 
 pub fn depends(pkg: &str) -> Vec<String> {  //-> Result<(), String> {
     let mut stack = vec![pkg.to_string()];
@@ -38,7 +40,12 @@ pub fn depends(pkg: &str) -> Vec<String> {  //-> Result<(), String> {
         //let rawwpkg = format!("{}", rawpkg);
         if !Path::new(&format!("/var/lib/pkg/DB/{}/META", rawpkg)).exists() {
             println!("{} isn't installed", rawpkg);
-            get(&rawpkg);
+            let configuration = fs::read_to_string("/etc/raw.conf").context("Raw.conf doesn't exist").unwrap();
+            if configuration.contains("mode source") {
+                install(&rawpkg, None);
+            } else {
+                get(&rawpkg);
+            }
             //std::process::exit(1)
         }
         let META = std::fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", rawpkg)).unwrap();

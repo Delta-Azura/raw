@@ -29,6 +29,8 @@ use std::fs::File;
 use walkdir::WalkDir;
 use std::io;
 use crate::file_type::file_type;
+use crate::getconf::getconf;
+use crate::depends::depends;
 
 
 
@@ -36,6 +38,37 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
     //let pkg_name = rawpkg.split_once(".raw").map(|(name, _)| name).unwrap_or(rawpkg);
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
     fs::remove_file("/var/cache/tmp.raw").unwrap();
+    if !rawpkg.contains(".raw.") {
+        let (mode, root, trash) = getconf().unwrap();
+        if mode != "source" {
+            println!("Please use raw get or install an archive .raw");
+            std::process::exit(1)
+        } else {
+            let saved = env::current_dir()?;
+            env::set_current_dir(root)?;
+            let index = fs::read_to_string("index.raw")?;
+            if index.lines().any(|l| l.contains(&format!("/{}/", rawpkg))) {
+                let path_to_pkgfile = index.lines().find(|l| l.contains(&format!("/{}/", rawpkg))).ok_or("Didn't find");
+                let path = path_to_pkgfile.unwrap().split_once("/Pkgfile").map(|(path, _)| path).ok_or("Failed");
+                env::set_current_dir(path.unwrap())?;
+                let content: Vec<String> = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).filter_map(|e| e.file_name().into_string().ok()).collect();
+                if content.iter().any(|f| f.contains(".raw.")) {
+                    if content.iter().any(|f| f.contains(rawpkg)) {
+                        let pkgname = content.iter().find(|l| l.contains(".raw.")).unwrap();
+                        println!("{}", pkgname);
+                        install(pkgname, None)?;
+                        env::set_current_dir(saved)?;
+                        let depends: Vec<String> = depends(rawpkg);
+                        for i in depends {
+                            install(&i, None)?;
+                        }
+                        return Ok(());
+                    }
+                }
+            }
+        }
+    }
+    eprintln!("DEBUG conflict rawpkg: {:?}", rawpkg);
     if Path::new("/tmp/conflict").exists() {
         fs::remove_file("/tmp/conflict").unwrap();
     } else {
