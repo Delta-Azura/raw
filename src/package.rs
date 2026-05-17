@@ -307,14 +307,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
     if !Path::new(&format!("{}/.local/share/raw/", env::var("HOME").unwrap())).exists() {
         fs::create_dir_all(format!("{}/.local/share/raw/", env::var("HOME").unwrap())).unwrap()
     }
-    let log_path = format!("{}/.local/share/raw/raw.log", env::var("HOME").unwrap());
-    if Path::new(&log_path).exists() {
-        fs::remove_file(&log_path).unwrap();
-        File::create(&log_path).context("Failed to create log file")?;
-    } else {
-        File::create(&log_path).context("Failed to  create log file")?;
-    }
-    let cmd = format!("{} 2>&1 | tee {}/.local/share/raw/raw.log", cmd, env::var("HOME").unwrap());
+    let cmd = format!("{} 2>&1 | tee -a {}/.local/share/raw/raw.log", cmd, env::var("HOME").unwrap());
     let output_build = match Command::new("bash")
     .args(["-c", &cmd])
     .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
