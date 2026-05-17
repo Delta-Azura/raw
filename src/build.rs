@@ -78,6 +78,7 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
                     }
                 }
             }
+            let potential_package = potential_package.iter().find(|l| l.contains(".raw.")).unwrap().to_string();
             if potential_package.contains(&format!(".raw.")) {
                 if option == Some("-y") {
                     if Path::new(&format!("/var/lib/pkg/DB/{}", to_build)).exists() {
@@ -96,7 +97,7 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
                             println!("{} sudo isn't installed, please go to the build directory to install {} {}", RED, to_build, RESET);
                         }
                     }
-
+            } else {
                     package(None).context("Build style or any other thing in the pkgfile might be incorrect. Try running package to know what's going on")?;
                     println!("{}Build succeded{}", GREEN, RESET);
                     if Path::new(&format!("/var/lib/pkg/DB/{}", to_build)).exists() {
