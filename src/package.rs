@@ -17,12 +17,9 @@
 
 use std::fs::File;
 use std::io::Write;
-//use crate::Path;
 use std::path::Path;
-//use crate::fs;
 use std::fs;
 use std::fs::OpenOptions;
-//use crate::env;
 use std::env;
 use std::process::Command;
 use crate::download::download;
@@ -191,6 +188,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
             if src.contains(".patch.gz") {
                 continue;
             } else {
+                println!("{}Checking the sources{}", YELLOW, RESET);
                 let mut file = File::open(src)?;
                 let mut buffer = [0u8; 512];
                 let bytes_read = file.read(&mut buffer)?;

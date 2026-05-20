@@ -34,7 +34,7 @@ use crate::extract::extract;
 
 pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
-    fs::remove_file("/var/cache/tmp.raw").unwrap();
+    fs::remove_file("/var/cache/tmp.raw")?;
     if !rawpkg.contains(".raw.") {
         let (mode, root, _trash) = getconf().unwrap();
         if mode != "source" {
@@ -67,7 +67,7 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
     }
     eprintln!("DEBUG conflict rawpkg: {:?}", rawpkg);
     if Path::new("/tmp/conflict").exists() {
-        fs::remove_file("/tmp/conflict").unwrap();
+        fs::remove_file("/tmp/conflict")?;
     } else {
         if Some("-f") == option {
             println!("overwriting");
