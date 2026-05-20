@@ -22,7 +22,7 @@ use crate::download::download;
 use crate::getconf;
 
 
-pub fn search(pkg: &str) -> Result<(String)> {
+pub fn search(pkg: &str) -> Result<String> {
     let (mode, path, url) = getconf().unwrap(); 
     if mode != "binary" {
         env::set_current_dir(path)?;

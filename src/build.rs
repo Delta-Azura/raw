@@ -28,7 +28,6 @@ use std::process::Command;
 
 const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
-const GREEN: &str = "\x1b[0;32m";
 
 pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
     let (mode, trash, url) = getconf().unwrap();
@@ -101,7 +100,7 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
 
 
                 package(None).context("Build style or any other thing in the pkgfile might be incorrect. Try running package to know what's going on")?;
-                let to_install: Vec<(String)> = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).filter_map(|e| e.file_name().into_string().ok()).collect();
+                let to_install: Vec<String> = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).filter_map(|e| e.file_name().into_string().ok()).collect();
                 let i = to_install.iter().find(|l| l.contains(".raw.")).unwrap();
                 if i.contains(".raw.") {
                     if Path::new(&format!("/var/lib/pkg/DB/{}", &to_build)).exists() {

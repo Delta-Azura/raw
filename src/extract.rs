@@ -18,7 +18,6 @@
 
 
 use std::fs::File;
-use std::process::Command;
 use compress_tools::*;
 use std::path::Path;
 use anyhow::{Result};

@@ -25,7 +25,6 @@ use anyhow::{Result};
 use anyhow::Context;
 use std::fs::File;
 use walkdir::WalkDir;
-use std::io;
 use crate::file_type::file_type;
 use crate::getconf::getconf;
 use crate::depends::depends;
@@ -116,7 +115,7 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
         .args(["-c", &pre_install])
         .status()
         .unwrap();
-        fs::remove_file(format!("{}.pre-install", pkg));
+        fs::remove_file(format!("{}.pre-install", pkg))?;
     } else {
         println!("No pre-installation required");
     }
@@ -134,7 +133,7 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
         .args(["-c", &post_install])
         .status()
         .unwrap();
-        fs::remove_file(format!("{}.post-install", pkg));
+        fs::remove_file(format!("{}.post-install", pkg))?;
     } else {
         println!("No post-installation required");
     }

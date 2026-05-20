@@ -17,7 +17,6 @@
 
 
 
-use std::fs::metadata;
 use std::fs;
 
 pub fn file_type(list: &str) -> bool {

@@ -42,11 +42,11 @@ const RESET: &str = "\x1b[0m";
 const GREEN: &str = "\x1b[0;32m";
 const YELLOW: &str = "\x1b[33m";
 
-pub fn package(option: Option<(&str)>) -> Result<()> {
+pub fn package(option: Option<&str>) -> Result<()> {
         match File::create("/var/cache/raw.tmp") {
         Ok(_) => {
             println!("You are building as root !");
-            fs::remove_file("/var/cache/raw.tmp");
+            fs::remove_file("/var/cache/raw.tmp")?;
             std::process::exit(1)
         }
         Err(e) => {}
@@ -185,7 +185,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
                     let style = build_style.split_once("=").map(|(_, style)| style).unwrap_or_else(|| {
                         println!("Invalid build= line");
                         std::process::exit(1)
-                    });;
+                    });
 
                     if Path::new(&format!("/etc/raw.d/{}", style)).exists() {
                         format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && prepare && cd $SRC && source /etc/raw.d/{} && cd $SRC && package'", style)
@@ -212,7 +212,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
                     let style = build_style.split_once("=").map(|(_, style)| style).unwrap_or_else(|| {
                         println!("Invalid build= line");
                         std::process::exit(1)
-                    });;
+                    });
 
                     if Path::new(&format!("/etc/raw.d/{}", style)).exists() {
                         format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && prepare && cd $SRC && source /etc/raw.d/{}'", style)
@@ -239,7 +239,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
                     let style = build_style.split_once("=").map(|(_, style)| style).unwrap_or_else(|| {
                         println!("Invalid build= line");
                         std::process::exit(1)
-                    });;
+                    });
                  
                     if Path::new(&format!("/etc/raw.d/{}", style)).exists() {
                         format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && source /etc/raw.d/{} && cd $SRC && package'", style)
@@ -267,7 +267,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
                     let style = build_style.split_once("=").map(|(_, style)| style).unwrap_or_else(|| {
                         println!("Invalid build= line");
                         std::process::exit(1)
-                    });;
+                    });
 
                     if Path::new(&format!("/etc/raw.d/{}", style)).exists() {
                         format!("fakeroot bash -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && source /etc/raw.d/{}'", style)
@@ -337,7 +337,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
         .write(true)
         .open(format!("{}/.local/share/raw/raw.log", env::var("HOME").unwrap()))
         .context("Failed to open log file")?;
-        writeln!(logfile, "{:#?}", log_file);
+        writeln!(logfile, "{:#?}", log_file)?;
         std::process::exit(1);
     }
     };
