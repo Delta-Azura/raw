@@ -39,6 +39,42 @@ const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
 const GREEN: &str = "\x1b[0;32m";
 const YELLOW: &str = "\x1b[33m";
+use std::io::Read;
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum ArchiveType {
+    Zip,
+    SevenZip,
+    Rar,
+    Gzip,
+    Bzip2,
+    Tar,
+    Xz,
+    Zstd,
+    Unknown,
+}
+
+struct Signature {
+    archive_type: ArchiveType, 
+    magic: &'static [u8],
+    offset: u64,
+}
+
+
+// list of signatures
+static SIGNATURES: &[Signature] = &[
+    Signature { archive_type: ArchiveType::Zip, magic: &[0x50, 0x4B, 0x03, 0x04], offset: 0 },
+    Signature { archive_type: ArchiveType::Zip, magic: &[0x50, 0x4B, 0x05, 0x06], offset: 0 },
+    Signature { archive_type: ArchiveType::SevenZip, magic: &[0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C], offset: 0 },
+    Signature { archive_type: ArchiveType::Rar, magic: &[0x52, 0x61, 0x72, 0x21, 0x1A, 0x07], offset: 0 },
+    Signature { archive_type: ArchiveType::Gzip, magic: &[0x1F, 0x8B], offset: 0 },
+    Signature { archive_type: ArchiveType::Bzip2, magic: &[0x42, 0x5A, 0x68], offset: 0 },
+    Signature { archive_type: ArchiveType::Xz, magic: &[0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00], offset: 0 },
+    Signature { archive_type: ArchiveType::Zstd, magic: &[0x28, 0xB5, 0x2F, 0xFD], offset: 0 },
+    // TAR magic number starts at offset 257
+    Signature { archive_type: ArchiveType::Tar, magic: &[0x75, 0x73, 0x74, 0x61, 0x72], offset: 257 },
+];
+
 
 pub fn package(option: Option<&str>) -> Result<()> {
         match File::create("/var/cache/raw.tmp") {
@@ -135,6 +171,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let building = format!("{}/work", collection);
     env::set_current_dir(&collection).unwrap();
     println!("Switching to the work directory {}", building);
+
     for src in source.split_whitespace() {
         if src.contains("http") {
             env::set_current_dir(&building)?;
@@ -154,10 +191,19 @@ pub fn package(option: Option<&str>) -> Result<()> {
             if src.contains(".patch.gz") {
                 continue;
             } else {
-                println!("{} {}", src, collection);
-                env::set_current_dir(&building)?;
-                extract(&src.to_string())?;
-                env::set_current_dir(&collection)?;
+                let mut file = File::open(src)?;
+                let mut buffer = [0u8; 512];
+                let bytes_read = file.read(&mut buffer)?;
+                for sig in SIGNATURES {
+                    let start = sig.offset as usize;
+                    let end = start + sig.magic.len();
+                    if bytes_read >= end && &buffer[start..end] == sig.magic {
+                        println!("{} {}", src, collection);
+                        env::set_current_dir(&building)?;
+                        extract(&src.to_string())?;
+                        env::set_current_dir(&collection)?;
+                    }
+                }
             }
         }
     }
