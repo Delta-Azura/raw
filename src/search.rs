@@ -36,7 +36,7 @@ pub fn search(pkg: &str) -> Result<String> {
         }
     return Err(anyhow::anyhow!("Package not found"));
     } else {
-        let index = download(&format!("{}/index.raw", url))?;
+        let _index = download(&format!("{}/index.raw", url))?;
         let content = fs::read_to_string("index.raw")?.to_string();
         let file = content.lines();
         for e in file {

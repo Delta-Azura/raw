@@ -28,7 +28,7 @@ pub fn info(rawpkg: &String) -> Result<()> {
 
     let file = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", rawpkg)).unwrap();
     // Adding vect to be able to read properly, without this it would be unable to read if the order isn't respected
-    let mut content: Vec<String> = file.lines().map(|l| l.to_string()).collect();
+    let content: Vec<String> = file.lines().map(|l| l.to_string()).collect();
     let name = content.iter().find(|l| l.starts_with('N')).unwrap().split_once('N').map(|(_, name)| name).unwrap().to_string();
     println!("Name : {}", name);
     let version = content.iter().find(|l| l.starts_with('V')).unwrap().to_string().split_once('V').map(|(_, version)| version).unwrap().to_string();

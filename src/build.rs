@@ -30,16 +30,16 @@ const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
 
 pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
-    let (mode, trash, url) = getconf().unwrap();
+    let (mode, _trash, _url) = getconf().unwrap();
     if mode != "source" {
         println!("{} Raw is used in binary mode, cannot build {}", RED, RESET);
         std::process::exit(1);
     }
-    if let Ok(mode) = getconf() {
+    if let Ok(_mode) = getconf() {
         let index = fs::read_to_string("index.raw").unwrap();
         let test = format!("/{}/", to_build);
         let found = index.lines().find(|line| line.contains(&test));
-        if let Some(building) = found {
+        if let Some(_building) = found {
             let chrp = found.unwrap().split_once("Pkgfile").map(|(chrp, _)| chrp).unwrap();
             println!("{}", chrp);
             env::set_current_dir(&chrp).unwrap();

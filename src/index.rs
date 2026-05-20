@@ -18,7 +18,6 @@
 use crate::getconf::getconf;
 use std::fs::File;
 use std::io::Write;
-use std::io::Read;
 use walkdir::WalkDir;
 use anyhow::{Context, Result};
 use std::path::Path;
@@ -28,7 +27,7 @@ use std::fs;
 
 
 pub fn index() -> Result <()> {
-    if let Ok((mode, path, trash)) = getconf() {
+    if let Ok((mode, path, _trash)) = getconf() {
         if mode == "source" {
             if Path::new("index.raw").exists() {
                 let question = Question::new("The index already exists, do you want to update it ? [y/n]")
@@ -97,7 +96,7 @@ pub fn index() -> Result <()> {
                         //println!("{}", entries)
                         if entries.contains("Pkgfile") {
                             let pkgfile = fs::read_to_string(&format!("{}/Pkgfile", entries)).unwrap_or("".to_string());
-                            let mut content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
+                            let content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
                             let version = content.iter().find(|version| version.starts_with("version")).unwrap_or(&"version=unknown".to_string()).to_string().split_once("version=").map(|(_, version)| version).unwrap().to_string();
                             let release = content.iter().find(|release| release.starts_with("release")).unwrap_or(&"release=1".to_string()).to_string().split_once("release=").map(|(_, version)| version).unwrap().to_string();
                             writeln!(rawfile, "{}", &format!("{}_{}#{}", entries, version, release))?;
@@ -112,7 +111,7 @@ pub fn index() -> Result <()> {
                     let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string().split_once("/").map(|(_, remove)| remove).unwrap().to_string();
                     if entries.contains("Pkgfile") {
                         let pkgfile = fs::read_to_string(&format!("{}/Pkgfile", entries)).unwrap_or("".to_string());
-                        let mut content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
+                        let content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
                         let version = content.iter().find(|version| version.starts_with("version")).unwrap_or(&"version=unknown".to_string()).to_string().split_once("version=").map(|(_, version)| version).unwrap().to_string();
                         let release = content.iter().find(|release| release.starts_with("release")).unwrap_or(&"release=1".to_string()).to_string().split_once("release=").map(|(_, version)| version).unwrap().to_string();
                         writeln!(rawfile, "{}", &format!("{}_{}#{}", entries, version, release))?;

@@ -18,9 +18,7 @@
 
 use std::path::Path;
 use std::fs;
-use std::fs::File;
 use std::env;
-use anyhow::Context;
 
 
 pub fn getconf() ->  Result<(String, String, String), String> {

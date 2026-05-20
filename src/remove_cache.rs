@@ -17,7 +17,6 @@
 
 use anyhow::{Result};
 use std::fs;
-use anyhow::Context;
 use crate::file_type::file_type;
 
 const RESET: &str = "\x1b[0m";

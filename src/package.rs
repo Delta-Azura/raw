@@ -32,8 +32,6 @@ use anyhow::{Result, Context};
 use crate::getconf::getconf;
 use crate::get::get;
 use crate::build::build;
-use crate::search;
-use crate::install;
 use flate2::write::GzEncoder;
 use flate2::Compression;
 
@@ -49,7 +47,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
             fs::remove_file("/var/cache/raw.tmp")?;
             std::process::exit(1)
         }
-        Err(e) => {}
+        Err(_e) => {}
     }
     match fs::exists("Pkgfile") {
         Ok(true) => println!("Starting to build"),
@@ -83,7 +81,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let actual = std::env::current_dir().unwrap();
     let col = actual.parent().unwrap().file_name().unwrap().to_str().unwrap().to_string();
     let collection = std::env::current_dir().unwrap();
-    let current = collection.file_name().unwrap().to_str().unwrap().to_string();
+    let _current = collection.file_name().unwrap().to_str().unwrap().to_string();
     let collection = collection.display().to_string();
     println!("Setting collection as : {}", col);
     let mut meta = File::create("META").unwrap();
@@ -106,7 +104,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
             if Path::new(&format!("/var/lib/pkg/DB/{}", i)).exists() {
                 println!("{}{} is installed{}", GREEN, i, RESET)
             } else {
-                let (mode, trash, url) = getconf().unwrap();
+                let (mode, trash, _url) = getconf().unwrap();
                 if mode != "source" {
                     get(&i)?;
                 }
@@ -119,7 +117,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
                     env::set_current_dir(format!("{}", chrp)).unwrap();
                     //let mut path_automatic = path_automatic.split_once("/Pkgfile").map(|(path_automatic, _)| path_automatic).unwrap();
                     let collection = std::env::current_dir().unwrap();
-                    let current = collection.file_name().unwrap().to_str().unwrap().to_string();
+                    let _current = collection.file_name().unwrap().to_str().unwrap().to_string();
                     let collection = collection.display().to_string();
                     //let mut path_automatic = path_automatic.lines();
                     //let mut path_automatic = path_automatic.find(|l| l.contains(&format!("{}", i))).unwrap().split_once("Package found here : ").map(|(_, path)| path).unwrap().split_once("/Pkgfile").map(|(path_automatic, _)| path_automatic).unwrap();
@@ -298,7 +296,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
         File::create(&log_path).context("Failed to  create log file")?;
     }
     let cmd = format!("{} 2>&1 | tee -a {}/.local/share/raw/raw.log", cmd, env::var("HOME").unwrap());
-    let output_build = match Command::new("bash")
+    let _output_build = match Command::new("bash")
     .args(["-c", &cmd])
     .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
     .env("CFLAGS", "-O2 -pipe")
@@ -306,7 +304,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
     .status() {
             // need if s.success because of the type of answer from status
     Ok(s) if s.success() => {
-        let mut log_file = format!("{} Build succeded {}", GREEN, RESET);
+        let log_file = format!("{} Build succeded {}", GREEN, RESET);
         println!("{} Build succeded {}", GREEN, RESET);
         let mut logfile = OpenOptions::new()
         .append(true)
@@ -357,7 +355,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
             let foot = entry.path().display().to_string();
             let pathpkg = foot.split_once(&prepare).map(|(_,pathpkg)| pathpkg).context("Not found")?.to_string();
             if pathpkg.is_empty() { continue; }
-                let list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
+                let _list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
                 if entry.file_type().is_symlink() {
                     let list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
                     let link = fs::read_link(entry.path())?;
@@ -391,7 +389,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
                 let foot = entry.path().display().to_string();
                 let pathpkg = foot.split_once(&prepare).map(|(_,pathpkg)| pathpkg).context("Not found")?.to_string();
                 if pathpkg.is_empty() { continue; }
-                    let list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
+                    let _list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
                     if entry.file_type().is_symlink() {
                         let list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
                         let link = fs::read_link(entry.path())?;

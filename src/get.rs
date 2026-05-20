@@ -29,7 +29,7 @@ use std::fs::File;
 
 
 pub fn get(pkg: &str) -> Result<()> {
-    let (mode, trash, url) = getconf().unwrap();
+    let (mode, _trash, url) = getconf().unwrap();
     if mode != "binary" {
         println!("Raw isn't used in binary mode, cannot connect to the repo");
         std::process::exit(1);

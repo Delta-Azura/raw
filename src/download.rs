@@ -20,7 +20,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use std::io::Read;
 use std::fs::File;
 use std::io::Write;
-use anyhow::{Result, Context};
+use anyhow::Result;
 
 pub fn download(url: &str) -> Result<String> {
     // Personnal notes :

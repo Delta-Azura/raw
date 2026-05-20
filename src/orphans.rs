@@ -16,7 +16,7 @@
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
-use anyhow::{Result, Context};
+use anyhow::Result;
 use std::path::Path;
 use std::fs;
 const RESET: &str = "\x1b[0m";

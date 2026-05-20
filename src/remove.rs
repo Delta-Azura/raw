@@ -19,7 +19,7 @@ use std::env;
 use std::fs;
 use std::path::Path;
 use std::env::current_dir;
-use anyhow::{Result, Context};
+use anyhow::Result;
 use std::fs::File;
 use std::process::Command;
 

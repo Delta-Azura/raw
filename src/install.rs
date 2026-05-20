@@ -36,7 +36,7 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
     fs::remove_file("/var/cache/tmp.raw").unwrap();
     if !rawpkg.contains(".raw.") {
-        let (mode, root, trash) = getconf().unwrap();
+        let (mode, root, _trash) = getconf().unwrap();
         if mode != "source" {
             println!("Please use raw get or install an archive .raw");
             std::process::exit(1)

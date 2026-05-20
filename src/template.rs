@@ -15,10 +15,10 @@ pub fn template(pkg: &str) -> Result<()> {
             fs::remove_file("/var/cache/raw.tmp")?;
             std::process::exit(1)
         }
-        Err(e) => {}
+        Err(_e) => {}
     }
     let pwd = env::current_dir()?;
-    let (mode, root, trash) = getconf().unwrap();
+    let (mode, root, _trash) = getconf().unwrap();
     if mode != "source" {
         println!("Creating in binary mode");
     } else {

@@ -61,7 +61,7 @@ pub fn conflict(rawpkg: &String) {
                         let test = format!("/{}", &list);
                         if test != "/usr/share/info/dir" {
                             if !test.starts_with("/etc") {
-                                let owner = query(&test);
+                                let _owner = query(&test);
                                 std::process::exit(1)
                             }
 
