@@ -64,7 +64,6 @@ use crate::remove_cache::remove_cache;
 
 const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
-const GREEN: &str = "\x1b[0;32m";
 
 
 fn main() -> Result<()> {
@@ -189,7 +188,7 @@ fn main() -> Result<()> {
         return Ok(())
     }
     if args[1] == "orphans" {
-        orphans();
+        orphans()?;
         return Ok(())
     }
     return Ok(());
