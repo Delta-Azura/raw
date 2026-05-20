@@ -17,50 +17,18 @@
 
 
 
-use tar::Archive;
-use bzip2::read::BzDecoder;
-use liblzma::read::XzDecoder;
-use flate2::read::GzDecoder;
 use std::fs::File;
-use rpm;
 use std::process::Command;
+use compress_tools::*;
+use std::path::Path;
+use anyhow::{Result};
+use anyhow::Context;
 
 
-
-pub fn extract(tarball: &String) {
+pub fn extract(tarball: &String) -> Result<()> {
     //let source = File::open(tarball).unwrap();
-    if tarball.ends_with(".tar.gz") || tarball.ends_with(".tgz") {
-        let source = File::open(tarball).unwrap();
-        let mut archive = Archive::new(GzDecoder::new(source));
-        archive.unpack(".").unwrap();
-    } else if tarball.ends_with(".tar.xz") {
-        let source = File::open(tarball).unwrap();
-        let mut archive = Archive::new(XzDecoder::new(source));
-        archive.unpack(".").unwrap();
-    } else if tarball.ends_with(".tar.bz2") {
-        let source = File::open(tarball).unwrap();
-        let mut archive = Archive::new(BzDecoder::new(source));
-        archive.unpack(".").unwrap();
-    } else if tarball.ends_with(".tar.zst") {
-        let source = File::open(tarball).unwrap();
-        let decoder = zstd::stream::read::Decoder::new(source).unwrap();
-        let mut archive = Archive::new(decoder);
-        archive.unpack(".").unwrap();
-    }
-    if tarball.ends_with(".rpm") {
-        let pkg = rpm::Package::open(tarball).unwrap();
-        match pkg.extract("./work") {
-            Ok(_) => {},
-            Err(e) if e.to_string().contains("AlreadyExists") => {},
-            Err(e) => panic!("{}", e),
-        }
-    }
-    if tarball.ends_with(".deb") {
-        let debian = format!("ar -x {}", tarball);
-        Command::new("bash")
-        .args(["-c", &debian])
-        .output()
-        .unwrap();
-
-    }
+    let mut source = File::open(tarball).unwrap();
+    let dest = Path::new(".");
+    uncompress_archive(&mut source, &dest, Ownership::Ignore).context("Uncompressing failed")?;
+    Ok(())
 }

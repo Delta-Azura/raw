@@ -12,7 +12,7 @@ pub fn template(pkg: &str) -> Result<()> {
     match File::create("/var/cache/raw.tmp") {
         Ok(_) => {
             println!("You are building as root !");
-            fs::remove_file("/var/cache/raw.tmp");
+            fs::remove_file("/var/cache/raw.tmp")?;
             std::process::exit(1)
         }
         Err(e) => {}

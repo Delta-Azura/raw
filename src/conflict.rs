@@ -20,27 +20,20 @@ use crate::query;
 use std::env;
 use std::path::Path;
 use crate::file_type::file_type;
-use flate2::read::GzDecoder;
-use tar::Archive;
 use std::thread;
 use std::time::Duration;
+use crate::extract::extract;
 
 
 pub fn conflict(rawpkg: &String) {
-    //File::create("/tmp/conflict").unwrap();
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap().to_string();
     if Path::new(&format!("/tmp/{}", pkg)).exists() {
         fs::remove_dir_all(format!("/tmp/{}", pkg)).unwrap();
+        fs::create_dir(format!("/tmp/{}", pkg)).unwrap();
     }
-    fs::create_dir(format!("/tmp/{}", pkg)).unwrap();
     fs::copy(rawpkg, format!("/tmp/{}/{}", pkg, rawpkg)).unwrap();
     env::set_current_dir(format!("/tmp/{}", pkg)).unwrap();
-    if rawpkg.ends_with(".tar.gz") || rawpkg.ends_with(".tgz") {
-        let file = fs::File::open(rawpkg).unwrap();
-        let mut archive = Archive::new(GzDecoder::new(file));
-        archive.unpack(".").unwrap();
-    }
-    //let compare = fs::read_to_string(format!("/tmp/{}/{}.footprint", pkg, pkg)).unwrap().split_whitespace().next().unwrap();
+    let _ = extract(rawpkg);
     let compare = fs::read_to_string(format!("/tmp/{}/{}.footprint", pkg, pkg)).unwrap();
     //let compare = binding.split_whitespace().next().unwrap();
     for e in fs::read_dir("/var/lib/pkg/DB/.").unwrap().filter_map(|e| e.ok()) {
@@ -79,7 +72,7 @@ pub fn conflict(rawpkg: &String) {
             }
         }
     }
-/// File conflict
+// File conflict
     for i in compare.lines() {
         let i = i.split_whitespace().next().unwrap_or("");
         let r = format!("/{}", i);
@@ -94,4 +87,5 @@ pub fn conflict(rawpkg: &String) {
             }
         }
     }
+    env::set_current_dir(format!("/tmp/{}", pkg)).unwrap();
 }

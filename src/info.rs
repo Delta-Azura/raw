@@ -24,16 +24,8 @@ use std::path::Path;
 
 
 pub fn info(rawpkg: &String) -> Result<()> {
-    //let path = format!("/var/lib/pkg/DB/");
     env::set_current_dir(format!("/var/lib/pkg/DB/{}", rawpkg)).context("Package isn't installed")?;
-    // Add directory listing
-    //let entry = fs::read_dir(".")
-    //    .unwrap()
-    //    .filter_map(|e| e.ok())
-    //    .find(|e| e.file_name().to_str().unwrap_or("").starts_with(rawpkg));
-    //if let Some(e) = entry {
-    //let directory_tmp = e.file_name(); 
-    //    let directory = directory_tmp.to_str().unwrap();
+
     let file = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", rawpkg)).unwrap();
     // Adding vect to be able to read properly, without this it would be unable to read if the order isn't respected
     let mut content: Vec<String> = file.lines().map(|l| l.to_string()).collect();

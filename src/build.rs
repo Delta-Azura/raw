@@ -23,12 +23,8 @@ use std::env;
 use std::fs;
 use crate::getconf::getconf;
 use std::path::Path;
-use crate::install::install;
-use crate::update::update;
 use question::{Answer, Question};
 use std::process::Command;
-
-//use users::switch::switch_user_group;
 
 const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
@@ -63,13 +59,13 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
                             if Path::new(&format!("/var/lib/pkg/DB/{}", &to_build)).exists() {
                                 Command::new("sudo")
                                 .args(["raw", "update", &i])
-                                .status();
+                                .status()?;
                         //install(&i)?;
                                 std::process::exit(0)
                             } else {
                                 Command::new("sudo")
                                 .args(["raw", "install", &i])
-                                .status();
+                                .status()?;
                                 std::process::exit(0)
                             }
                         } else {
@@ -84,17 +80,16 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
                 for i in &potential_package {
                     println!("{}", i);
                     if i.contains(".raw.") {
-                        println!("tesssssssstttttt");
                         if Path::new(&format!("/var/lib/pkg/DB/{}", &to_build)).exists() {
                             Command::new("sudo")
                             .args(["raw", "update", &i])
-                            .status();
+                            .status()?;
                             //std::process::exit(0);
                         //install(&i)?;
                         } else {
                             Command::new("sudo")
                             .args(["raw", "install", &i])
-                            .status();
+                            .status()?;
                             //std::process::exit(0);
                         }
                     
@@ -112,13 +107,13 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
                     if Path::new(&format!("/var/lib/pkg/DB/{}", &to_build)).exists() {
                         Command::new("sudo")
                         .args(["raw", "update", &i])
-                        .status();
+                        .status()?;
                 //install(&i)?;
                         std::process::exit(0)
                     } else {
                         Command::new("sudo")
                         .args(["raw", "install", &i])
-                        .status();
+                        .status()?;
                         std::process::exit(0)
                     }
                 }

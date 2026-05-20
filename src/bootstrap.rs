@@ -18,19 +18,13 @@
 
 use std::path::Path;
 use std::fs;
-use std::process::Command;
 use std::env;
 use recursive_copy::{copy_recursive, CopyOptions};
-use crate::conflict::conflict;
-use tar::Archive;
-use flate2::read::GzDecoder;
 use anyhow::{Result};
 use anyhow::Context;
 use std::fs::File;
-use walkdir::WalkDir;
 use std::io;
-use crate::file_type::file_type;
-
+use crate::extract::extract;
 
 
 pub fn bootstrap(rawpkg: &String, bootstrap_path: &str) -> Result<()> {
@@ -44,9 +38,7 @@ pub fn bootstrap(rawpkg: &String, bootstrap_path: &str) -> Result<()> {
     fs::copy(rawpkg, format!("{}/var/lib/pkg/DB/{}/{}", bootstrap_path, pkg, rawpkg)).unwrap();
     env::set_current_dir(format!("{}/var/lib/pkg/DB/{}", bootstrap_path, pkg)).unwrap();
     if rawpkg.ends_with(".tar.gz") || rawpkg.ends_with(".tgz") {
-        let file = fs::File::open(rawpkg).unwrap();
-        let mut archive = Archive::new(GzDecoder::new(file));
-        archive.unpack(".").unwrap();
+        extract(rawpkg)?;
     } else {
         println!("No package in the format required : ABORTING");
         std::process::exit(1);

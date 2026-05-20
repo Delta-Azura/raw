@@ -21,8 +21,6 @@ use std::process::Command;
 use std::env;
 use recursive_copy::{copy_recursive, CopyOptions};
 use crate::conflict::conflict;
-use tar::Archive;
-use flate2::read::GzDecoder;
 use anyhow::{Result};
 use anyhow::Context;
 use std::fs::File;
@@ -31,11 +29,11 @@ use std::io;
 use crate::file_type::file_type;
 use crate::getconf::getconf;
 use crate::depends::depends;
+use crate::extract::extract;
 
 
 
 pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
-    //let pkg_name = rawpkg.split_once(".raw").map(|(name, _)| name).unwrap_or(rawpkg);
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
     fs::remove_file("/var/cache/tmp.raw").unwrap();
     if !rawpkg.contains(".raw.") {
@@ -78,20 +76,23 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
             conflict(&rawpkg);
         }
     }
-    fs::copy(rawpkg, format!("/var/lib/pkg/{}", rawpkg))?;
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap();
-    fs::create_dir(format!("/var/lib/pkg/DB/{}", pkg)).unwrap();
-    println!("Copying {} to /var/lib/pkg/DB/{}/{}", rawpkg, pkg, rawpkg);
-    fs::copy(rawpkg, format!("/var/lib/pkg/DB/{}/{}", pkg, rawpkg)).unwrap();
-    env::set_current_dir(format!("/var/lib/pkg/DB/{}", pkg)).unwrap();
-    if rawpkg.ends_with(".tar.gz") || rawpkg.ends_with(".tgz") {
-        let file = fs::File::open(rawpkg).unwrap();
-        let mut archive = Archive::new(GzDecoder::new(file));
-        archive.unpack(".").unwrap();
+ 
+    if Path::new(&format!("/tmp/{}", pkg)).exists() {
+        env::set_current_dir(format!("/tmp/{}", pkg))?;
     } else {
-        println!("No package in the format required : ABORTING");
-        std::process::exit(1);
+        fs::create_dir(format!("/tmp/{}", pkg))?;
+        println!("1");
+        env::set_current_dir(format!("/tmp/{}", pkg))?;
+        println!("2");
+        if rawpkg.ends_with(".tar.gz") || rawpkg.ends_with(".tgz") {
+            extract(rawpkg)?;
+        } else {
+            println!("No package in the format required : ABORTING");
+            std::process::exit(1);
+        }
     }
+    env::set_current_dir(format!("/tmp/{}", pkg))?;
     let opts = match option {
         Some("-f") => CopyOptions {
             overwrite: true,
@@ -137,7 +138,6 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
     } else {
         println!("No post-installation required");
     }
-    fs::remove_dir_all(format!("/var/lib/pkg/DB/{}", pkg)).unwrap();
     fs::create_dir(format!("/var/lib/pkg/DB/{}", pkg)).unwrap();
     if Path::new(&format!("/{}.pre-remove", pkg)).exists() {
         fs::copy(format!("/{}.pre-remove", pkg), format!("/var/lib/pkg/DB/{}/{}.pre-remove", pkg, pkg)).unwrap();

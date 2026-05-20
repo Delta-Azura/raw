@@ -57,7 +57,6 @@ pub fn get(pkg: &str) -> Result<()> {
             install(&tarball, None)?;
         }
         let dependencies = depends(pkg);
-        //let deps: Vec<&str> = dependencies.split_whitespace().collect();
         for i in &dependencies {
             get(i)?;
             File::create(format!("/var/lib/pkg/DB/{}/automatic", i)).unwrap();

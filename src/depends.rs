@@ -23,28 +23,21 @@ use crate::get::get;
 use crate::install;
 
 
-pub fn depends(pkg: &str) -> Vec<String> {  //-> Result<(), String> {
+pub fn depends(pkg: &str) -> Vec<String> {  
     let mut stack = vec![pkg.to_string()];
     let mut visited = std::collections::HashSet::new();
-
-    //let path = format!("/var/lib/pkg/DB/{}/META", pkg);
-    //let file = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", pkg)).unwrap();
-    // Adding vect to be able to read properly, without this it would be unable to read if the order isn't respected
-   // let mut content: Vec<String> = file.lines().map(|l| l.to_string()).collect();
-    //let deps = content.lines().filter(|l| l.starts_with('R'));
     while let Some(rawpkg) = stack.pop() {
         if !visited.insert(rawpkg.clone()) {
             continue;
         }
         println!("{}", rawpkg);
-        //let rawwpkg = format!("{}", rawpkg);
         if !Path::new(&format!("/var/lib/pkg/DB/{}/META", rawpkg)).exists() {
             println!("{} isn't installed", rawpkg);
             let configuration = fs::read_to_string("/etc/raw.conf").context("Raw.conf doesn't exist").unwrap();
             if configuration.contains("mode source") {
-                install(&rawpkg, None);
+                let _ = install(&rawpkg, None);
             } else {
-                get(&rawpkg);
+                let _ = get(&rawpkg);
             }
             //std::process::exit(1)
         }
@@ -58,20 +51,8 @@ pub fn depends(pkg: &str) -> Vec<String> {  //-> Result<(), String> {
             }
 
         }
-               // for e in name.lines() {
-                    //if Path::new(format!("/var/lib/pkg/DB/{}", e)).exists() {
-                    //    println!("{} is already installed", e);
-                    //} else {
-                    //    println!("You need to install {}", e);
-                    //    std::process::exit(1)
-                    //}    //env::set_current_dir(format!("/var/lib/pkg/DB/{}", e))
-                //}
-                //println!("{}", name);
-        //println!("{}", rawpkg);
+
     }
-    //return stack.to_string()
-    //println!("{}", rawpkg);
-    //Ok(())
-    //println!("{}", stack);
+
     return stack
 }

@@ -28,17 +28,14 @@ use std::process::Command;
 use crate::download::download;
 use crate::extract::extract;
 use walkdir::WalkDir;
-use tar::Builder;
-use liblzma::write::XzEncoder;
-use flate2::Compression;
-use flate2::write::GzEncoder;
 use anyhow::{Result, Context};
 use crate::getconf::getconf;
 use crate::get::get;
 use crate::build::build;
 use crate::search;
 use crate::install;
-
+use flate2::write::GzEncoder;
+use flate2::Compression;
 
 const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
@@ -82,13 +79,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
     let depends = variables.next().context("Depends might not be correct, check your pkgfile")?;
     let source = variables.next().context("The source might not be correct, check your pkgfile")?;
     let makedepends: Vec<String> = variables.next().unwrap().split_whitespace().map(|s| s.to_string()).collect();    //if makedepends == "none" {
-    //    println!("No makedepends");
-    //} else {
-    //    for i makedepends.lines() {
 
-    //    }
-
-    //}
     let actual = std::env::current_dir().unwrap();
     let col = actual.parent().unwrap().file_name().unwrap().to_str().unwrap().to_string();
     let collection = std::env::current_dir().unwrap();
@@ -108,9 +99,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
     }
     fs::create_dir("work")?;
     fs::create_dir("pkg")?;
-    //if Path::new("config").exists() {
-    //    fs::copy("config", "work/config").unwrap();
-    //}
+ 
     if !makedepends.is_empty() {
         println!("{}Checking for makedepends: {:?}{}", YELLOW, makedepends, RESET);
         for i in &makedepends {
@@ -119,7 +108,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
             } else {
                 let (mode, trash, url) = getconf().unwrap();
                 if mode != "source" {
-                    get(&i);
+                    get(&i)?;
                 }
                 if mode == "source" {
                     env::set_current_dir(trash).context("Failed")?;
@@ -127,7 +116,6 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
                     let test = format!("/{}/", i);
                     let found = index_raw.lines().find(|line| line.contains(&test));
                     let chrp = found.unwrap().split_once("Pkgfile").map(|(chrp, _)| chrp).unwrap();
-                    //println!("{}", chrp);
                     env::set_current_dir(format!("{}", chrp)).unwrap();
                     //let mut path_automatic = path_automatic.split_once("/Pkgfile").map(|(path_automatic, _)| path_automatic).unwrap();
                     let collection = std::env::current_dir().unwrap();
@@ -137,17 +125,10 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
                     //let mut path_automatic = path_automatic.find(|l| l.contains(&format!("{}", i))).unwrap().split_once("Package found here : ").map(|(_, path)| path).unwrap().split_once("/Pkgfile").map(|(path_automatic, _)| path_automatic).unwrap();
                     println!("{}", collection);
 
-                    //println!("{}", path_automatic);
-                    //env::set_current_dir(path_automatic).unwrap();
+
                     File::create("automatic").context("Failed to create the automatic file, be careful while removing orphans")?;
                     
-                    //install(&i, None)?;
                     build(&i, Some("-y"))?;
-                        //println!("{}Something might be wrong with {}, please check the index and the pkgfile{}", RED, i, RESET);
-                        //std::process::exit(1)
-                    //} else {
-                    //    println!("Installing next package");
-                    //}
                 }
                 
             }
@@ -158,29 +139,31 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
     println!("Switching to the work directory {}", building);
     for src in source.split_whitespace() {
         if src.contains("http") {
-            if src.ends_with("rpm") {
-                let tarball = download(src)?;
-                fs::remove_dir("work/").unwrap();
-                extract(&tarball)
+            env::set_current_dir(&building)?;
+            let tarball = download(src)?;
+            env::set_current_dir(&collection)?;
+            if tarball.contains(".patch.gz") {
+                continue;
             } else {
                 env::set_current_dir(&building)?;
-                let tarball = download(src)?;
+                extract(&tarball)?;
                 env::set_current_dir(&collection)?;
-                if tarball.contains(".patch.gz") {
-                    continue;
-                } else {
-                    env::set_current_dir(&building)?;
-                    extract(&tarball);
-                    env::set_current_dir(&collection)?;
-                }
             }
         } else {
             env::set_current_dir(&collection)?;
             fs::copy(src, format!("work/{}", src))?;
+            env::set_current_dir(&building)?;
+            if src.contains(".patch.gz") {
+                continue;
+            } else {
+                println!("{} {}", src, collection);
+                env::set_current_dir(&building)?;
+                extract(&src.to_string())?;
+                env::set_current_dir(&collection)?;
+            }
         }
     }
     env::set_current_dir(&collection)?;
-    //let extracted = Path::new("{}/{}", collection, tarball)
     let prepare = fs::read_to_string("Pkgfile").unwrap();
     let cmd = match (prepare.contains("prepare()"), prepare.contains("package()"), prepare.contains("build()")) {
         (true, true, true) => {
@@ -330,8 +313,8 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
         .write(true)
         .open(format!("{}/.local/share/raw/raw.log", env::var("HOME").unwrap()))
         .context("Failed to open log file")?;
-        writeln!(logfile, "{:#?}", log_file);
-        env::set_current_dir(&collection).unwrap();
+        writeln!(logfile, "{:#?}", log_file)?;
+        env::set_current_dir(&collection)?;
         fs::remove_dir_all("work").unwrap();
     }
     Ok(s) => {
@@ -343,7 +326,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
         .write(true)
         .open(format!("{}/.local/share/raw/raw.log", env::var("HOME").unwrap()))
         .context("Failed to open log file")?;
-        writeln!(logfile, "{:#?}", log_file);
+        writeln!(logfile, "{:#?}", log_file)?;
         std::process::exit(1);
     }
     Err(e) => {
@@ -383,9 +366,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
                     let list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
                 writeln!(footprint, "{}", list)?;
             }
-        //if list.is_empty() { continue; }
-        //let mut footprint = format!("{}", foot);
-        //writeln!(footprint, "{}", list).unwrap();
+
         }
         let footprint = fs::read_to_string(format!("{}.footprint", name)).unwrap();
         if existing == footprint {
@@ -421,9 +402,7 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
                     }
             }
     }
-        //if list.is_empty() { continue; }
-        //let mut footprint = format!("{}", foot);
-        //writeln!(footprint, "{}", list).unwrap();
+
     fs::copy("META", "pkg/META").unwrap();
     fs::remove_file("META").unwrap();
     fs::copy(format!("{}.footprint", name), format!("pkg/{}.footprint", name)).unwrap();
@@ -455,10 +434,9 @@ pub fn package(option: Option<(&str)>) -> Result<()> {
         for i in &makedepends {
             Command::new("sudo")
                 .args(["raw", "remove", &i])
-                .status();
+                .status()?;
         }
     }
-    //let packagename = format!("{}", name);
     println!("Generating package");
     let tar = File::create(format!("{}.{}#1.raw.tar.gz", name, version))?;
     let enc = GzEncoder::new(tar, Compression::default());

@@ -25,15 +25,14 @@ use crate::conflict::conflict;
 
 pub fn update(rawpkg: &String) {
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap().to_string();
-    //println!("{}", pkg);
     if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
         File::create("/tmp/conflict").unwrap();
         println!("removing previous package");
-        remove(&pkg);
-        conflict(&rawpkg);
+        let _ = remove(&pkg);
+        let _ = conflict(&rawpkg);
         println!("Installing the new one");
-        install(&rawpkg, None);
-        fs::remove_file("/tmp/conflict");
+        let _ = install(&rawpkg, None);
+        fs::remove_file("/tmp/conflict").unwrap();
 
     } else {
         println!("Package isn't installed");

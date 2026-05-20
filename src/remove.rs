@@ -26,7 +26,7 @@ use std::process::Command;
 
 pub fn remove(rawpkg: &String) -> Result<()> {
     File::create("/var/cache/raw.tmp")?;
-    let _ = fs::remove_file("/var/cache/raw.tmp");
+    fs::remove_file("/var/cache/raw.tmp")?;
     let current = current_dir()?;
     let check = format!("/var/lib/pkg/DB/{}", rawpkg);
     if Path::new(&check).exists() {
@@ -54,7 +54,7 @@ pub fn remove(rawpkg: &String) -> Result<()> {
         let file = fs::read_to_string(format!("/var/lib/pkg/DB/{}/files", rawpkg))?;
         let content = file.lines();
         env::set_current_dir("/tmp")?;
-        fs::remove_dir_all(format!("/var/lib/pkg/DB/{}", rawpkg));
+        fs::remove_dir_all(format!("/var/lib/pkg/DB/{}", rawpkg))?;
         let protected = vec!["bin", "lib", "lib64", "sbin", "usr/share/info/dir"];
         for i in content {
             let to_remove = i.split_whitespace().next().unwrap();
@@ -66,7 +66,6 @@ pub fn remove(rawpkg: &String) -> Result<()> {
                     continue;
                 }
             }
-            //println!("Package has been correctly uninstalled !");
         }
         if post_remove != "no" {
             println!("Executing post-remove trigger");
@@ -78,15 +77,7 @@ pub fn remove(rawpkg: &String) -> Result<()> {
     } else {
             println!("This package isn't installed, can't remove it");
     }
-    // Necessary for the update function.
     env::set_current_dir(current).unwrap();
-    //scanning the entire directory to find the right path
-    //let entry = fs::read_dir(".")
-    //    .unwrap()
-    //    .filter_map(|e| e.ok())
-    //    .find(|e| e.file_name().to_str().unwrap_or("").starts_with(rawpkg));
-    //if let Some(e) = entry {
-    //    let directory_tmp = e.file_name(); 
-    //    let directory = directory_tmp.to_str().unwrap();
+
     Ok(())
 }
