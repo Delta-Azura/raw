@@ -23,15 +23,16 @@ use crate::file_type::file_type;
 use std::thread;
 use std::time::Duration;
 use crate::extract::extract;
+use anyhow::{Result, Context};
 
 
-pub fn conflict(rawpkg: &String) {
+pub fn conflict(rawpkg: &String) -> Result<()> {
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap().to_string();
     if Path::new(&format!("/tmp/{}", pkg)).exists() {
-        fs::remove_dir_all(format!("/tmp/{}", pkg)).unwrap();
-        fs::create_dir(format!("/tmp/{}", pkg)).unwrap();
+        fs::remove_dir_all(format!("/tmp/{}", pkg)).context("Failed to remove /tmp/pkg")?;
+        fs::create_dir(format!("/tmp/{}", pkg)).context("Failed to create /tmp/pkg")?;
     }
-    fs::copy(rawpkg, format!("/tmp/{}/{}", pkg, rawpkg)).unwrap();
+    fs::copy(rawpkg, format!("/tmp/{}/{}", pkg, rawpkg)).context("failed to copy to /tmp/")?;
     env::set_current_dir(format!("/tmp/{}", pkg)).unwrap();
     let _ = extract(rawpkg);
     let compare = fs::read_to_string(format!("/tmp/{}/{}.footprint", pkg, pkg)).unwrap();
@@ -88,4 +89,5 @@ pub fn conflict(rawpkg: &String) {
         }
     }
     env::set_current_dir(format!("/tmp/{}", pkg)).unwrap();
+    Ok(())
 }

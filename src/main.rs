@@ -139,7 +139,7 @@ fn main() -> Result<()> {
     }
     if args[1] == "update" {
         let argument = format!("{}", args[2]);
-        update(&argument);
+        update(&argument)?;
         return Ok(())
     }
     if args[1] == "files" {

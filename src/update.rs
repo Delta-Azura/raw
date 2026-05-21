@@ -21,9 +21,11 @@ use crate::remove;
 use std::path::Path;
 use crate::install::install;
 use crate::conflict::conflict;
+use anyhow::{Result};
+use anyhow::Context;
 
 
-pub fn update(rawpkg: &String) {
+pub fn update(rawpkg: &String) -> Result<()> {
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap().to_string();
     if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
         File::create("/tmp/conflict").unwrap();
@@ -32,11 +34,14 @@ pub fn update(rawpkg: &String) {
         let _ = conflict(&rawpkg);
         println!("Installing the new one");
         let _ = install(&rawpkg, None);
-        fs::remove_file("/tmp/conflict").unwrap();
+        if Path::new("/tmp/conflict").exists() {
+            fs::remove_file("/tmp/conflict").context("Unable to remove /tmp/conflict,")?;
+        }
 
     } else {
         println!("Package isn't installed");
         std::process::exit(1);
     }
+    Ok(())
 
 }

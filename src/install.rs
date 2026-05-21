@@ -72,7 +72,7 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
         if Some("-f") == option {
             println!("overwriting");
         } else {
-            conflict(&rawpkg);
+            conflict(&rawpkg).context("Conflict checking failed")?;
         }
     }
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap();
@@ -84,12 +84,10 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
         println!("1");
         env::set_current_dir(format!("/tmp/{}", pkg))?;
         println!("2");
-        if rawpkg.ends_with(".tar.gz") || rawpkg.ends_with(".tgz") {
-            extract(rawpkg)?;
-        } else {
-            println!("No package in the format required : ABORTING");
-            std::process::exit(1);
-        }
+        extract(rawpkg).context("Didn't find the archive to unpack")?;
+        println!("No package in the format required : ABORTING");
+        std::process::exit(1);
+        
     }
     env::set_current_dir(format!("/tmp/{}", pkg))?;
     let opts = match option {
@@ -115,7 +113,7 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
         .args(["-c", &pre_install])
         .status()
         .unwrap();
-        fs::remove_file(format!("{}.pre-install", pkg))?;
+        fs::remove_file(format!("{}.pre-install", pkg)).context("Unable to remove pre-installation file")?;
     } else {
         println!("No pre-installation required");
     }
@@ -137,7 +135,7 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
     } else {
         println!("No post-installation required");
     }
-    fs::create_dir(format!("/var/lib/pkg/DB/{}", pkg)).unwrap();
+    fs::create_dir(format!("/var/lib/pkg/DB/{}", pkg)).context(format!("/var/lib/pkg/DB/{} already exists", pkg))?;
     if Path::new(&format!("/{}.pre-remove", pkg)).exists() {
         fs::copy(format!("/{}.pre-remove", pkg), format!("/var/lib/pkg/DB/{}/{}.pre-remove", pkg, pkg)).unwrap();
     }

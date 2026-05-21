@@ -52,7 +52,7 @@ pub fn get(pkg: &str) -> Result<()> {
         println!("{}", path);
         let tarball = download(&path)?;
         if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
-            update(&tarball); 
+            update(&tarball)?; 
         } else {
             install(&tarball, None)?;
         }
