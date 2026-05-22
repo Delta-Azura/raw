@@ -40,8 +40,8 @@ pub fn depends(pkg: &str) -> Vec<String> {
             }
             //std::process::exit(1)
         }
-        let META = std::fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", rawpkg)).unwrap();
-        let meta = META.lines().find(|l| l.starts_with("R")).unwrap().split_once('R').map(|(_, meta)| meta).unwrap();
+        let metafile = std::fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", rawpkg)).unwrap();
+        let meta = metafile.lines().find(|l| l.starts_with("R")).unwrap().split_once('R').map(|(_, meta)| meta).unwrap();
         let dependencies : Vec<&str> =  meta.split_whitespace().collect();
         for i in dependencies.iter() {
             if !visited.contains(*i) {
