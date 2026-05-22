@@ -3,6 +3,15 @@ name = "raw"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "raw"
+path = "src/main.rs"
+
+[lib]
+name = "raw"
+path = "src/lib.rs"
+
+
 [dependencies]
 reqwest = { version = "0.13.3", features = ["blocking"] }
 walkdir = "2"
