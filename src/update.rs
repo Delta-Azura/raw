@@ -30,10 +30,10 @@ pub fn update(rawpkg: &String) -> Result<()> {
     if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
         File::create("/tmp/conflict").unwrap();
         println!("removing previous package");
-        let _ = remove(&pkg);
-        let _ = conflict(&rawpkg);
+        remove(&pkg)?;
+        conflict(&rawpkg)?;
         println!("Installing the new one");
-        let _ = install(&rawpkg, None);
+        install(&rawpkg, None)?;
         if Path::new("/tmp/conflict").exists() {
             fs::remove_file("/tmp/conflict").context("Unable to remove /tmp/conflict,")?;
         }
