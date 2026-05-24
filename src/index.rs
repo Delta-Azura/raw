@@ -95,13 +95,14 @@ pub fn index() -> Result <()> {
                         let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string();
                         if entries.contains("Pkgfile") {
                             let pkgfile = fs::read_to_string(&format!("{}{}", path, entries)).context("Pkgfile not found")?;
-                            println!("{}", pkgfile);
                             let content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
                             let version = content.iter().find(|version| version.starts_with("version")).unwrap_or(&"version=unknown".to_string()).to_string().split_once("version=").map(|(_, version)| version).unwrap().to_string();
                             let release = content.iter().find(|release| release.starts_with("release")).unwrap_or(&"release=1".to_string()).to_string().split_once("release=").map(|(_, version)| version).unwrap().to_string();
-                            if version.contains("\"") {
-                                let version = version.split_once("\"").map(|(_, version)| version).unwrap().split_once("\"").map(|(version, _)| version).unwrap();
-                            }
+                            let version = if version.contains("\"") {
+                                version.split_once("\"").map(|(_, version)| version).unwrap().split_once("\"").map(|(version, _)| version).unwrap()
+                            } else {
+                                &version
+                            };
                             writeln!(rawfile, "{}", &format!("{}_{}#{}", entries, version, release))?;
                         } else {
                             continue;
@@ -117,9 +118,11 @@ pub fn index() -> Result <()> {
                         let content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
                         let version = content.iter().find(|version| version.starts_with("version")).unwrap_or(&"version=unknown".to_string()).to_string().split_once("version=").map(|(_, version)| version).unwrap().to_string();
                         let release = content.iter().find(|release| release.starts_with("release")).unwrap_or(&"release=1".to_string()).to_string().split_once("release=").map(|(_, version)| version).unwrap().to_string();
-                        if version.contains("\"") {
-                            let version = version.split_once("\"").map(|(_, version)| version).unwrap().split_once("\"").map(|(version, _)| version).unwrap();
-                        }
+                        let version = if version.contains("\"") {
+                            version.split_once("\"").map(|(_, version)| version).unwrap().split_once("\"").map(|(version, _)| version).unwrap()
+                        } else {
+                            &version
+                        };
                         writeln!(rawfile, "{}", &format!("{}_{}#{}", entries, version, release))?;
                     } else {
                         continue;
