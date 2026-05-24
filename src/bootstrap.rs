@@ -57,6 +57,5 @@ pub fn bootstrap(rawpkg: &String, bootstrap_path: &str) -> Result<()> {
     fs::remove_file(format!("{}/META", bootstrap_path)).unwrap();
     fs::remove_file(format!("{}/{}.footprint", bootstrap_path, pkg)).unwrap();
     fs::remove_file(format!("{}/{}", bootstrap_path, rawpkg)).unwrap();
-    //let content = line.lines();
     Ok(())
 }

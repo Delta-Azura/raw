@@ -92,10 +92,10 @@ pub fn index() -> Result <()> {
                     fs::remove_file("index.raw").unwrap();
                     let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
                     for entry in WalkDir::new(&path.trim()).min_depth(2) {
-                        let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string().split_once("/").map(|(_, remove)| remove).unwrap().to_string();
-                        //println!("{}", entries)
+                        let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string();
                         if entries.contains("Pkgfile") {
-                            let pkgfile = fs::read_to_string(&format!("{}/Pkgfile", entries)).unwrap_or("".to_string());
+                            let pkgfile = fs::read_to_string(&format!("{}{}", path, entries)).context("Pkgfile not found")?;
+                            println!("{}", pkgfile);
                             let content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
                             let version = content.iter().find(|version| version.starts_with("version")).unwrap_or(&"version=unknown".to_string()).to_string().split_once("version=").map(|(_, version)| version).unwrap().to_string();
                             let release = content.iter().find(|release| release.starts_with("release")).unwrap_or(&"release=1".to_string()).to_string().split_once("release=").map(|(_, version)| version).unwrap().to_string();
@@ -108,9 +108,9 @@ pub fn index() -> Result <()> {
             } else {
                 let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
                 for entry in WalkDir::new(&path.trim()).min_depth(2) {
-                    let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string().split_once("/").map(|(_, remove)| remove).unwrap().to_string();
+                    let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string();
                     if entries.contains("Pkgfile") {
-                        let pkgfile = fs::read_to_string(&format!("{}/Pkgfile", entries)).unwrap_or("".to_string());
+                        let pkgfile = fs::read_to_string(&format!("{}{}", path, entries)).unwrap_or("".to_string());
                         let content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
                         let version = content.iter().find(|version| version.starts_with("version")).unwrap_or(&"version=unknown".to_string()).to_string().split_once("version=").map(|(_, version)| version).unwrap().to_string();
                         let release = content.iter().find(|release| release.starts_with("release")).unwrap_or(&"release=1".to_string()).to_string().split_once("release=").map(|(_, version)| version).unwrap().to_string();
