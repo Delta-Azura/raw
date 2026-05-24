@@ -99,6 +99,9 @@ pub fn index() -> Result <()> {
                             let content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
                             let version = content.iter().find(|version| version.starts_with("version")).unwrap_or(&"version=unknown".to_string()).to_string().split_once("version=").map(|(_, version)| version).unwrap().to_string();
                             let release = content.iter().find(|release| release.starts_with("release")).unwrap_or(&"release=1".to_string()).to_string().split_once("release=").map(|(_, version)| version).unwrap().to_string();
+                            if version.contains("\"") {
+                                let version = version.split_once("\"").map(|(_, version)| version).unwrap().split_once("\"").map(|(version, _)| version).unwrap();
+                            }
                             writeln!(rawfile, "{}", &format!("{}_{}#{}", entries, version, release))?;
                         } else {
                             continue;
@@ -114,6 +117,9 @@ pub fn index() -> Result <()> {
                         let content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
                         let version = content.iter().find(|version| version.starts_with("version")).unwrap_or(&"version=unknown".to_string()).to_string().split_once("version=").map(|(_, version)| version).unwrap().to_string();
                         let release = content.iter().find(|release| release.starts_with("release")).unwrap_or(&"release=1".to_string()).to_string().split_once("release=").map(|(_, version)| version).unwrap().to_string();
+                        if version.contains("\"") {
+                            let version = version.split_once("\"").map(|(_, version)| version).unwrap().split_once("\"").map(|(version, _)| version).unwrap();
+                        }
                         writeln!(rawfile, "{}", &format!("{}_{}#{}", entries, version, release))?;
                     } else {
                         continue;
