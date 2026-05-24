@@ -103,6 +103,11 @@ pub fn index() -> Result <()> {
                             } else {
                                 &version
                             };
+                            let release = if release.contains("\"") {
+                                release.split_once("\"").map(|(_, release)| release).unwrap().split_once("\"").map(|(release, _)| release).unwrap()
+                            } else {
+                                &release
+                            };
                             writeln!(rawfile, "{}", &format!("{}_{}#{}", entries, version, release))?;
                         } else {
                             continue;
@@ -122,6 +127,11 @@ pub fn index() -> Result <()> {
                             version.split_once("\"").map(|(_, version)| version).unwrap().split_once("\"").map(|(version, _)| version).unwrap()
                         } else {
                             &version
+                        };
+                        let release = if release.contains("\"") {
+                            release.split_once("\"").map(|(_, release)| release).unwrap().split_once("\"").map(|(release, _)| release).unwrap()
+                        } else {
+                            &release
                         };
                         writeln!(rawfile, "{}", &format!("{}_{}#{}", entries, version, release))?;
                     } else {
