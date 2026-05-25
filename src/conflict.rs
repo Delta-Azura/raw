@@ -31,6 +31,8 @@ pub fn conflict(rawpkg: &String) -> Result<()> {
     if Path::new(&format!("/tmp/{}", pkg)).exists() {
         fs::remove_dir_all(format!("/tmp/{}", pkg)).context("Failed to remove /tmp/pkg")?;
         fs::create_dir(format!("/tmp/{}", pkg)).context("Failed to create /tmp/pkg")?;
+    } else {
+        fs::create_dir(format!("/tmp/{}", pkg)).context("Failed to create /tmp/pkg")?;
     }
     fs::copy(rawpkg, format!("/tmp/{}/{}", pkg, rawpkg)).context("failed to copy to /tmp/")?;
     env::set_current_dir(format!("/tmp/{}", pkg)).unwrap();
