@@ -29,15 +29,15 @@ pub fn getconf() ->  Result<(String, String, String), String> {
                 //.lines() important to only take the line concerned
                 let repo = config.lines().find(|c| c.starts_with("source=")).unwrap().split_once("source=").map(|(_, repo)| repo).unwrap().to_string();
                 let url = config.lines().find(|l| l.starts_with("url=")).unwrap().split_once("url=").map(|(_, repo)| repo).unwrap().to_string();
-                println!("{}", url);
-                println!("{}", repo);
+                println!("Url set as : {}", url);
+                println!("Repo set as : {}", repo);
                 env::set_current_dir(&repo.trim()).unwrap();
                 return Ok(("binary".to_string(), repo, url));
             }
             if config.clone().contains("mode source") {
                 let root = config.lines().find(|c| c.starts_with("root=")).unwrap().split_once("root=").map(|(_, root)| root).unwrap().to_string();
-                println!("{}", root);
-                env::set_current_dir(&root.trim()).unwrap();//.context("Repertory doesn't exists")?;
+                println!("Root directory set as : {}", root);
+                env::set_current_dir(&root.trim()).unwrap();
                 return Ok(("source".to_string(), root.to_string(), String::new()));
             } else {
                 return Err("not specified".to_string());

@@ -35,9 +35,9 @@ pub fn conflict(rawpkg: &String) -> Result<()> {
         fs::create_dir(format!("/tmp/{}", pkg)).context("Failed to create /tmp/pkg")?;
     }
     fs::copy(rawpkg, format!("/tmp/{}/{}", pkg, rawpkg)).context("failed to copy to /tmp/")?;
-    env::set_current_dir(format!("/tmp/{}", pkg)).unwrap();
-    let _ = extract(rawpkg);
-    let compare = fs::read_to_string(format!("/tmp/{}/{}.footprint", pkg, pkg)).unwrap();
+    env::set_current_dir(format!("/tmp/{}", pkg)).context("Failed to channge directory to /tmp/pkgname")?;
+    extract(rawpkg)?;
+    let compare = fs::read_to_string(format!("/tmp/{}/{}.footprint", pkg, pkg)).context("Failed to read footprint")?;
     //let compare = binding.split_whitespace().next().unwrap();
     for e in fs::read_dir("/var/lib/pkg/DB/.").unwrap().filter_map(|e| e.ok()) {
         let directory_tmp = e.file_name();
@@ -49,7 +49,7 @@ pub fn conflict(rawpkg: &String) -> Result<()> {
             thread::sleep(Duration::from_secs(10));
             continue; 
         }
-        let target = fs::read_to_string(&files_path).unwrap();//.split_whitespace().next().unwrap();
+        let target = fs::read_to_string(&files_path).context("Failed to read package list of files")?;//.split_whitespace().next().unwrap();
         //let target = temp.split_whitespace().next().unwrap();
         for lines in target.lines() {
             let lines = lines.split_whitespace().next().unwrap_or("");
@@ -90,6 +90,6 @@ pub fn conflict(rawpkg: &String) -> Result<()> {
             }
         }
     }
-    env::set_current_dir(format!("/tmp/{}", pkg)).unwrap();
+    env::set_current_dir(format!("/tmp/{}", pkg)).context("Failed to set current dir to /tmp/pkgname")?;
     Ok(())
 }

@@ -36,13 +36,13 @@ pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
         std::process::exit(1);
     }
     if let Ok(_mode) = getconf() {
-        let index = fs::read_to_string("index.raw").unwrap();
+        let index = fs::read_to_string("index.raw").context("index.raw might be missing, please run raw index")?;
         let test = format!("/{}/", to_build);
         let found = index.lines().find(|line| line.contains(&test));
         if let Some(_building) = found {
             let chrp = found.unwrap().split_once("Pkgfile").map(|(chrp, _)| chrp).unwrap();
             println!("{}", chrp);
-            env::set_current_dir(&chrp).unwrap();
+            env::set_current_dir(&chrp).context("Failed to change current directory to building target")?;
             let potential_package: Vec<String> = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).filter_map(|e| e.file_name().into_string().ok()).collect();
             if option != Some("-y") {
                 for i in &potential_package {

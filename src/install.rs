@@ -30,6 +30,8 @@ use crate::getconf::getconf;
 use crate::depends::depends;
 use crate::extract::extract;
 
+const RED: &str = "\x1b[1;31m";
+const RESET: &str = "\x1b[0m";
 
 
 pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
@@ -65,7 +67,7 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
             }
         }
     }
-    eprintln!("DEBUG conflict rawpkg: {:?}", rawpkg);
+    eprintln!("Checking conflict for rawpkg: {:?}", rawpkg);
     if Path::new("/tmp/conflict").exists() {
         fs::remove_file("/tmp/conflict")?;
     } else {
@@ -81,12 +83,9 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
         env::set_current_dir(format!("/tmp/{}", pkg))?;
     } else {
         fs::create_dir(format!("/tmp/{}", pkg))?;
-        println!("1");
         env::set_current_dir(format!("/tmp/{}", pkg))?;
-        println!("2");
         extract(rawpkg).context("Didn't find the archive to unpack")?;
-        println!("No package in the format required : ABORTING");
-        std::process::exit(1);
+        println!("{}Conflict Detection might not have been executed be careful{}", RED, RESET);
         
     }
     env::set_current_dir(format!("/tmp/{}", pkg))?;

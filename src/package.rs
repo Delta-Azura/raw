@@ -117,9 +117,9 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let _current = collection.file_name().unwrap().to_str().unwrap().to_string();
     let collection = collection.display().to_string();
     println!("Setting collection as : {}", col);
-    let mut meta = File::create("META").unwrap();
+    let mut meta = File::create("META").context("Failed to create META file")?;
     let metadata = format!("N{}\nV{}\nr{}\nc{}\nD{}\nP{}\nR{}\n", name, version, release, col, description, packager, depends);
-    write!(meta, "{}", metadata).unwrap();
+    write!(meta, "{}", metadata).context("Failed to write metadata")?;
     if Path::new("work").exists() {
         println!("Removing work/");
         fs::remove_dir_all("work/")?;
@@ -485,7 +485,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let mut a = tar::Builder::new(enc);
     a.follow_symlinks(false);
     a.append_dir_all("", "pkg/")?;
-    a.finish().unwrap();
+    a.finish().context("Compression failed")?;
     fs::remove_dir_all("pkg")?;
     Ok(())
 }
