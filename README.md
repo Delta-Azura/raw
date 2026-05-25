@@ -46,7 +46,7 @@ install -v -m644 doc/{nano.html,sample.nanorc} $PKG/usr/share/doc/nano-${version
 # Example of raw.conf 
 ``` bash 
 alexis [ ~/Onyx ]$ cat /etc/raw.conf 
-mode binary
+mode=binary
 
 root=/home/alexis/Onyx
 
@@ -54,7 +54,7 @@ url=https://remoterepo
 alexis [ ~/Onyx ]$ 
 
 alexis [ ~/Onyx ]$ cat /etc/raw.conf 
-mode source
+mode=source
 
 root=/home/alexis/Onyx
 alexis [ ~/Onyx ]$ 
