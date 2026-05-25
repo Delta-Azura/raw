@@ -24,7 +24,7 @@ pub fn template(pkg: &str) -> Result<()> {
     } else {
         if pwd.to_string_lossy().to_string() != root {
             println!("You are not creating the template in your directory set in your raw.conf, it will not work with raw index and raw build");
-            env::set_current_dir(pwd).unwrap();
+            env::set_current_dir(pwd).context("Failed to change directory")?;
         }
     }
     if Path::new(pkg).exists() {
