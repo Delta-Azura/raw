@@ -31,3 +31,11 @@ pub fn extract(tarball: &String) -> Result<()> {
     uncompress_archive(&mut source, &dest, Ownership::Ignore).context("Uncompressing failed")?;
     Ok(())
 }
+
+
+pub async fn extract_parallel(tarball: &String) -> Result<()> {
+    let mut source = File::open(tarball)?;
+    let dest = Path::new(".");
+    uncompress_archive(&mut source, &dest, Ownership::Ignore).context("Uncompressing failed")?;
+    Ok(())
+}

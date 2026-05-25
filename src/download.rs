@@ -21,6 +21,7 @@ use std::io::Read;
 use std::fs::File;
 use std::io::Write;
 use anyhow::Result;
+use crate::extract::extract_parallel;
 
 pub fn download(url: &str) -> Result<String> {
     // Personnal notes :
@@ -57,4 +58,35 @@ pub fn download(url: &str) -> Result<String> {
     }
     //giving back file name or the error 
     return Ok(tarball.to_string())
+}
+
+
+pub async fn download_parallel(url: &str) -> Result<String> {
+    let client = reqwest::Client::builder()
+        .user_agent("raw/0.2.6")
+        .build()?;
+
+    let mut answer = client.get(url).send().await?;
+    if !answer.status().is_success() {
+        anyhow::bail!("ERROR {} while downloading {}", answer.status(), url);
+    }
+    println!("Downloading {}", url);
+    let progress = answer.content_length().unwrap_or(0);
+    let pb = ProgressBar::new(progress);
+    pb.set_style(
+        ProgressStyle::default_bar()
+            .template("{msg} [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")
+            .unwrap()
+            .progress_chars("##"),
+    );
+
+    let tarball = url.split('/').last().unwrap().to_string();
+    let mut file = File::create(&tarball)?;
+
+    while let Some(chunk) = answer.chunk().await? {
+        file.write_all(&chunk)?;
+        pb.inc(chunk.len() as u64);
+    }
+
+    Ok(tarball)
 }

@@ -31,6 +31,8 @@ use crate::get::get;
 use crate::build::build;
 use flate2::write::GzEncoder;
 use flate2::Compression;
+use crate::download::download_parallel;
+use tokio::task::JoinSet;
 
 const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
@@ -168,15 +170,79 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let building = format!("{}/work", collection);
     env::set_current_dir(&collection).unwrap();
     println!("Switching to the work directory {}", building);
+    if source.split_whitespace().count() > 1 {
+        for src in source.split_whitespace() {
+            if !src.contains("http") {
+                if !src.contains(".patch.gz") {
+                    println!("{}Checking the sources{}", YELLOW, RESET);
+                    let mut file = File::open(&src)?;
+                    let mut buffer = [0u8; 512];
+                    let bytes_read = file.read(&mut buffer)?;
+                    for sig in SIGNATURES {
+                        let start = sig.offset as usize;
+                        let end = start + sig.magic.len();
+                        if bytes_read >= end && &buffer[start..end] == sig.magic {
+                            env::set_current_dir(&building)?;
+                            extract(&src.to_string())?;
+                            env::set_current_dir(&collection)?;
+                        } else {
+                            fs::copy(src, format!("work/{}", src))?;
+                        }
 
-    for src in source.split_whitespace() {
+
+                    }
+                }
+            }
+        }
+        env::set_current_dir(&building)?;
+        let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async {
+                let mut set = JoinSet::new();
+                for src in source.split_whitespace() {
+                    if src.contains("http") {
+                        let src = src.to_string();
+                        set.spawn(async move {
+                            download_parallel(&src).await
+                        });
+                    }
+                }
+                while let Some(result) = set.join_next().await {
+                    let tarball = result??;
+                    if !tarball.contains(".patch.gz")  {
+                        println!("{}Checking the sources{}", YELLOW, RESET);
+                        let mut file = File::open(&tarball)?;
+                        let mut buffer = [0u8; 512];
+                        let bytes_read = file.read(&mut buffer)?;
+                        for sig in SIGNATURES {
+                            let start = sig.offset as usize;
+                            let end = start + sig.magic.len();
+                            if bytes_read >= end && &buffer[start..end] == sig.magic {
+                                println!("{} {}", tarball, collection);
+                                env::set_current_dir(&building)?;
+                                extract(&tarball.to_string())?;
+                                //env::set_current_dir(&collection)?;
+                            }
+
+
+                        //} else {
+                        //    fs::copy(tarball, format!("work/{}", tarball))?;
+                        //}
+
+                        }
+                    } else {
+                        fs::copy(&tarball, format!("work/{}", tarball))?;
+                    }
+                }
+                Ok::<(), anyhow::Error>(())
+            })?;
+
+    } else {
+        let src = source.trim();
         if src.contains("http") {
             env::set_current_dir(&building)?;
             let tarball = download(src)?;
             env::set_current_dir(&collection)?;
-            if tarball.contains(".patch.gz") {
-                continue;
-            } else {
+            if !tarball.contains(".patch.gz") {
                 env::set_current_dir(&building)?;
                 extract(&tarball)?;
                 env::set_current_dir(&collection)?;
@@ -185,9 +251,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
             env::set_current_dir(&collection)?;
             fs::copy(src, format!("work/{}", src))?;
             env::set_current_dir(&building)?;
-            if src.contains(".patch.gz") {
-                continue;
-            } else {
+            if !src.contains(".patch.gz") {
                 println!("{}Checking the sources{}", YELLOW, RESET);
                 let mut file = File::open(src)?;
                 let mut buffer = [0u8; 512];
