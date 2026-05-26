@@ -20,6 +20,8 @@ It's designed to be quick, light and memory safe.
 - Support of the prepare and package functions alongside with the build=something type of Pkgfiles
 - /etc preserved
 - Display symlinks in footprints
+- Parallel source download -> binaries parallel download coming soon
+- Support of makedepends
 
 
 # Pkgfile example :
@@ -30,7 +32,8 @@ version=9.0
 release=1
 packager=alexis
 source=(https://www.nano-editor.org/dist/v9/nano-${version}.tar.xz)
-depends="kernel-headers libpng"
+makedepends="htop" #This is an example
+rundepends="kernel-headers libpng" #This is an example to show the syntax
 build() {
 cd $name-$version
 ./configure --prefix=/usr     \
