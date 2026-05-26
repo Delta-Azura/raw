@@ -76,8 +76,9 @@ pub fn remove(rawpkg: &String) -> Result<()> {
         }
     } else {
             println!("This package isn't installed, can't remove it");
+            std::process::exit(1);
     }
     env::set_current_dir(current).unwrap();
-
+    println!("{} successfully removed", rawpkg);
     Ok(())
 }

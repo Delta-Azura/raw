@@ -191,6 +191,8 @@ pub fn package(option: Option<&str>) -> Result<()> {
 
 
                     }
+                } else {
+                    fs::copy(src, format!("work/{}", src))?;
                 }
             }
         }
@@ -222,12 +224,6 @@ pub fn package(option: Option<&str>) -> Result<()> {
                                 extract(&tarball.to_string())?;
                                 //env::set_current_dir(&collection)?;
                             }
-
-
-                        //} else {
-                        //    fs::copy(tarball, format!("work/{}", tarball))?;
-                        //}
-
                         }
                     } else {
                         fs::copy(&tarball, format!("work/{}", tarball))?;

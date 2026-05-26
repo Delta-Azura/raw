@@ -160,7 +160,6 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
     if content.contains(".desktop") {
         if Path::new("/usr/bin/gtk-update-icon-cache").exists() {
             Command::new("bash")
-                // glib-compile-schemas /usr/share/glib-2.0/schemas
             .args(["-c", "glib-compile-schemas /usr/share/glib-2.0/schemas"])
             .status()
             .unwrap();
@@ -172,7 +171,6 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
                 if file_type(&foot) == false {
                     env::set_current_dir("/").unwrap();
                     env::set_current_dir(&foot).unwrap();
-                    println!("{}", foot);
                     let directory = format!("/usr/bin/gtk-update-icon-cache -f -t {}", foot);
                     Command::new("bash")
                     .args(["-c", &directory])

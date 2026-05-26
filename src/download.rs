@@ -21,7 +21,6 @@ use std::io::Read;
 use std::fs::File;
 use std::io::Write;
 use anyhow::Result;
-use crate::extract::extract_parallel;
 
 pub fn download(url: &str) -> Result<String> {
     // Personnal notes :
