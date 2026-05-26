@@ -222,7 +222,6 @@ pub fn package(option: Option<&str>) -> Result<()> {
                                 println!("{} {}", tarball, collection);
                                 env::set_current_dir(&building)?;
                                 extract(&tarball.to_string())?;
-                                //env::set_current_dir(&collection)?;
                             }
                         }
                     } else {
@@ -504,7 +503,8 @@ pub fn package(option: Option<&str>) -> Result<()> {
                     }
             }
     }
-
+    let footprint = fs::read_to_string(format!("{}.footprint", name))?;
+    println!("{}This package contains : {} files{}", YELLOW, footprint.lines().count(), RESET);
     fs::copy("META", "pkg/META").unwrap();
     fs::remove_file("META").unwrap();
     fs::copy(format!("{}.footprint", name), format!("pkg/{}.footprint", name)).unwrap();
