@@ -28,98 +28,21 @@ use std::fs;
 
 pub fn index() -> Result <()> {
     if let Ok((mode, path, _trash)) = getconf() {
-        if mode == "source" {
-            if Path::new("index.raw").exists() {
-                let question = Question::new("The index already exists, do you want to update it ? [y/n]")
-                    .yes_no()
-                    .until_acceptable()
-                    .default(Answer::YES)
-                    .show_defaults()
-                    .clarification("Please enter either 'yes' or 'no'\n")
-                    .ask();
-                if question == Some(Answer::YES) {
-                    fs::remove_file("index.raw").unwrap();
-                    let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
-                    for entry in WalkDir::new(&path.trim()).min_depth(2) {
-                        File::open("index.raw").unwrap();
-                        let entry = entry.unwrap();
-                        let entries = match path.ends_with("/") {
-                            true => {
-                                entry.path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string()//.split_once("/").map(|(_, remove)| remove).unwrap().to_string();
-                            }
-                            false => {
-                                entry.path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string().split_once("/").map(|(_, remove)| remove).unwrap().to_string()
-                            }
-                        };
-                        if entries.contains("Pkgfile") {
-                            writeln!(rawfile,"{}", entries)?;
-                        } else {
-                            continue;
-                        }
-                    }
-                }
-                
-            } else {
-                let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
-                for entry in WalkDir::new(&path.trim()).min_depth(2) {
-                    File::open("index.raw").unwrap();
-                    let entry = entry.unwrap();
-                    let entries = match path.ends_with("/") {
-                        true => {
-                            entry.path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string()//.split_once("/").map(|(_, remove)| remove).unwrap().to_string();
-                        }
-                        false => {
-                            entry.path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string().split_once("/").map(|(_, remove)| remove).unwrap().to_string()
-                        }
-                        };
-                    if entries.contains("Pkgfile") {
-                        writeln!(rawfile,"{}", entries).unwrap();
-                    } else {
-                        continue;
-                    }
-                }
-            }
-        } else {
-            if Path::new("index.raw").exists() {
-                let question = Question::new("The index already exists, do you want to update it ? [y/n] : ")
-                    .yes_no()
-                    .until_acceptable()
-                    .default(Answer::YES)
-                    .show_defaults()
-                    .clarification("Please enter either 'yes' or 'no' ")
-                    .ask();
-                if question == Some(Answer::YES) {
-                    fs::remove_file("index.raw").unwrap();
-                    let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
-                    for entry in WalkDir::new(&path.trim()).min_depth(2) {
-                        let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string();
-                        if entries.contains("Pkgfile") {
-                            let pkgfile = fs::read_to_string(&format!("{}{}", path, entries)).context("Pkgfile not found")?;
-                            let content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
-                            let version = content.iter().find(|version| version.starts_with("version")).unwrap_or(&"version=unknown".to_string()).to_string().split_once("version=").map(|(_, version)| version).unwrap().to_string();
-                            let release = content.iter().find(|release| release.starts_with("release")).unwrap_or(&"release=1".to_string()).to_string().split_once("release=").map(|(_, version)| version).unwrap().to_string();
-                            let version = if version.contains("\"") {
-                                version.split_once("\"").map(|(_, version)| version).unwrap().split_once("\"").map(|(version, _)| version).unwrap()
-                            } else {
-                                &version
-                            };
-                            let release = if release.contains("\"") {
-                                release.split_once("\"").map(|(_, release)| release).unwrap().split_once("\"").map(|(release, _)| release).unwrap()
-                            } else {
-                                &release
-                            };
-                            writeln!(rawfile, "{}", &format!("{}_{}#{}", entries, version, release))?;
-                        } else {
-                            continue;
-                        }
-                    }
-                }
-            } else {
+        if Path::new("index.raw").exists() {
+            let question = Question::new("The index already exists, do you want to update it ? [y/n] : ")
+                .yes_no()
+                .until_acceptable()
+                .default(Answer::YES)
+                .show_defaults()
+                .clarification("Please enter either 'yes' or 'no' ")
+                .ask();
+            if question == Some(Answer::YES) {
+                fs::remove_file("index.raw").unwrap();
                 let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
                 for entry in WalkDir::new(&path.trim()).min_depth(2) {
                     let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string();
                     if entries.contains("Pkgfile") {
-                        let pkgfile = fs::read_to_string(&format!("{}{}", path, entries)).unwrap_or("".to_string());
+                        let pkgfile = fs::read_to_string(&format!("{}{}", path, entries)).context("Pkgfile not found")?;
                         let content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
                         let version = content.iter().find(|version| version.starts_with("version")).unwrap_or(&"version=unknown".to_string()).to_string().split_once("version=").map(|(_, version)| version).unwrap().to_string();
                         let release = content.iter().find(|release| release.starts_with("release")).unwrap_or(&"release=1".to_string()).to_string().split_once("release=").map(|(_, version)| version).unwrap().to_string();
@@ -139,9 +62,33 @@ pub fn index() -> Result <()> {
                     }
                 }
             }
-
+        } else {
+            let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
+            for entry in WalkDir::new(&path.trim()).min_depth(2) {
+                let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string();
+                if entries.contains("Pkgfile") {
+                    let pkgfile = fs::read_to_string(&format!("{}{}", path, entries)).unwrap_or("".to_string());
+                    let content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
+                    let version = content.iter().find(|version| version.starts_with("version")).unwrap_or(&"version=unknown".to_string()).to_string().split_once("version=").map(|(_, version)| version).unwrap().to_string();
+                    let release = content.iter().find(|release| release.starts_with("release")).unwrap_or(&"release=1".to_string()).to_string().split_once("release=").map(|(_, version)| version).unwrap().to_string();
+                    let version = if version.contains("\"") {
+                        version.split_once("\"").map(|(_, version)| version).unwrap().split_once("\"").map(|(version, _)| version).unwrap()
+                    } else {
+                        &version
+                    };
+                    let release = if release.contains("\"") {
+                        release.split_once("\"").map(|(_, release)| release).unwrap().split_once("\"").map(|(release, _)| release).unwrap()
+                    } else {
+                        &release
+                    };
+                    writeln!(rawfile, "{}", &format!("{}_{}#{}", entries, version, release))?;
+                } else {
+                    continue;
+                }
+            }
         }
 
-    }         
+    }
+
     Ok(())
-}
+}         

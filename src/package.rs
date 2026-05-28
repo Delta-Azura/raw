@@ -28,7 +28,6 @@ use walkdir::WalkDir;
 use anyhow::{Result, Context};
 use crate::getconf::getconf;
 use crate::get::get;
-use crate::build::build;
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use crate::download::download_parallel;
@@ -150,18 +149,35 @@ pub fn package(option: Option<&str>) -> Result<()> {
                     let found = index_raw.lines().find(|line| line.contains(&test));
                     let chrp = found.unwrap().split_once("Pkgfile").map(|(chrp, _)| chrp).unwrap();
                     env::set_current_dir(format!("{}", chrp)).unwrap();
-                    //let mut path_automatic = path_automatic.split_once("/Pkgfile").map(|(path_automatic, _)| path_automatic).unwrap();
                     let collection = std::env::current_dir().unwrap();
                     let _current = collection.file_name().unwrap().to_str().unwrap().to_string();
                     let collection = collection.display().to_string();
-                    //let mut path_automatic = path_automatic.lines();
-                    //let mut path_automatic = path_automatic.find(|l| l.contains(&format!("{}", i))).unwrap().split_once("Package found here : ").map(|(_, path)| path).unwrap().split_once("/Pkgfile").map(|(path_automatic, _)| path_automatic).unwrap();
                     println!("{}", collection);
 
-
+                    println!("1");
                     File::create("automatic").context("Failed to create the automatic file, be careful while removing orphans")?;
+                    for entry in fs::read_dir(collection)? {
+                        println!("1");
+                        let entry = entry?;
+                        if entry.file_name().to_string_lossy().contains(".raw.") {
+                            let pkgver =  entry.file_name().to_string_lossy().split_once('.').map(|(_, pkgver)| pkgver).unwrap().split_once("#").map(|(pkgver, _)| pkgver).unwrap().to_string();
+                            let pkgrel = entry.file_name().to_string_lossy().split_once('#').map(|(_, pkgver)| pkgver).unwrap().split_once(".").map(|(pkgver, _)| pkgver).unwrap().to_string();
+                            if !Path::new("Pkgfile").exists() {
+                                Command::new("sudo").args(["raw", "install", &i]).output().unwrap();
+                            } else {
+                                let pkgfile_comp = fs::read_to_string("Pkgfile")?;
+                                let pkgverfile = pkgfile_comp.lines().find(|l| l.starts_with("version=")).context("No line found")?.split_once("version=").map(|(_, version)| version).context("no pkg version mentionned in pkgfile")?;
+                                let pkgrelfile = pkgfile_comp.lines().find(|l| l.starts_with("release=")).context("No line found")?.split_once("release=").map(|(_, version)| version).context("no pkg release mentionned in pkgfile")?;
+                                if pkgver == pkgverfile || pkgrel == pkgrelfile {
+                                    Command::new("sudo").args(["raw", "install", &i]).output().unwrap();
+                                } else {
+                                    package(None)?;
+                                    Command::new("sudo").args(["raw", "install", &i]).output().unwrap();
+                                }
+                            }
+                        }
+                    }
                     
-                    build(&i, Some("-y"))?;
                 }
                 
             }

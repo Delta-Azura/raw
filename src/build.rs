@@ -1,128 +1,16 @@
-// Raw is a simple package manager written in rust, it aims to be compatible with the Pkgfiles written that works with pkgmk from pkgutils/cards
-//    Copyright (C) 2026  Alexis/Delta-Azura
-
-//    This program is free software; you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation; either version 2 of the License, or
-//    (at your option) any later version.
-
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-
-//    You should have received a copy of the GNU General Public License along
-//    with this program; if not, write to the Free Software Foundation, Inc.,
-//    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-
-use anyhow::{Result, Context};
-use crate::package::package;
-//use std::fs::File;
 use std::env;
+use anyhow::{Result, Context};
+use crate::package;
 use std::fs;
-use crate::getconf::getconf;
-use std::path::Path;
-use question::{Answer, Question};
-use std::process::Command;
+use crate::getconf;
 
-const RED: &str = "\x1b[1;31m";
-const RESET: &str = "\x1b[0m";
-
-pub fn build(to_build: &str, option: Option<&str>) -> Result<()> {
-    let (mode, _trash, _url) = getconf().unwrap();
-    if mode != "source" {
-        println!("{} Raw is used in binary mode, cannot build {}", RED, RESET);
-        std::process::exit(1);
-    }
-    if let Ok(_mode) = getconf() {
-        let index = fs::read_to_string("index.raw").context("index.raw might be missing, please run raw index")?;
-        let test = format!("/{}/", to_build);
-        let found = index.lines().find(|line| line.contains(&test));
-        if let Some(_building) = found {
-            let chrp = found.unwrap().split_once("Pkgfile").map(|(chrp, _)| chrp).unwrap();
-            println!("{}", chrp);
-            env::set_current_dir(&chrp).context("Failed to change current directory to building target")?;
-            let potential_package: Vec<String> = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).filter_map(|e| e.file_name().into_string().ok()).collect();
-            if option != Some("-y") {
-                for i in &potential_package {
-                    if i.contains(".raw.") {
-                        let question = Question::new(&format!("{} already exists, do you want to install it ?", i))
-                            .yes_no()
-                            .until_acceptable()
-                            .default(Answer::YES)
-                            .show_defaults()
-                            .clarification("Please enter either 'y' or 'n' \n")
-                            .ask();
-                        if question == Some(Answer::YES) {
-                            if Path::new(&format!("/var/lib/pkg/DB/{}", &to_build)).exists() {
-                                Command::new("sudo")
-                                .args(["raw", "update", &i])
-                                .status()?;
-                        //install(&i)?;
-                                std::process::exit(0)
-                            } else {
-                                Command::new("sudo")
-                                .args(["raw", "install", &i])
-                                .status()?;
-                                std::process::exit(0)
-                            }
-                        } else {
-                            package(None).context("Build style or any other thing in the pkgfile might be incorrect. Try running package to know what's going on")?;
-                        }
-                    } else {
-                        package(None)?;
-                    }
-                }
-            } else {
-                println!("{:?}", potential_package);
-                for i in &potential_package {
-                    println!("{}", i);
-                    if i.contains(".raw.") {
-                        if Path::new(&format!("/var/lib/pkg/DB/{}", &to_build)).exists() {
-                            Command::new("sudo")
-                            .args(["raw", "update", &i])
-                            .status()?;
-                            //std::process::exit(0);
-                        //install(&i)?;
-                        } else {
-                            Command::new("sudo")
-                            .args(["raw", "install", &i])
-                            .status()?;
-                            //std::process::exit(0);
-                        }
-                    
-                    } else {
-                        continue;
-                    }
-                }
-
-
-
-                package(None).context("Build style or any other thing in the pkgfile might be incorrect. Try running package to know what's going on")?;
-                let to_install: Vec<String> = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).filter_map(|e| e.file_name().into_string().ok()).collect();
-                let i = to_install.iter().find(|l| l.contains(".raw.")).unwrap();
-                if i.contains(".raw.") {
-                    if Path::new(&format!("/var/lib/pkg/DB/{}", &to_build)).exists() {
-                        Command::new("sudo")
-                        .args(["raw", "update", &i])
-                        .status()?;
-                //install(&i)?;
-                        std::process::exit(0)
-                    } else {
-                        Command::new("sudo")
-                        .args(["raw", "install", &i])
-                        .status()?;
-                        std::process::exit(0)
-                    }
-                }
-
-            }
-
-        } else {
-            println!("{} {} not found, try running raw index to update the repo database {}", RED, to_build, RESET);
-            std::process::exit(1)
-        }
-    }
+pub fn build(pkg: &str) -> Result<()> {
+    getconf().unwrap();
+    //env::set_current_dir(&pkg)?;
+    let path = fs::read_to_string("index.raw").context("index.raw doesn't exist, please run raw index")?;
+    let path = path.lines().find(|l| l.contains(&format!("{}/", pkg))).context("This package doesn't exists on the index")?.split_once("/Pkgfile").map(|(path, _)| path).unwrap().to_string();
+    println!("{}", path);
+    env::set_current_dir(path)?;
+    package(None)?;
     Ok(())
 }

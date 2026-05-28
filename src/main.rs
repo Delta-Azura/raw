@@ -30,7 +30,6 @@ mod list;
 mod librs;
 mod getconf;
 mod index;
-mod build;
 mod get;
 mod depends;
 mod upgrade;
@@ -40,12 +39,13 @@ mod remove_cache;
 mod help;
 mod orphans;
 mod template;
+mod build;
+use crate::build::build;
 use crate::template::template;
 use crate::orphans::orphans;
 use crate::help::help;
 use crate::bootstrap::bootstrap;
 use crate::get::get;
-use crate::build::build;
 use crate::index::index;
 use crate::getconf::getconf;
 use crate::librs::libs;
@@ -95,6 +95,10 @@ fn main() -> Result<()> {
         } else {
             template(&args[2])?;
         }
+        return Ok(());
+    }
+    if args[1] == "build" {
+        build(&args[2])?;
         return Ok(());
     }
     if args[1] == "package" {
@@ -161,10 +165,6 @@ fn main() -> Result<()> {
     }
     if args[1] == "index" {
         index()?;
-        return Ok(())
-    }
-    if args[1] == "build" {
-        build(&args[2], args.get(3).map(|s| s.as_str()))?;
         return Ok(())
     }
     if args[1] == "get" {

@@ -1,0 +1,15 @@
+pub fn changelog() {
+    let Some(mode, path, _) = getconf();
+    if !changelog.txt.exists() {
+        File::create("changelog")?; 
+    }
+    let mut changelog = OpenOptions::new()
+        .append(true)
+        .write(true)
+        .open("changelog").unwrap();
+    if mode = "source" {
+        println!("test");
+    }
+
+    
+}
