@@ -111,7 +111,15 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let depends = variables.next().context("Depends might not be correct, check your pkgfile")?;
     let source = variables.next().context("The source might not be correct, check your pkgfile")?;
     let makedepends: Vec<String> = variables.next().unwrap().split_whitespace().map(|s| s.to_string()).collect();    //if makedepends == "none" {
-
+    let pkgfile = fs::read_to_string("Pkgfile").context("Package file doesn't exist")?;
+    let keep_sources = "true";
+    for i in pkgfile.lines() {
+        let keep_sources = if i.contains("RAW_KEEP_SOURCES=false") {
+            "false"
+        } else {
+            "true"
+        };
+    }
     let actual = std::env::current_dir().unwrap();
     let col = actual.parent().unwrap().file_name().unwrap().to_str().unwrap().to_string();
     let collection = std::env::current_dir().unwrap();
@@ -185,7 +193,8 @@ pub fn package(option: Option<&str>) -> Result<()> {
     }
     let building = format!("{}/work", collection);
     env::set_current_dir(&collection).unwrap();
-    println!("Switching to the work directory {}", building);
+    println!("{}", collection);
+    //println!("Switching to the work directory {}", building);
     if source.split_whitespace().count() > 1 {
         for src in source.split_whitespace() {
             if !src.contains("http") {
@@ -212,7 +221,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
                 }
             }
         }
-        env::set_current_dir(&building)?;
+        env::set_current_dir(&collection)?;
         let rt = tokio::runtime::Runtime::new()?;
             rt.block_on(async {
                 let mut set = JoinSet::new();
@@ -236,6 +245,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
                             let end = start + sig.magic.len();
                             if bytes_read >= end && &buffer[start..end] == sig.magic {
                                 println!("{} {}", tarball, collection);
+                                fs::copy(&tarball, format!("{}/{}", building, tarball))?;
                                 env::set_current_dir(&building)?;
                                 extract(&tarball.to_string())?;
                             }
@@ -250,13 +260,17 @@ pub fn package(option: Option<&str>) -> Result<()> {
     } else {
         let src = source.trim();
         if src.contains("http") {
-            env::set_current_dir(&building)?;
+            env::set_current_dir(&collection)?;
             let tarball = download(src)?;
             env::set_current_dir(&collection)?;
             if !tarball.contains(".patch.gz") {
+                fs::copy(&tarball, format!("work/{}", tarball))?;
                 env::set_current_dir(&building)?;
                 extract(&tarball)?;
                 env::set_current_dir(&collection)?;
+                if keep_sources != "true" {
+                    fs::remove_file(tarball)?;
+                }
             }
         } else {
             env::set_current_dir(&collection)?;
