@@ -248,6 +248,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
                                 fs::copy(&tarball, format!("{}/{}", building, tarball))?;
                                 env::set_current_dir(&building)?;
                                 extract(&tarball.to_string())?;
+                                env::set_current_dir(&collection)?;
                             }
                         }
                     } else {
