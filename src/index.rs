@@ -28,6 +28,11 @@ use std::fs;
 
 pub fn index() -> Result <()> {
     if let Ok((mode, path, _trash)) = getconf() {
+        let path = if !path.ends_with("/") {
+            format!("{}/", path)
+        } else {
+            path
+        };
         if Path::new("index.raw").exists() {
             let question = Question::new("The index already exists, do you want to update it ? [y/n] : ")
                 .yes_no()
