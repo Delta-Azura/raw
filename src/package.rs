@@ -114,7 +114,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let pkgfile = fs::read_to_string("Pkgfile").context("Package file doesn't exist")?;
     let keep_sources = "true";
     for i in pkgfile.lines() {
-        let keep_sources = if i.contains("RAW_KEEP_SOURCES=false") {
+        let keep_sources = if i.starts_with("RAW_KEEP_SOURCES=false") {
             "false"
         } else {
             "true"
@@ -249,6 +249,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
                                 env::set_current_dir(&building)?;
                                 extract(&tarball.to_string())?;
                                 env::set_current_dir(&collection)?;
+                                fs::remove_file(&tarball).context("Unable to remove the downloaded archive")?;
                             }
                         }
                     } else {
