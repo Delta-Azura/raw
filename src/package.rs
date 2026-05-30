@@ -249,7 +249,11 @@ pub fn package(option: Option<&str>) -> Result<()> {
                                 env::set_current_dir(&building)?;
                                 extract(&tarball.to_string())?;
                                 env::set_current_dir(&collection)?;
-                                fs::remove_file(&tarball).context("Unable to remove the downloaded archive")?;
+                                if keep_sources != "true" {
+                                    fs::remove_file(&tarball).context("Unable to remove the downloaded archive")?;
+                                } else {
+                                    println!("Skipping removal of the sources");
+                                }
                             }
                         }
                     } else {
