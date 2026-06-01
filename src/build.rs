@@ -28,6 +28,7 @@ pub fn build(pkg: &str) -> Result<()> {
     let path = fs::read_to_string("index.raw").context("index.raw doesn't exist, please run raw index")?;
     let path = path.lines().find(|l| l.contains(&format!("{}/", pkg))).context("This package doesn't exists on the index")?.split_once("/Pkgfile").map(|(path, _)| path).unwrap().to_string();
     println!("{}", path);
+    println!("current path is {}", path);
     for entry in fs::read_dir(&path)? {
         let entry = entry?;
         if entry.file_name().to_string_lossy().contains(".raw.") {
@@ -50,7 +51,12 @@ pub fn build(pkg: &str) -> Result<()> {
                 }
             }
 
+        } else {
+            env::set_current_dir(&path)?;
+            package(None)?;
+            Command::new("sudo").args(["raw", "install", &pkg]).status()?;
         }
+
     }
     Ok(())
 }
