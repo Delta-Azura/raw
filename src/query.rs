@@ -23,6 +23,7 @@ use anyhow::{Result, Context};
 
 
 pub fn query(path: &String) -> Result<(Vec<String>)> {
+    let actual = std::env::current_dir().unwrap();
     env::set_current_dir("/var/lib/pkg/DB/").unwrap();
     //.map(|(_, name)| name).unwrap().to_string();
     let mut result = Vec::new();
@@ -37,5 +38,6 @@ pub fn query(path: &String) -> Result<(Vec<String>)> {
             }
         }
     }
+    env::set_current_dir(actual)?;
     return Ok(result);
 }
