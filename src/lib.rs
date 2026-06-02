@@ -23,7 +23,10 @@ pub mod help;
 pub mod orphans;
 pub mod template;
 pub mod num_cpus;
+pub mod getlibs;
+
 #[allow(unused_imports)]
+pub use crate::getlibs::get_needed_libs;
 pub use crate::template::template;
 pub use crate::orphans::orphans;
 pub use crate::help::help;

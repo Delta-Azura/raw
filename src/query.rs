@@ -17,21 +17,25 @@
 
 use std::fs;
 use std::env;
+use anyhow::{Result, Context};
 
 
 
-pub fn query(path: &String) {
+
+pub fn query(path: &String) -> Result<(Vec<String>)> {
     env::set_current_dir("/var/lib/pkg/DB/").unwrap();
-    let target = format!("{}", path).split_once('/').map(|(_, target)| target).unwrap().to_string(); 
     //.map(|(_, name)| name).unwrap().to_string();
+    let mut result = Vec::new();
     for e in fs::read_dir(".").unwrap().filter_map(|e| e.ok()) {
         let directory_tmp = e.file_name(); 
         let directory = directory_tmp.to_str().unwrap();
         let compare = fs::read_to_string(format!("/var/lib/pkg/DB/{}/files", directory)).unwrap();
         for line in compare.lines() {
-            if line == target {
+            if line.contains(path) {
             println!("This file/repertory belongs to : {}", directory);
+            result.push(directory.to_string());
             }
         }
     }
+    return Ok(result);
 }

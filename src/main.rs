@@ -40,6 +40,7 @@ mod help;
 mod orphans;
 mod template;
 mod build;
+mod getlibs;
 use crate::build::build;
 use crate::template::template;
 use crate::orphans::orphans;

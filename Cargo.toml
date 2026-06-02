@@ -23,3 +23,4 @@ compress-tools = "0.16.1"
 flate2 = "1.1.9"
 tar = "0.4.46"
 tokio = { version = "1.52.3", features = ["rt", "rt-multi-thread", "macros"] }
+goblin = "0.10.7"

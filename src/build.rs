@@ -50,7 +50,6 @@ pub fn build(pkg: &str) -> Result<()> {
                     Command::new("sudo").args(["raw", "install", &potential_package]).status()?;
                 }
             }
-
         } else {
             env::set_current_dir(&path)?;
             package(None)?;

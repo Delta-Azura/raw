@@ -14,7 +14,6 @@
 //    You should have received a copy of the GNU General Public License along
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
@@ -32,6 +31,9 @@ use flate2::write::GzEncoder;
 use flate2::Compression;
 use crate::download::download_parallel;
 use tokio::task::JoinSet;
+
+use crate::getlibs::scan_pkg_dir;
+use crate::query;
 
 const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
@@ -575,6 +577,19 @@ pub fn package(option: Option<&str>) -> Result<()> {
                 .status()?;
         }
     }
+    let building = building.split_once("/work").map(|(building, _)| building).context("Failed to find pkg/")?;
+    let building = format!("{}/pkg", building);
+    println!("{}", building);
+    let libs = scan_pkg_dir(Path::new(&building));
+    //let libs = get_needed_libs(&building);
+    //let libs = scan_pkg_dir(&building);
+    println!("{:?}", libs);
+    let mut pkgdeps = Vec::new();
+    for i in libs {
+        let pkgdep = query(&format!("{}", i));
+        pkgdeps.push(pkgdep);
+    }
+    println!("{:?}", pkgdeps);
     println!("Generating package");
     let tar = File::create(format!("{}.{}#1.raw.tar.gz", name, version))?;
     let enc = GzEncoder::new(tar, Compression::default());
