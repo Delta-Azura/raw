@@ -64,8 +64,11 @@ pub fn conflict(rawpkg: &String) -> Result<()> {
                         let test = format!("/{}", &list);
                         if test != "/usr/share/info/dir" {
                             if !test.starts_with("/etc") {
-                                let _owner = query(&test);
-                                std::process::exit(1)
+                                if file_type(&test) == true {
+                                    let test = test.split_once("/").map(|(_, test)| test).context("Failed to parse conflict search")?;
+                                    let _owner = query(&test.to_string());
+                                    std::process::exit(1)
+                                }
                             }
 
                         }
