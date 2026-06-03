@@ -33,15 +33,13 @@ pub fn query(path: &String) -> Result<(Vec<String>)> {
         let compare = fs::read_to_string(format!("/var/lib/pkg/DB/{}/files", directory)).unwrap();
         for line in compare.lines() {
             if line.contains(path) {
-                println!("This file/repertory belongs to : {}", directory);
-                if result.contains(&directory.to_string()) {
-                    println!("....");
-                } else {
+                if !result.contains(&directory.to_string()) {
                     result.push(directory.to_string());
                 }
             }
         }
     }
+    println!("This file/repertory belongs to : {:?}", result);
     env::set_current_dir(actual)?;
     return Ok(result);
 }
