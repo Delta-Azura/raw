@@ -581,15 +581,35 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let building = format!("{}/pkg", building);
     println!("{}", building);
     let libs = scan_pkg_dir(Path::new(&building));
-    //let libs = get_needed_libs(&building);
-    //let libs = scan_pkg_dir(&building);
     println!("{:?}", libs);
     let mut pkgdeps = Vec::new();
     for i in libs {
         let pkgdep = query(&format!("{}", i));
         pkgdeps.push(pkgdep);
+    } 
+    let mut metar = String::new();
+    if !pkgdeps.is_empty() {
+        let pkgdeps: Vec<String> = pkgdeps.into_iter().filter_map(|l| l.ok()).flatten().collect();
+        let pkgdeps = pkgdeps.join(" ");
+        let meta = fs::read_to_string("pkg/META")?;
+        for i in meta.lines() {
+            if i.starts_with("R") {
+                metar = i.split_once("R").map(|(_, metar)| metar).context("Rundepends line not found")?.to_string();
+            }
+        }
+        let new_content: String = meta
+            .lines()
+            .filter(|line| !line.starts_with("R"))
+            .collect::<Vec<&str>>()
+            .join("\n");
+        
+        if !metar.is_empty() {
+            fs::write("pkg/META", format!("{}\nR{} {}\n", new_content, metar, pkgdeps))?;
+        } else {
+            println!("ok");
+            fs::write("pkg/META", format!("{}\nR{}\n", new_content, pkgdeps))?;
+        }
     }
-    println!("{:?}", pkgdeps);
     println!("Generating package");
     let tar = File::create(format!("{}.{}#1.raw.tar.gz", name, version))?;
     let enc = GzEncoder::new(tar, Compression::default());
