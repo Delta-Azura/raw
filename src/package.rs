@@ -509,7 +509,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
         }
         let footprint = fs::read_to_string(format!("{}.footprint", name)).unwrap();
         if existing == footprint {
-            println!("Same")
+            println!("{}Footprint didn't change{}", YELLOW, RESET)
         } else {
             for line in existing.lines() {
                 if !footprint.lines().any(|l| l == line) {
@@ -581,7 +581,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let building = format!("{}/pkg", building);
     println!("{}", building);
     let libs = scan_pkg_dir(Path::new(&building));
-    println!("{:?}", libs);
+    println!("{}Runtime libraries found : {:?}{}", GREEN, libs, RESET);
     let mut pkgdeps = Vec::new();
     for i in libs {
         let pkgdep = query(&format!("{}", i));
@@ -606,7 +606,6 @@ pub fn package(option: Option<&str>) -> Result<()> {
         if !metar.is_empty() {
             fs::write("pkg/META", format!("{}\nR{} {}\n", new_content, metar, pkgdeps))?;
         } else {
-            println!("ok");
             fs::write("pkg/META", format!("{}\nR{}\n", new_content, pkgdeps))?;
         }
     }

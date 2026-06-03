@@ -25,7 +25,6 @@ use anyhow::{Result, Context};
 pub fn query(path: &String) -> Result<(Vec<String>)> {
     let actual = std::env::current_dir().unwrap();
     env::set_current_dir("/var/lib/pkg/DB/").unwrap();
-    //.map(|(_, name)| name).unwrap().to_string();
     let mut result = Vec::new();
     for e in fs::read_dir(".").unwrap().filter_map(|e| e.ok()) {
         let directory_tmp = e.file_name(); 
@@ -39,7 +38,7 @@ pub fn query(path: &String) -> Result<(Vec<String>)> {
             }
         }
     }
-    println!("This file/repertory belongs to : {:?}", result);
+    println!("Match found here : {:?}", result);
     env::set_current_dir(actual)?;
     return Ok(result);
 }

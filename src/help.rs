@@ -37,6 +37,6 @@ pub fn help() {
     println!("raw get packagename {}#only in binary mode to install a package{}", YELLOW, RESET);
     println!("raw upgrade {}#to upgrade your system, only in binary mode{}", YELLOW, RESET);
     println!("raw query filename {}#to know who this file belongs to{}", GREEN, RESET);
-    println!("raw package {}#to build the package being in the directory containing it's pkgfile{}", GREEN, RESET);
+    println!("raw package {}#to build the package being in the directory containing its pkgfile{}", GREEN, RESET);
     println!("raw orphans {}to list every orphans remaining on the system and their number{}", GREEN, RESET);
 }
