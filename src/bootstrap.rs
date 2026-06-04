@@ -32,10 +32,10 @@ pub fn bootstrap(rawpkg: &String, bootstrap_path: &str) -> Result<()> {
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
     fs::remove_file("/var/cache/tmp.raw").unwrap();
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap();
-    fs::create_dir_all(format!("{}/var/lib/pkg/DB/{}/", bootstrap_path, pkg)).unwrap();
+    fs::create_dir_all(format!("{}/var/lib/pkg/DB/{}/", bootstrap_path, pkg)).context("Potential corruption in database")?;
     println!("Copying {} to /var/lib/pkg/DB/{}/ in bootstrap directory", rawpkg, pkg);
-    fs::copy(rawpkg, format!("{}/var/lib/pkg/DB/{}/{}", bootstrap_path, pkg, rawpkg)).unwrap();
-    env::set_current_dir(format!("{}/var/lib/pkg/DB/{}", bootstrap_path, pkg)).unwrap();
+    fs::copy(rawpkg, format!("{}/var/lib/pkg/DB/{}/{}", bootstrap_path, pkg, rawpkg)).context("Impossible to copy the package to the required destination")?;
+    env::set_current_dir(format!("{}/var/lib/pkg/DB/{}", bootstrap_path, pkg)).context("Package not found in the database")?;
     if rawpkg.ends_with(".tar.gz") || rawpkg.ends_with(".tgz") {
         extract(rawpkg)?;
     } else {
@@ -49,13 +49,13 @@ pub fn bootstrap(rawpkg: &String, bootstrap_path: &str) -> Result<()> {
         content_only: false,
         ..Default::default()
     };
-    copy_recursive(Path::new("."), Path::new(bootstrap_path), &opts).unwrap();
-    fs::remove_dir_all(format!("{}/var/lib/pkg/DB/{}", bootstrap_path, pkg)).unwrap();
+    copy_recursive(Path::new("."), Path::new(bootstrap_path), &opts).context("Unable to copy the package")?;
+    fs::remove_dir_all(format!("{}/var/lib/pkg/DB/{}", bootstrap_path, pkg)).context("Package doesn't exist in database")?;
     fs::create_dir(format!("{}/var/lib/pkg/DB/{}", bootstrap_path, pkg)).unwrap();
-    fs::copy(format!("{}/META", bootstrap_path), format!("{}/var/lib/pkg/DB/{}/META", bootstrap_path, pkg)).unwrap();
-    fs::copy(format!("{}/{}.footprint", bootstrap_path, pkg), format!("{}/var/lib/pkg/DB/{}/files", bootstrap_path, pkg)).unwrap();
-    fs::remove_file(format!("{}/META", bootstrap_path)).unwrap();
-    fs::remove_file(format!("{}/{}.footprint", bootstrap_path, pkg)).unwrap();
-    fs::remove_file(format!("{}/{}", bootstrap_path, rawpkg)).unwrap();
+    fs::copy(format!("{}/META", bootstrap_path), format!("{}/var/lib/pkg/DB/{}/META", bootstrap_path, pkg)).context("Unable to locate META file")?;
+    fs::copy(format!("{}/{}.footprint", bootstrap_path, pkg), format!("{}/var/lib/pkg/DB/{}/files", bootstrap_path, pkg)).context("Unable to locate the footprint")?;
+    fs::remove_file(format!("{}/META", bootstrap_path))?;
+    fs::remove_file(format!("{}/{}.footprint", bootstrap_path, pkg))?;
+    fs::remove_file(format!("{}/{}", bootstrap_path, rawpkg))?;
     Ok(())
 }
