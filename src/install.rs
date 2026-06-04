@@ -53,7 +53,7 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
                 let content: Vec<String> = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).filter_map(|e| e.file_name().into_string().ok()).collect();
                 if content.iter().any(|f| f.contains(".raw.")) {
                     if content.iter().any(|f| f.contains(rawpkg)) {
-                        let pkgname = content.iter().find(|l| l.contains(".raw.")).unwrap();
+                        let pkgname = content.iter().find(|l| l.contains(".raw.")).context("Failed to find raw package")?;
                         println!("{}", pkgname);
                         install(pkgname, None)?;
                         env::set_current_dir(saved)?;
@@ -77,7 +77,7 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
             conflict(&rawpkg).context("Conflict checking failed")?;
         }
     }
-    let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap();
+    let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).context("Failed to get pkgname")?;
  
     if Path::new(&format!("/tmp/{}", pkg)).exists() {
         env::set_current_dir(format!("/tmp/{}", pkg))?;
@@ -111,7 +111,7 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
         Command::new("bash")
         .args(["-c", &pre_install])
         .status()
-        .unwrap();
+        .context("Pre-installation failed")?;
         fs::remove_file(format!("{}.pre-install", pkg)).context("Unable to remove pre-installation file")?;
     } else {
         println!("No pre-installation required");
@@ -129,7 +129,7 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
         Command::new("bash")
         .args(["-c", &post_install])
         .status()
-        .unwrap();
+        .context("Failed to run post-install")?;
         fs::remove_file(format!("{}.post-install", pkg))?;
     } else {
         println!("No post-installation required");
@@ -156,7 +156,6 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
         fs::remove_file(format!("/{}.post-install", pkg))?;
     }
     let content = fs::read_to_string(format!("/var/lib/pkg/DB/{}/files", pkg))?;
-    //let content = line.lines();
     if content.contains(".desktop") {
         if Path::new("/usr/bin/gtk-update-icon-cache").exists() {
             Command::new("bash")
