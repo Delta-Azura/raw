@@ -137,6 +137,10 @@ raw search htop # Allows you to search for packages both in binary and source mo
 Take a look at :
 <https://github.com/Delta-Azura/onyx>
 
+# If you are reading this from git.great-os.org/alexis/raw
+Report any issue and open a pull request only to : 
+<https://github.com/Delta-Azura/raw>
+
 # Educational purpose
 My target is to be able to learn rust while building this projet.
 From all the tests i ran, not a single one is actually failing no matter what you are trying to do with it.
