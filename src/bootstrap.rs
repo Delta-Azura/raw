@@ -30,8 +30,8 @@ pub fn bootstrap(rawpkg: &String, bootstrap_path: &str) -> Result<()> {
     println!("\x1b[31;1m[WARN] Please use this function only to install base packages, it will not run any post installation nor ldconfig !\x1b[0m");
     //let pkg_name = rawpkg.split_once(".raw").map(|(name, _)| name).unwrap_or(rawpkg);
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
-    fs::remove_file("/var/cache/tmp.raw").unwrap();
-    let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap();
+    fs::remove_file("/var/cache/tmp.raw").context("Failed to remove tmp.raw")?;
+    let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).context("Splitting failed")?;
     fs::create_dir_all(format!("{}/var/lib/pkg/DB/{}/", bootstrap_path, pkg)).context("Potential corruption in database")?;
     println!("Copying {} to /var/lib/pkg/DB/{}/ in bootstrap directory", rawpkg, pkg);
     fs::copy(rawpkg, format!("{}/var/lib/pkg/DB/{}/{}", bootstrap_path, pkg, rawpkg)).context("Impossible to copy the package to the required destination")?;

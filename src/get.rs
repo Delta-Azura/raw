@@ -59,7 +59,7 @@ pub fn get(pkg: &str) -> Result<()> {
         let dependencies = depends(pkg);
         for i in &dependencies {
             get(i)?;
-            File::create(format!("/var/lib/pkg/DB/{}/automatic", i)).unwrap();
+            File::create(format!("/var/lib/pkg/DB/{}/automatic", i)).context("Failed to add automatic file for oprhans")?;
         }
     } else {
         println!("Not found");

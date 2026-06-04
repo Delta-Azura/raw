@@ -26,7 +26,7 @@ use anyhow::Context;
 
 pub fn extract(tarball: &String) -> Result<()> {
     //let source = File::open(tarball).unwrap();
-    let mut source = File::open(tarball)?;
+    let mut source = File::open(tarball).context("Failed to open source file to extract")?;
     let dest = Path::new(".");
     uncompress_archive(&mut source, &dest, Ownership::Ignore).context("Uncompressing failed")?;
     Ok(())

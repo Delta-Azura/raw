@@ -44,7 +44,7 @@ pub fn getconf() ->  Result<(String, String, String), String> {
             }
         }
         false => {
-            println!("No mode specified, aborting");
+            println!("/etc/raw.conf file not found");
             std::process::exit(1)
         }
         
