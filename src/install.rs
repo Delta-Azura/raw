@@ -121,7 +121,7 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
     Command::new("bash")
     .args(["-c", "ldconfig"])
     .status()
-    .unwrap();
+    .context("Failed to run ldconfig")?;
     let automatic = Path::new("automatic").exists();
     if Path::new(&format!("{}.post-install", pkg)).exists() {
         let post_install = format!("chmod u+x {}.post-install && ./{}.post-install", pkg, pkg);
@@ -136,33 +136,33 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
     }
     fs::create_dir(format!("/var/lib/pkg/DB/{}", pkg)).context(format!("/var/lib/pkg/DB/{} already exists", pkg))?;
     if Path::new(&format!("/{}.pre-remove", pkg)).exists() {
-        fs::copy(format!("/{}.pre-remove", pkg), format!("/var/lib/pkg/DB/{}/{}.pre-remove", pkg, pkg)).unwrap();
+        fs::copy(format!("/{}.pre-remove", pkg), format!("/var/lib/pkg/DB/{}/{}.pre-remove", pkg, pkg))?;
     }
     if Path::new(&format!("/{}.post-remove", pkg)).exists() {
-        fs::copy(format!("/{}.post-remove", pkg), format!("/var/lib/pkg/DB/{}/{}.post-remove", pkg, pkg)).unwrap();
+        fs::copy(format!("/{}.post-remove", pkg), format!("/var/lib/pkg/DB/{}/{}.post-remove", pkg, pkg))?;
     }
     if automatic == true {
-        fs::copy("/automatic", format!("/var/lib/pkg/DB/{}/automatic", pkg)).unwrap();
+        fs::copy("/automatic", format!("/var/lib/pkg/DB/{}/automatic", pkg))?;
     }
-    fs::copy("/META", format!("/var/lib/pkg/DB/{}/META", pkg)).unwrap();
-    fs::copy(format!("/{}.footprint", pkg), format!("/var/lib/pkg/DB/{}/files", pkg)).unwrap();
-    fs::remove_file("/META").unwrap();
-    fs::remove_file(format!("/{}.footprint", pkg)).unwrap();
-    fs::remove_file(format!("/{}", rawpkg)).unwrap();
+    fs::copy("/META", format!("/var/lib/pkg/DB/{}/META", pkg))?;
+    fs::copy(format!("/{}.footprint", pkg), format!("/var/lib/pkg/DB/{}/files", pkg))?;
+    fs::remove_file("/META")?;
+    fs::remove_file(format!("/{}.footprint", pkg))?;
+    fs::remove_file(format!("/{}", rawpkg))?;
     if Path::new(&format!("/{}.pre-install", pkg)).exists() {
-        fs::remove_file(format!("/{}.pre-install", pkg)).unwrap();
+        fs::remove_file(format!("/{}.pre-install", pkg))?;
     }
     if Path::new(&format!("/{}.post-install", pkg)).exists() {
-        fs::remove_file(format!("/{}.post-install", pkg)).unwrap();
+        fs::remove_file(format!("/{}.post-install", pkg))?;
     }
-    let content = fs::read_to_string(format!("/var/lib/pkg/DB/{}/files", pkg)).unwrap();
+    let content = fs::read_to_string(format!("/var/lib/pkg/DB/{}/files", pkg))?;
     //let content = line.lines();
     if content.contains(".desktop") {
         if Path::new("/usr/bin/gtk-update-icon-cache").exists() {
             Command::new("bash")
             .args(["-c", "glib-compile-schemas /usr/share/glib-2.0/schemas"])
             .status()
-            .unwrap();
+            .context("Failed to recompile schemas")?;
             println!("Compiling gschemas")
         }
         if Path::new("/usr/bin/gtk-update-icon-cache").exists() {
@@ -175,7 +175,7 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
                     Command::new("bash")
                     .args(["-c", &directory])
                     .status()
-                    .unwrap();
+                    .context("Failed to update icon cache")?;
                     println!("Updating icon cache");
                 }
                 

@@ -35,8 +35,8 @@ pub fn build(pkg: &str) -> Result<()> {
             env::set_current_dir(&path)?;
             println!("current path is {}", path);
             let potential_package = entry.file_name().to_string_lossy().to_string();
-            let pkgver =  entry.file_name().to_string_lossy().split_once('.').map(|(_, pkgver)| pkgver).unwrap().split_once("#").map(|(pkgver, _)| pkgver).unwrap().to_string();
-            let pkgrel = entry.file_name().to_string_lossy().split_once('#').map(|(_, pkgver)| pkgver).unwrap().split_once(".").map(|(pkgver, _)| pkgver).unwrap().to_string();
+            let pkgver =  entry.file_name().to_string_lossy().split_once('.').map(|(_, pkgver)| pkgver).context("Version parsing failed")?.split_once("#").map(|(pkgver, _)| pkgver).context("Version parsing failed")?.to_string();
+            let pkgrel = entry.file_name().to_string_lossy().split_once('#').map(|(_, pkgver)| pkgver).context("Release parsing failed")?.split_once(".").map(|(pkgver, _)| pkgver).context("Release parsing failed")?.to_string();
             if !Path::new("Pkgfile").exists() {
                 Command::new("sudo").args(["raw", "install", &potential_package]).status()?;
             } else {

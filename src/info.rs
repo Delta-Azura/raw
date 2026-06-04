@@ -29,15 +29,15 @@ pub fn info(rawpkg: &String) -> Result<()> {
     let file = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", rawpkg)).unwrap();
     // Adding vect to be able to read properly, without this it would be unable to read if the order isn't respected
     let content: Vec<String> = file.lines().map(|l| l.to_string()).collect();
-    let name = content.iter().find(|l| l.starts_with('N')).unwrap().split_once('N').map(|(_, name)| name).unwrap().to_string();
+    let name = content.iter().find(|l| l.starts_with('N')).context("Failed to get pkgname")?.split_once('N').map(|(_, name)| name).context("Failed to get pkgname")?.to_string();
     println!("Name : {}", name);
-    let version = content.iter().find(|l| l.starts_with('V')).unwrap().to_string().split_once('V').map(|(_, version)| version).unwrap().to_string();
+    let version = content.iter().find(|l| l.starts_with('V')).context("Failed to get pkgver")?.to_string().split_once('V').map(|(_, version)| version).context("Failed to get pkgver")?.to_string();
     println!("Version = {}", version);
-    let description = content.iter().find(|l| l.starts_with('D')).unwrap().to_string().split_once('D').map(|(_, description)| description).unwrap().to_string();
+    let description = content.iter().find(|l| l.starts_with('D')).context("Failed to get description")?.to_string().split_once('D').map(|(_, description)| description).context("Failed to get description")?.to_string();
     println!("Description = {}", description);
-    let packager = content.iter().find(|l| l.starts_with('P')).unwrap().to_string().split_once('P').map(|(_, packager)| packager).unwrap().to_string();
+    let packager = content.iter().find(|l| l.starts_with('P')).context("Failed to get packager name")?.to_string().split_once('P').map(|(_, packager)| packager).context("Failed to get packager name")?.to_string();
     println!("Packager = {}", packager);
-    let collection = content.iter().find(|l| l.starts_with('c')).unwrap().to_string().split_once('c').map(|(_, collection)| collection).unwrap().to_string();
+    let collection = content.iter().find(|l| l.starts_with('c')).context("Failed to get collection")?.to_string().split_once('c').map(|(_, collection)| collection).context("Failed to get collection")?.to_string();
     println!("Collection = {}", collection);
     if Path::new(&format!("/var/lib/pkg/DB/{}/automatic", rawpkg)).exists() {
         println!("Manual Installation : NO");
