@@ -116,7 +116,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let pkgfile = fs::read_to_string("Pkgfile").context("Package file doesn't exist")?;
     let keep_sources = "true";
     for i in pkgfile.lines() {
-        let keep_sources = if i.starts_with("RAW_KEEP_SOURCES=false") {
+        let _keep_sources = if i.starts_with("RAW_KEEP_SOURCES=false") {
             "false"
         } else {
             "true"

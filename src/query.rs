@@ -17,12 +17,12 @@
 
 use std::fs;
 use std::env;
-use anyhow::{Result, Context};
+use anyhow::Result;
 
 
 
 
-pub fn query(path: &String) -> Result<(Vec<String>)> {
+pub fn query(path: &String) -> Result<Vec<String>> {
     let actual = std::env::current_dir().unwrap();
     env::set_current_dir("/var/lib/pkg/DB/").unwrap();
     let mut result = Vec::new();

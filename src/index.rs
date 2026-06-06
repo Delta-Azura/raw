@@ -27,7 +27,7 @@ use std::fs;
 
 
 pub fn index() -> Result <()> {
-    if let Ok((mode, path, _trash)) = getconf() {
+    if let Ok((_mode, path, _trash)) = getconf() {
         let path = if !path.ends_with("/") {
             format!("{}/", path)
         } else {

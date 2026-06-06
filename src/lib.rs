@@ -43,7 +43,6 @@ pub use crate::query::query;
 pub use crate::remove::remove;
 pub use crate::update::update;
 pub use crate::package::package;
-use anyhow::{Result};
 pub use crate::upgrade::upgrade;
 pub use crate::search::search;
 pub use crate::remove_cache::remove_cache;
