@@ -43,7 +43,7 @@ pub fn get(pkg: &str) -> Result<()> {
             println!("Package doesn't exists");
             std::process::exit(1)
         }
-        let line = index_raw.lines().find(|l| l.contains(&format!("/{}_", pkg))).unwrap();
+        let line = index_raw.lines().find(|l| l.contains(&format!("/{}_", pkg))).context("Failed to get pkgname")?;
         let version = line.split_once('_').map(|(_, version)| version).unwrap().split_once('#').map(|(version, _)| version).context("Failed to get package name")?;
         let release = line.split_once('#').map(|(_, release)| release).context("Failed to get package name")?;
         let collection = line.split_once('/').map(|(collection, _)| collection).context("Failed to get package name")?;
