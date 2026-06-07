@@ -48,7 +48,7 @@ pub fn get(pkg: &str) -> Result<()> {
         let release = line.split_once('#').map(|(_, release)| release).context("Failed to get package name")?;
         let collection = line.split_once('/').map(|(collection, _)| collection).context("Failed to get package name")?;
         // %23 = #
-        let path = format!("{}/{}/{}/{}.{}%23{}.raw.tar.xz", url, collection, pkg, pkg, version, release);
+        let path = format!("{}/{}/{}/{}.{}%23{}.raw.tar.gz", url, collection, pkg, pkg, version, release);
         println!("{}", path);
         env::set_current_dir(root).context("Failed to change to the download directory")?;
         let tarball = download(&path)?;
