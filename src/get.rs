@@ -29,7 +29,7 @@ use std::fs::File;
 
 
 pub fn get(pkg: &str) -> Result<()> {
-    let (mode, _trash, url) = getconf().unwrap();
+    let (mode, root, url) = getconf().unwrap();
     if mode != "binary" {
         println!("Raw isn't used in binary mode, cannot connect to the repo");
         std::process::exit(1);
@@ -50,10 +50,12 @@ pub fn get(pkg: &str) -> Result<()> {
         // %23 = #
         let path = format!("{}/{}/{}/{}.{}%23{}.raw.tar.xz", url, collection, pkg, pkg, version, release);
         println!("{}", path);
+        env::set_current_dir(root).context("Failed to change to the download directory")?;
         let tarball = download(&path)?;
         if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
             update(&tarball)?; 
         } else {
+            //fs::copy(tarball, )
             install(&tarball, None)?;
         }
         let dependencies = depends(pkg);
