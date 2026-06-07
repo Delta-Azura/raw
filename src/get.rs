@@ -38,8 +38,8 @@ pub fn get(pkg: &str) -> Result<()> {
     let metadata = download(&format!("{}/index.raw", url))?;
     let index_raw = fs::read_to_string(metadata).context("Download failed")?;
     if index_raw.contains(&format!("{}", pkg)) {
-        let rawpkg = index_raw.lines().any(|l| l.contains(&format!("/{}_", pkg)));
-        if rawpkg == true {
+        let rawpkg = index_raw.lines().any(|l| l.contains(&format!("/{}/", pkg)));
+        if rawpkg != true {
             println!("Package doesn't exists");
             std::process::exit(1)
         }
