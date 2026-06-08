@@ -24,7 +24,7 @@ use std::thread;
 use std::time::Duration;
 use crate::extract::extract;
 use anyhow::{Result, Context};
-
+use std::collections::HashSet;
 
 pub fn conflict(rawpkg: &String) -> Result<()> {
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap().to_string();
@@ -38,6 +38,7 @@ pub fn conflict(rawpkg: &String) -> Result<()> {
     env::set_current_dir(format!("/tmp/{}", pkg)).context("Failed to channge directory to /tmp/pkgname")?;
     extract(rawpkg)?;
     let compare = fs::read_to_string(format!("/tmp/{}/{}.footprint", pkg, pkg)).context("Failed to read footprint")?;
+    let compare_set: HashSet<&str> = compare.lines().filter_map(|l| l.split_whitespace().next()).collect();
     //let compare = binding.split_whitespace().next().unwrap();
     for e in fs::read_dir("/var/lib/pkg/DB/.").unwrap().filter_map(|e| e.ok()) {
         let directory_tmp = e.file_name();
@@ -54,27 +55,25 @@ pub fn conflict(rawpkg: &String) -> Result<()> {
         for lines in target.lines() {
             let lines = lines.split_whitespace().next().unwrap_or("");
             //let release = variables.next().unwrap();
-            for line in compare.lines() {
-                let line = line.split_whitespace().next().unwrap_or("");
-                if line.split_whitespace().next().unwrap_or("") == lines {                    
-                    let list = format!("{}", lines);
-                    if list.is_empty() { continue; }
-                    //file_type(&list);
-                    if file_type(&list) == true {
-                        let test = format!("/{}", &list);
-                        if test != "/usr/share/info/dir" {
-                            if !test.starts_with("/etc") {
-                                if file_type(&test) == true {
-                                    let test = test.split_once("/").map(|(_, test)| test).context("Failed to parse conflict search")?;
-                                    let _owner = query(&test.to_string());
-                                    std::process::exit(1)
-                                }
+            if compare_set.contains(lines) {                    
+                let list = format!("{}", lines);
+                if list.is_empty() { continue; }
+                //file_type(&list);
+                if file_type(&list) == true {
+                    let test = format!("/{}", &list);
+                    if test != "/usr/share/info/dir" {
+                        if !test.starts_with("/etc") {
+                            if file_type(&test) == true {
+                                let test = test.split_once("/").map(|(_, test)| test).context("Failed to parse conflict search")?;
+                                let _owner = query(&test.to_string());
+                                std::process::exit(1)
                             }
-
                         }
-                        
+
                     }
+                    
                 }
+                
             }
         }
     }

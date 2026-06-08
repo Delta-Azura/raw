@@ -77,7 +77,6 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
             conflict(&rawpkg).context("Conflict checking failed")?;
         }
     }
-    println!("test");
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).context("Failed to get pkgname")?;
  
     if Path::new(&format!("/tmp/{}", pkg)).exists() {
