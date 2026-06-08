@@ -146,3 +146,153 @@ My target is to be able to learn rust while building this projet.
 From all the tests i ran, not a single one is actually failing no matter what you are trying to do with it.
 I built this is one week as a learning project.
 It's a fully functional package manager, 0 compilation error and it handles conflict detection, dependecy resolution and so on, please refer to the beggining of the README.
+
+
+# Qu'est-ce que RAW
+Raw est un projet de gestionnaire de paquets from scratch pour Onyx.
+Il est conçu pour être rapide, léger et memory-safe.
+
+# Fonctionnalités :
+- Compilation de paquets depuis des Pkgfiles
+- Installation, suppression et mise à jour de ces paquets
+- Détection des conflits entre fichiers et paquets
+- Listage des libs installées par un paquet
+- Recherche du propriétaire d'un fichier via une requête
+- Installation de paquets depuis un dépôt distant
+- Mise en place d'un index pour le dépôt distant
+- Mode binaire et mode source permettant d'utiliser la compilation de manière transparente
+- Listage des paquets installés
+- Bootstrap de paquets dans un dossier ou dans un chemin donné
+- Détection du nombre maximum de cœurs disponibles pour la compilation
+- Verrous pour ne pas corrompre votre installation
+- Uniquement lié au kernel, glibc et xz à l'exécution
+- Support des scripts pre et post installation
+- Support des fonctions prepare et package ainsi que du type de Pkgfile build=quelquechose
+- /etc préservé
+- Affichage des symlinks dans les footprints
+- Téléchargement parallèle des sources -> téléchargement parallèle des binaires à venir
+- Support des makedepends
+
+# Exemple de Pkgfile :
+```bash
+description=" The Nano package contains a small, simple text editor which aims to replace Pico, the default editor in the Pine package. "
+name=nano
+version=9.0
+release=1
+packager=alexis
+source=(https://www.nano-editor.org/dist/v9/nano-${version}.tar.xz)
+makedepends="htop" #Ceci est un exemple
+rundepends="kernel-headers libpng" #Ceci est un exemple pour montrer la syntaxe
+build() {
+cd $name-$version
+./configure --prefix=/usr     \
+            --sysconfdir=/etc \
+            --enable-utf8     \
+            --docdir=/usr/share/doc/nano-${version} &&
+make
+make DESTDIR=$PKG install
+install -v -m644 doc/{nano.html,sample.nanorc} $PKG/usr/share/doc/nano-${version}
+}
+```
+
+# Exemple de raw.conf
+```bash
+alexis [ ~/Onyx ]$ cat /etc/raw.conf
+mode=binary
+
+root=/home/alexis/Onyx
+
+url=https://remoterepo
+alexis [ ~/Onyx ]$
+
+alexis [ ~/Onyx ]$ cat /etc/raw.conf
+mode=source
+
+root=/home/alexis/Onyx
+alexis [ ~/Onyx ]$
+```
+
+# Exemple de nom de fichier post/pre-installation
+```
+pkgname.post-install
+pkgname.pre-install
+```
+
+# Exemple de Pkgfile avec build=quelquechose :
+```bash
+alexis [ ~/htop ]$ cat Pkgfile
+description=" The htop package provides a TUI [1] system monitor and has became well-known for its ease-of-use and comprehensive features. "
+name=htop
+version=3.5.1
+release=1
+packager=alexis
+depends="nano"
+source=("https://github.com/htop-dev/htop/releases/download/${version}/htop-${version}.tar.xz")
+```
+Si ce champ est laissé vide, raw cherchera dans le répertoire /etc/raw.d/ un fichier nommé build-default, qui doit ressembler à ceci :
+```bash
+alexis [ ~/htop ]$ cat /etc/raw.d/build-default
+cd $name-$version
+./configure --prefix=/usr &&
+make
+make DESTDIR=$PKG install
+```
+
+Vous pouvez également utiliser ce template de Pkgfile :
+```bash
+alexis [ ~/htop ]$ cat Pkgfile
+description=" The htop package provides a TUI [1] system monitor and has became well-known for its ease-of-use and comprehensive features. "
+name=htop
+version=3.5.1
+release=1
+packager=alexis
+depends="nano"
+source=("https://github.com/htop-dev/htop/releases/download/${version}/htop-${version}.tar.xz")
+
+build=make
+```
+Dans ce cas, raw cherchera make, défini par build ici, dans le fichier /etc/raw.d/make.
+
+# ATTENTION
+Raw détecte automatiquement si une fonction prepare ou package est présente dans le Pkgfile. Ne laissez cependant pas une fonction package, prepare ou build avec un '#' en début de ligne — raw ne la détectera pas, exécutera la fonction commentée et la compilation échouera.
+
+# Comment le compiler ?
+Téléchargez la dernière release, décompressez l'archive et entrez dans le répertoire.
+Exécutez :
+```bash
+cargo build --release
+sudo cp target/release/raw /usr/bin/
+sudo touch /etc/raw.conf
+```
+Vous êtes prêt !
+
+# Utilisation basique :
+```bash
+raw package # Compile un paquet en étant dans un répertoire contenant un Pkgfile valide
+sudo raw install htop.3.5.1#1.raw.tar.gz # Installe le paquet généré
+raw info htop # Obtenir les informations de base
+raw query /usr/bin/htop # Savoir à qui appartient ce fichier
+raw libs htop # Lister toutes les bibliothèques appartenant à htop
+raw libs systemd all # Lister toutes les bibliothèques de systemd y compris les libs /security
+raw list # Lister tous les paquets installés
+sudo raw update htop.3.5.1#1.raw.tar.gz # Mettre à jour htop
+raw index # En mode source, génère un index utile pour la commande suivante
+raw build htop # Fonctionne peu importe le chemin et proposera d'installer/mettre à jour
+sudo raw upgrade # Permet de mettre à jour vos paquets si vous utilisez un dépôt binaire distant
+sudo raw get htop # Installe des paquets depuis un dépôt binaire distant et gère les dépendances
+raw search htop # Recherche des paquets en mode binaire et source
+```
+
+# Où trouver des Pkgfiles fonctionnels pour mon système LFS ?
+Jetez un œil à :
+<https://github.com/Delta-Azura/onyx>
+
+# Si vous lisez ceci depuis git.great-os.org/alexis/raw
+Signalez les problèmes et ouvrez des pull requests uniquement sur :
+<https://github.com/Delta-Azura/raw>
+
+# Objectif pédagogique
+Mon objectif est d'apprendre Rust en construisant ce projet.
+D'après tous les tests que j'ai effectués, aucun n'échoue quelle que soit l'opération tentée.
+Je l'ai construit en une semaine comme projet d'apprentissage.
+C'est un gestionnaire de paquets pleinement fonctionnel, 0 erreur de compilation, avec détection des conflits, résolution des dépendances, etc. Référez-vous au début du README pour plus de détails.
