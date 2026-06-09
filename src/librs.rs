@@ -22,7 +22,12 @@ pub fn libs(pkg : &str,option: Option<&str>) -> Result<()> {
     if option == Some("all") {
         let libs = format!("/var/lib/pkg/DB/{}/files", pkg);
         let output = fs::read_to_string(libs).context("Package isn't installed")?;
-        for i in output.lines() {
+        let mut output: Vec<&str> = output.lines().collect();
+        output.sort_by_key(|s| {
+            let (dir, file) = s.rsplit_once("/").unwrap_or(("", s));
+            (dir.to_string(), file.to_string())
+        });
+        for i in output.iter() {
             if i.ends_with(".so") || i.contains(".so.") {
                 println!("{}", i);
             }
@@ -30,7 +35,12 @@ pub fn libs(pkg : &str,option: Option<&str>) -> Result<()> {
     } else {
         let libs = format!("/var/lib/pkg/DB/{}/files", pkg);
         let output = fs::read_to_string(libs).context("Package isn't installed")?;
-        for i in output.lines() {
+        let mut output: Vec<&str> = output.lines().collect();
+        output.sort_by_key(|s| {
+            let (dir, file) = s.rsplit_once("/").unwrap_or(("", s));
+            (dir.to_string(), file.to_string())
+        });
+        for i in output.iter() {
             if !i.contains("security") {
                 if i.ends_with(".so") || i.contains(".so.") {
                     println!("{}", i);
