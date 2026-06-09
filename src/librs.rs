@@ -23,7 +23,7 @@ pub fn libs(pkg : &str,option: Option<&str>) -> Result<()> {
         let libs = format!("/var/lib/pkg/DB/{}/files", pkg);
         let output = fs::read_to_string(libs).context("Package isn't installed")?;
         for i in output.lines() {
-            if i.contains(".so") {
+            if i.ends_with(".so") || i.contains(".so.") {
                 println!("{}", i);
             }
         }
@@ -32,7 +32,7 @@ pub fn libs(pkg : &str,option: Option<&str>) -> Result<()> {
         let output = fs::read_to_string(libs).context("Package isn't installed")?;
         for i in output.lines() {
             if !i.contains("security") {
-                if i.contains(".so") {
+                if i.ends_with(".so") || i.contains(".so.") {
                     println!("{}", i);
                 }
             }
