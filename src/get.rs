@@ -56,7 +56,7 @@ pub fn get(pkg: &str) -> Result<()> {
             update(&tarball)?; 
         } else {
             //fs::copy(tarball, )
-            install(&tarball, None)?;
+            install(&tarball, false)?;
         }
         let dependencies = depends(pkg);
         for i in &dependencies {

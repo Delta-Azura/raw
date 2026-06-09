@@ -34,7 +34,7 @@ const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
 
 
-pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
+pub fn install(rawpkg: &String, option: bool) -> Result<()> {
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
     fs::remove_file("/var/cache/tmp.raw")?;
     if !rawpkg.contains(".raw.") {
@@ -55,11 +55,13 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
                     if content.iter().any(|f| f.contains(rawpkg)) {
                         let pkgname = content.iter().find(|l| l.contains(".raw.")).context("Failed to find raw package")?;
                         println!("{}", pkgname);
-                        install(pkgname, None)?;
+                        if option == true {
+                            install(pkgname, true)?;
+                        }
                         env::set_current_dir(saved)?;
                         let depends: Vec<String> = depends(rawpkg);
                         for i in depends {
-                            install(&i, None)?;
+                            install(&i, false)?;
                         }
                         return Ok(());
                     }
@@ -67,12 +69,10 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
             }
         }
     }
-    eprintln!("Checking conflict for rawpkg: {:?}", rawpkg);
-    if Path::new("/tmp/conflict").exists() {
-        fs::remove_file("/tmp/conflict")?;
-    } else {
-        if Some("-f") == option {
-            println!("overwriting");
+    if option == false {
+        eprintln!("Checking conflict for rawpkg: {:?}", rawpkg);
+        if Path::new("/tmp/conflict").exists() {
+            fs::remove_file("/tmp/conflict")?;
         } else {
             conflict(&rawpkg).context("Conflict checking failed")?;
         }
@@ -90,14 +90,14 @@ pub fn install(rawpkg: &String, option: Option<&str>) -> Result<()> {
     }
     env::set_current_dir(format!("/tmp/{}", pkg))?;
     let opts = match option {
-        Some("-f") => CopyOptions {
+        true => CopyOptions {
             overwrite: true,
             follow_symlinks: false,
             restrict_symlinks: false,
             content_only: false,
             ..Default::default()
         },
-        _ => CopyOptions {
+        false => CopyOptions {
             overwrite: false,
             follow_symlinks: false,
             restrict_symlinks: false,

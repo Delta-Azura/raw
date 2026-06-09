@@ -24,12 +24,29 @@ use std::fs::File;
 use std::process::Command;
 
 
-pub fn remove(rawpkg: &String) -> Result<()> {
+pub fn remove(rawpkg: &String, option: bool) -> Result<()> {
     File::create("/var/cache/raw.tmp")?;
     fs::remove_file("/var/cache/raw.tmp")?;
     let current = current_dir()?;
     let check = format!("/var/lib/pkg/DB/{}", rawpkg);
+
     if Path::new(&check).exists() {
+        if option == false {
+            for e in fs::read_dir("/var/lib/pkg/DB/.").unwrap().filter_map(|e| e.ok()) {
+                let directory = e.file_name();
+                let directory = directory.to_str().unwrap();
+                let meta = format!("/var/lib/pkg/DB/{}/META", directory);
+                // checking corrupted packages
+                if meta.contains(&format!("{}", rawpkg)) {
+                    continue;
+                }
+                let meta = fs::read_to_string(meta)?;
+                if meta.contains(rawpkg) {
+                    println!("Impossible to remove this package as it's a necessary depend for {}", directory);
+                    std::process::exit(1)
+                }
+            }
+        }
         env::set_current_dir(format!("/var/lib/pkg/DB/{}", rawpkg))?;
         if Path::new(&format!("/var/lib/pkg/DB/{}/{}.pre-remove", rawpkg, rawpkg)).exists() {
             let pre_remove = format!("chmod u+x {}.pre-remove && ./{}.pre-remove", rawpkg, rawpkg);

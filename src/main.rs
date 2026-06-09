@@ -117,11 +117,12 @@ fn main() -> Result<()> {
 
     if args[1] == "install" {
         let argument = format!("{}", args[2]);
+        println!("{}", argument);
         if args.len() < 4 {
-            install(&argument, None)?;
+            install(&argument, false)?;
         } else {
             if args[3] == "-f" {
-                install(&argument, Some("-f"))?;
+                install(&argument, true)?;
             }
         }
         return Ok(());
@@ -134,7 +135,13 @@ fn main() -> Result<()> {
     }
     if args[1] == "remove" {
         let argument = format!("{}", args[2]);
-        remove(&argument)?;
+        if args.len() < 4 {
+            remove(&argument, false);
+        } else {
+            if args[3] == "-f" {
+                remove(&argument, true);
+            }
+        }
         return Ok(())
     }
     if args[1] == "query" {

@@ -34,7 +34,7 @@ pub fn depends(pkg: &str) -> Vec<String> {
             println!("{} isn't installed", rawpkg);
             let configuration = fs::read_to_string("/etc/raw.conf").context("Raw.conf doesn't exist").unwrap();
             if configuration.contains("mode source") {
-                let _ = install(&rawpkg, None);
+                let _ = install(&rawpkg, false);
             } else {
                 let _ = get(&rawpkg);
             }
