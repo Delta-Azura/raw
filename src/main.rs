@@ -41,6 +41,7 @@ mod orphans;
 mod template;
 mod build;
 mod getlibs;
+mod changelog;
 use crate::build::build;
 use crate::template::template;
 use crate::orphans::orphans;
