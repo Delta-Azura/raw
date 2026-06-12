@@ -36,9 +36,10 @@ pub fn upgrade() -> Result<()> {
     for i in index_raw.lines() {
         let i = i.trim();
         if i.is_empty() { continue; }
-        let pkg = i.split_once('_').map(|(pkg, _)| pkg).unwrap().split_once('/').map(|(_, pkg)| pkg).unwrap();
-        let version = i.split_once('_').map(|(_, version)| version).unwrap().split_once('#').map(|(version, _)| version).unwrap();
-        let release = i.split_once('#').map(|(_, release)| release).unwrap();
+        let pkg = i.split_once("/Pkgfile").map(|(pkg, _)| pkg).context("Failed to get package name")?.rsplit_once("/").map(|(_, name)| name).context("Failed to get package name")?;
+        let meta: Vec<&str> = i.split("|").collect();
+        let version = meta.get(1).context("Failed to get version")?;
+        let release = meta.get(1).context("Failed to get release")?;
         if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
             let file = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", pkg)).unwrap();
             let content: Vec<String> = file.lines().map(|l| l.to_string()).collect();

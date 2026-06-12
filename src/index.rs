@@ -61,7 +61,7 @@ pub fn index() -> Result <()> {
                         } else {
                             &release
                         };
-                        writeln!(rawfile, "{}", &format!("{}_{}#{}", entries, version, release))?;
+                        writeln!(rawfile, "{}", &format!("{}|{}|{}", entries, version, release))?;
                     } else {
                         continue;
                     }
@@ -86,7 +86,7 @@ pub fn index() -> Result <()> {
                     } else {
                         &release
                     };
-                    writeln!(rawfile, "{}", &format!("{}_{}#{}", entries, version, release))?;
+                    writeln!(rawfile, "{}", &format!("{}|{}|{}", entries, version, release))?;
                 } else {
                     continue;
                 }

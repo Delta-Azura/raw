@@ -44,8 +44,12 @@ pub fn get(pkg: &str) -> Result<()> {
             std::process::exit(1)
         }
         let line = index_raw.lines().find(|l| l.contains(&format!("/{}/", pkg))).context("Failed to get pkgname")?;
-        let version = line.split_once('_').map(|(_, version)| version).unwrap().split_once('#').map(|(version, _)| version).context("Failed to get package name")?;
-        let release = line.split_once('#').map(|(_, release)| release).context("Failed to get package name")?;
+        let data: Vec<&str> = line.split("|").collect();
+        //let (version, release) = (data[1], data[2]);
+        let version = data.get(1).context("Missing version")?;
+        let release = data.get(2).context("Missing release")?;
+        //let version = line.split_once('_').map(|(_, version)| version).unwrap().split_once('#').map(|(version, _)| version).context("Failed to get package name")?;
+        //let release = line.split_once('#').map(|(_, release)| release).context("Failed to get package name")?;
         let collection = line.split_once('/').map(|(collection, _)| collection).context("Failed to get package name")?;
         // %23 = #
         let path = format!("{}/{}/{}/{}.{}%23{}.raw.tar.gz", url, collection, pkg, pkg, version, release);
