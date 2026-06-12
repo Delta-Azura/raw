@@ -46,8 +46,9 @@ pub fn changelog() -> Result<()> {
                         let meta = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", name)).context(format!("Failed to read {} META file", name))?;
                         let version = meta.lines().find(|l| l.starts_with("V")).context("Failed to get version")?.split_once("V").map(|(_, version)| version).context("Failed to get version")?;
                         let release = meta.lines().find(|l| l.starts_with("r")).context("Failed to get release line")?.split_once("r").map(|(_, release)| release).context("Failed to get version name")?;
-                        let distversion = s.split_once("_").map(|(_, version)| version).context("Failed to get version")?.split_once("#").map(|(version, _)| version).context("Failed to get version")?;
-                        let distrelease = s.split_once("#").map(|(_, release)| release).context("Failed to get release")?;
+                        let meta: Vec<&str> = s.split("|").collect();
+                        let distversion = meta.get(1).context("Failed to get distant version")?.to_string();
+                        let distrelease = meta.get(2).context("Failed to get distant release")?.to_string();
                         if version != distversion || release != distrelease {
                             upgrade.push(name);
                         }

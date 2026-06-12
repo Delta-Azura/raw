@@ -137,17 +137,17 @@ fn main() -> Result<()> {
     if args[1] == "remove" {
         let argument = format!("{}", args[2]);
         if args.len() < 4 {
-            remove(&argument, false);
+            remove(&argument, false)?;
         } else {
             if args[3] == "-f" {
-                remove(&argument, true);
+                remove(&argument, true)?;
             }
         }
         return Ok(())
     }
     if args[1] == "query" {
         let argument = format!("{}", args[2]);
-        query(&argument);
+        query(&argument)?;
         return Ok(())
     }
     if args[1] == "update" {
