@@ -33,8 +33,8 @@ pub fn index() -> Result <()> {
         } else {
             path
         };
-        if !Path::new("index.raw").exists() {
-            File::create("index.raw")?;
+        if Path::new("index.raw").exists() {
+            fs::remove_file("index.raw")?;
         }
         let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
         for entry in WalkDir::new(&path.trim()).min_depth(2) {

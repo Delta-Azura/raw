@@ -29,6 +29,7 @@ use crate::file_type::file_type;
 use crate::getconf::getconf;
 use crate::depends::depends;
 use crate::extract::extract;
+use crate::createsha;
 
 const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
@@ -36,6 +37,23 @@ const RESET: &str = "\x1b[0m";
 
 pub fn install(rawpkg: &String, option: bool) -> Result<()> {
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
+   let path = if Path::new("/etc/raw.conf").exists() {
+        let conf = fs::read_to_string("/etc/raw.conf").context("Failed to open raw.conf file")?;
+        let source = conf
+            .lines()
+            .find(|l| l.starts_with("source="))
+            .and_then(|l| l.split_once("source=").map(|(_, p)| p.to_string()));
+        let root = conf
+            .lines()
+            .find(|l| l.starts_with("root="))
+            .and_then(|l| l.split_once("root=").map(|(_, p)| p.to_string()));
+        source.or(root).context("No source path or root path defined in raw.conf")?
+
+    } else {
+        println!("No need to check signature");
+        "none".to_string()
+    };
+
     fs::remove_file("/var/cache/tmp.raw")?;
     if !rawpkg.contains(".raw.") {
         let (mode, root, _trash) = getconf().unwrap();
@@ -69,6 +87,7 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
             }
         }
     }
+
     if option == false {
         eprintln!("Checking conflict for rawpkg: {:?}", rawpkg);
         if Path::new("/tmp/conflict").exists() {
@@ -77,8 +96,21 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
             conflict(&rawpkg).context("Conflict checking failed")?;
         }
     }
+    
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).context("Failed to get pkgname")?;
- 
+    if path != "none" {
+        let hash = createsha(&rawpkg)?;
+        if path.ends_with("/") {
+            let path = path.rsplit_once("/").map(|(path, _)| path).context("Failed to get index.raw path");
+        }
+        let index = fs::read_to_string(format!("{}/index.raw", path)).context("Failed to open index.raw")?;
+        let sha = index.lines().find(|l| l.contains(&format!("{}/Pkgfile", pkg))).context("Package not present in index.raw")?;
+        let meta: Vec<&str> = sha.split("|").collect();
+        let sha = meta.get(3).context("Failed to get signature")?.to_string();
+        if sha != hash {
+            anyhow::bail!("Failed to check signature, exit !")
+        }
+    }
     if Path::new(&format!("/tmp/{}", pkg)).exists() {
         env::set_current_dir(format!("/tmp/{}", pkg))?;
     } else {
