@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
 
-pub fn createsha(package: String) -> Result<()> {
+pub fn createsha(package: &str) -> Result<String> {
     let file = File::open(package).context("Failed to open newly generated archive")?;
     let mut reader = BufReader::new(file);
     let mut hasher = Sha256::new();
@@ -17,5 +17,5 @@ pub fn createsha(package: String) -> Result<()> {
     }
     let hash = hex::encode(hasher.finalize());
     println!("{}", hash);
-    Ok(())
+    return Ok(hash);
 }
