@@ -42,6 +42,8 @@ mod template;
 mod build;
 mod getlibs;
 mod changelog;
+mod sig;
+use crate::sig::createsha;
 use crate::build::build;
 use crate::template::template;
 use crate::orphans::orphans;

@@ -31,6 +31,7 @@ use flate2::write::GzEncoder;
 use flate2::Compression;
 use crate::download::download_parallel;
 use tokio::task::JoinSet;
+use crate::createsha;
 
 use crate::getlibs::scan_pkg_dir;
 use crate::query;
@@ -615,7 +616,9 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let mut a = tar::Builder::new(enc);
     a.follow_symlinks(false);
     a.append_dir_all("", "pkg/")?;
-    a.finish().context("Compression failed")?;
+    let mut gz = a.into_inner().context("Tar failed")?;
+    gz.try_finish().context("Gzip flush failed")?;
     fs::remove_dir_all("pkg")?;
+    createsha(format!("{}.{}#1.raw.tar.gz", name, version))?;
     Ok(())
 }

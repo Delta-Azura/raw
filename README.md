@@ -46,6 +46,10 @@ install -v -m644 doc/{nano.html,sample.nanorc} $PKG/usr/share/doc/nano-${version
 }
 ```
 
+# WARNING 
+Raw automatically detects if a function prepare or package is present on the Pkgfile, however, do not leave a package or prepare or build function with a '#' at the start of the line, raw will not detect it, run the function commented and the build will fail.
+
+
 # Example of raw.conf 
 ``` bash 
 alexis [ ~/Onyx ]$ cat /etc/raw.conf 
@@ -102,10 +106,6 @@ build=make
 ``` 
 In this case, raw will try to look at make, defined by build here, in the /etc/raw.d/make file.
 
-
-# WARNING 
-Raw automatically detects if a function prepare or package is present on the Pkgfile, however, do not leave a package or prepare or build function with a '#' at the start of the line, raw will not detect it, run the function commented and the build will fail.
-
 # How to build it ? 
 Download the latest release, uncompress the tarball and enter the directory.
 Run :
@@ -141,11 +141,6 @@ Take a look at :
 Report any issue and open a pull request only to : 
 <https://github.com/Delta-Azura/raw>
 
-# Educational purpose
-My target is to be able to learn rust while building this projet.
-From all the tests i ran, not a single one is actually failing no matter what you are trying to do with it.
-I built this is one week as a learning project.
-It's a fully functional package manager, 0 compilation error and it handles conflict detection, dependecy resolution and so on, please refer to the beggining of the README.
 
 
 # Qu'est-ce que RAW
@@ -290,9 +285,3 @@ Jetez un œil à :
 # Si vous lisez ceci depuis git.great-os.org/alexis/raw
 Signalez les problèmes et ouvrez des pull requests uniquement sur :
 <https://github.com/Delta-Azura/raw>
-
-# Objectif pédagogique
-Mon objectif est d'apprendre Rust en construisant ce projet.
-D'après tous les tests que j'ai effectués, aucun n'échoue quelle que soit l'opération tentée.
-Je l'ai construit en une semaine comme projet d'apprentissage.
-C'est un gestionnaire de paquets pleinement fonctionnel, 0 erreur de compilation, avec détection des conflits, résolution des dépendances, etc. Référez-vous au début du README pour plus de détails.
