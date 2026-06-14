@@ -39,8 +39,6 @@ pub fn index() -> Result <()> {
         let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
         for entry in WalkDir::new(&path.trim()).min_depth(2) {
             let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string();
-            
-            println!("{}", entries);
             let (version, release, sha) = if entries.contains("Pkgfile") {
                 let pkgfile = fs::read_to_string(&format!("{}{}", path, entries)).context("Pkgfile not found")?;
                 let content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
@@ -50,12 +48,11 @@ pub fn index() -> Result <()> {
                 let mut sha = "none".to_string();
                 for check in fs::read_dir(path)? {
                     let checkraw = check?.file_name().to_string_lossy().to_string();
-                    sha = if checkraw.contains(".raw.") {
+                    if checkraw.contains(".raw.") {
                         let checkraw = format!("{}/{}", path, checkraw);
-                        createsha(&checkraw)?
-                    } else {
-                        "none".to_string()
-                    };
+                        println!("{}", checkraw);
+                        sha = createsha(&checkraw)?
+                    }
                 }
                 (version, release, sha)
             } else {

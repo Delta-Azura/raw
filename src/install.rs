@@ -37,7 +37,7 @@ const RESET: &str = "\x1b[0m";
 
 pub fn install(rawpkg: &String, option: bool) -> Result<()> {
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
-   let path = if Path::new("/etc/raw.conf").exists() {
+   let mut path = if Path::new("/etc/raw.conf").exists() {
         let conf = fs::read_to_string("/etc/raw.conf").context("Failed to open raw.conf file")?;
         let source = conf
             .lines()
@@ -101,14 +101,14 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
     if path != "none" {
         let hash = createsha(&rawpkg)?;
         if path.ends_with("/") {
-            let path = path.rsplit_once("/").map(|(path, _)| path).context("Failed to get index.raw path");
+            path = path.rsplit_once("/").map(|(path, _)| path).context("Failed to get index.raw path")?.to_string();
         }
         let index = fs::read_to_string(format!("{}/index.raw", path)).context("Failed to open index.raw")?;
         let sha = index.lines().find(|l| l.contains(&format!("{}/Pkgfile", pkg))).context("Package not present in index.raw")?;
         let meta: Vec<&str> = sha.split("|").collect();
         let sha = meta.get(3).context("Failed to get signature")?.to_string();
         if sha != hash {
-            anyhow::bail!("Failed to check signature, exit !")
+            anyhow::bail!("Signatures don't match, exiting !")
         }
     }
     if Path::new(&format!("/tmp/{}", pkg)).exists() {
