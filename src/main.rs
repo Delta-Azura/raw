@@ -43,6 +43,7 @@ mod build;
 mod getlibs;
 mod changelog;
 mod sig;
+mod localpkg;
 use crate::sig::createsha;
 use crate::build::build;
 use crate::template::template;

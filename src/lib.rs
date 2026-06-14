@@ -25,12 +25,12 @@ pub mod template;
 pub mod num_cpus;
 pub mod getlibs;
 pub mod sig;
-
+pub mod localpkg;
 
 #[allow(unused_imports)]
 pub use crate::getlibs::get_needed_libs;
 pub use crate::sig::createsha;
-
+pub use crate::localpkg::localpkg;
 pub use crate::template::template;
 pub use crate::orphans::orphans;
 pub use crate::help::help;
