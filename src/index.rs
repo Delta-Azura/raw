@@ -21,7 +21,6 @@ use std::io::Write;
 use walkdir::WalkDir;
 use anyhow::{Context, Result};
 use std::path::Path;
-use question::{Answer, Question};
 use std::fs;
 use crate::createsha;
 
@@ -50,7 +49,6 @@ pub fn index() -> Result <()> {
                     let checkraw = check?.file_name().to_string_lossy().to_string();
                     if checkraw.contains(".raw.") {
                         let checkraw = format!("{}/{}", path, checkraw);
-                        println!("{}", checkraw);
                         sha = createsha(&checkraw)?
                     }
                 }
