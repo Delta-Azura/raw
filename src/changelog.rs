@@ -29,7 +29,10 @@ pub fn changelog() -> Result<()> {
         let checkmode = fs::read_to_string("/etc/raw.conf")?;
         if checkmode.contains("mode=binary") {
             if let Some(line) = checkmode.lines().find(|l| l.starts_with("url=")) {
-                let url = line.split_once("url=").map(|(_, url)| url).context("Failed to fetch url")?;
+                let mut url = line.split_once("url=").map(|(_, url)| url).context("Failed to fetch url")?;
+                if url.ends_with("/") {
+                    url = url.rsplit_once("/").map(|(url, _)| url).context("Failed to split url")?;
+                }
                 env::set_current_dir("/var/cache/").context("Failed to change directory to /var/cache/")?;
                 let index = download(&format!("{}/index.raw", url))?;
                 let mut packages = Vec::new();
