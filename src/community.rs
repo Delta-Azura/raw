@@ -29,7 +29,7 @@ pub fn community(pkg: &str) -> Result<()> {
     if conf.lines().any(|l| l.starts_with("community=")) {
         let mut url = conf.lines().find(|l| l.starts_with("community=")).context("Failed to read community line")?.split_once("community=").map(|(_, community)| community).context("Failed to get community git")?;
         if url.ends_with("/") {
-            url = url.split_once("/").map(|(url, _)| url).context("Failed to adapt url")?;
+            url = url.rsplit_once("/").map(|(url, _)| url).context("Failed to adapt url")?;
         }
         let url = format!("{}/{}", url, pkg);
         let mut opt = git2::FetchOptions::new();
@@ -41,7 +41,10 @@ pub fn community(pkg: &str) -> Result<()> {
         if Path::new(pkg).exists() {
             fs::remove_dir_all(pkg)?;
         }
-        match builder.clone(&url, Path::new("/var/cache/state")) {
+        if Path::new(pkg).exists() {
+            fs::remove_dir_all(pkg).context(format!("Failed to remove {} in the home user directory", pkg))?;
+        }
+        match builder.clone(&url, Path::new(pkg)) {
             Ok(repo) => repo,
             Err(e) => panic!("failed to clone: {}", e),
         };
