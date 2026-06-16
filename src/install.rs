@@ -56,33 +56,28 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
 
     fs::remove_file("/var/cache/tmp.raw")?;
     if !rawpkg.contains(".raw.") {
-        let (mode, root, _trash) = getconf().unwrap();
-        if mode != "source" {
-            println!("Please use raw get or install an archive .raw");
-            std::process::exit(1)
-        } else {
-            let saved = env::current_dir()?;
-            env::set_current_dir(root)?;
-            let index = fs::read_to_string("index.raw")?;
-            if index.lines().any(|l| l.contains(&format!("/{}/", rawpkg))) {
-                let path_to_pkgfile = index.lines().find(|l| l.contains(&format!("/{}/", rawpkg))).ok_or("Didn't find");
-                let path = path_to_pkgfile.unwrap().split_once("/Pkgfile").map(|(path, _)| path).ok_or("Failed");
-                env::set_current_dir(path.unwrap())?;
-                let content: Vec<String> = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).filter_map(|e| e.file_name().into_string().ok()).collect();
-                if content.iter().any(|f| f.contains(".raw.")) {
-                    if content.iter().any(|f| f.contains(rawpkg)) {
-                        let pkgname = content.iter().find(|l| l.contains(".raw.")).context("Failed to find raw package")?;
-                        println!("{}", pkgname);
-                        if option == true {
-                            install(pkgname, true)?;
-                        }
-                        env::set_current_dir(saved)?;
-                        let depends: Vec<String> = depends(rawpkg);
-                        for i in depends {
-                            install(&i, false)?;
-                        }
-                        return Ok(());
+        let (_mode, root, _trash) = getconf().unwrap();
+        let saved = env::current_dir()?;
+        env::set_current_dir(root)?;
+        let index = fs::read_to_string("index.raw")?;
+        if index.lines().any(|l| l.contains(&format!("/{}/", rawpkg))) {
+            let path_to_pkgfile = index.lines().find(|l| l.contains(&format!("/{}/", rawpkg))).ok_or("Didn't find");
+            let path = path_to_pkgfile.unwrap().split_once("/Pkgfile").map(|(path, _)| path).ok_or("Failed");
+            env::set_current_dir(path.unwrap())?;
+            let content: Vec<String> = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).filter_map(|e| e.file_name().into_string().ok()).collect();
+            if content.iter().any(|f| f.contains(".raw.")) {
+                if content.iter().any(|f| f.contains(rawpkg)) {
+                    let pkgname = content.iter().find(|l| l.contains(".raw.")).context("Failed to find raw package")?;
+                    println!("{}", pkgname);
+                    if option == true {
+                        install(pkgname, true)?;
                     }
+                    env::set_current_dir(saved)?;
+                    let depends: Vec<String> = depends(rawpkg);
+                    for i in depends {
+                        install(&i, false)?;
+                    }
+                    return Ok(());
                 }
             }
         }
