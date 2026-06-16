@@ -29,6 +29,8 @@ It's designed to be quick, light and memory safe.
 - Support of dependencies while removing, type sudo raw remove pkgname -f to force.
 - Automatic detection of runtime dependencies scanning the binary.
 - Automatic post-installation hooks
+- RAW_KEEP_SOURCES=false to remove the sources after building the package
+- Parallel download for sources (yet to arrive for binary mode)
 
 
 # Pkgfile example :
@@ -161,7 +163,7 @@ Take a look at :
 <https://github.com/Delta-Azura/onyx>
 
 # A little fetcher to see outdated pkgfiles : 
-<https::/github.com/Delta-Azura/raw-fetch>
+<https://github.com/Delta-Azura/raw-fetch>
 
 # If you are reading this from git.great-os.org/alexis/raw
 Report any issue and open a pull request only to : 
@@ -203,6 +205,9 @@ Il est conçu pour être rapide, léger et memory-safe.
 - Support des dépendances à la suppression, taper sudo raw remove pkgname -f pour forcer
 - Détection automatique des dépendances runtime par scan du binaire
 - Hooks post-installation automatiques
+- RAW_KEEP_SOURCES=false pour supprimer les sources après avoir construit le paquet.
+- Parallel download for sources (pas encore disponible pour le mode binaire)
+
 
 # Exemple de Pkgfile :
 ```bash
@@ -337,7 +342,7 @@ Jetez un œil à :
 <https://github.com/Delta-Azura/onyx>
 
 # Un petit récupérateur pour repérer les pkgfiles obsolètes :
-<https::/github.com/Delta-Azura/raw-fetch>
+<https:/github.com/Delta-Azura/raw-fetch>
 
 # Si vous lisez ceci depuis git.great-os.org/alexis/raw
 Signalez les problèmes et ouvrez des pull requests uniquement sur :
