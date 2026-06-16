@@ -20,8 +20,15 @@ It's designed to be quick, light and memory safe.
 - Support of the prepare and package functions alongside with the build=something type of Pkgfiles
 - /etc preserved
 - Display symlinks in footprints
+- Diff of footprints between builds 
 - Parallel source download -> binaries parallel download coming soon
 - Support of makedepends
+- Support of integrity of packages 
+- Changelog function 
+- Support of aur like repositories
+- Support of dependencies while removing, type sudo raw remove pkgname -f to force.
+- Automatic detection of runtime dependencies scanning the binary.
+- Automatic post-installation hooks
 
 
 # Pkgfile example :
@@ -55,21 +62,32 @@ Raw automatically detects if a function prepare or package is present on the Pkg
 alexis [ ~/Onyx ]$ cat /etc/raw.conf 
 mode=binary
 
-root=/home/alexis/Onyx
+source=/home/alexis/Onyx
 
 url=https://remoterepo
+
+community=link
+
+local=true # If you want to enable a local repository
+
 alexis [ ~/Onyx ]$ 
 
 alexis [ ~/Onyx ]$ cat /etc/raw.conf 
 mode=source
 
 root=/home/alexis/Onyx
+
+community=link
 alexis [ ~/Onyx ]$ 
 ```
 
 # Example of post/pre-installation file name 
 pkgname.post-install
 pkgname.pre-install
+
+Example of post/pre-removal file name
+pkgname.post-remove
+pkgname.pre-remove
 
 # Example of build=something Pkgfile : 
 ``` bash
@@ -120,6 +138,7 @@ You're now all set !
 ``` bash
 raw package # Build a package being in a repertory containing a valid Pkgfile
 sudo raw install htop.3.5.1#1.raw.tar.gz # Install the generated package
+sudo raw remove package # Remove the package
 raw info htop # To get the basic informations
 raw query /usr/bin/htop # To know who this file belongs to
 raw libs htop # To list every libraries owned by htop
@@ -131,11 +150,18 @@ raw build htop # Will work no matter the path you are at and will propose to ins
 sudo raw upgrade # Allows you to upgrade your systemd if you are using a remote binary repo
 sudo raw get htop # Allows you to install packages from a remote binary repo and handles dependencies
 raw search htop # Allows you to search for packages both in binary and source mode
+sudo raw bootstrap package path # To install the binaries into a folder
+sudo raw community packagename # To install a package from an aur repo like
+sudo raw rmcache # To remove the cached packages
+sudo raw orphans # to list all of the orphans packages
 ```
 
 # Where to find already working Pkgfiles for my lfs system ? 
 Take a look at :
 <https://github.com/Delta-Azura/onyx>
+
+# A little fetcher to see outdated pkgfiles : 
+<https::/github.com/Delta-Azura/raw-fetch>
 
 # If you are reading this from git.great-os.org/alexis/raw
 Report any issue and open a pull request only to : 
@@ -168,8 +194,15 @@ Il est conçu pour être rapide, léger et memory-safe.
 - Support des fonctions prepare et package ainsi que du type de Pkgfile build=quelquechose
 - /etc préservé
 - Affichage des symlinks dans les footprints
+- Diff des footprints entre deux builds
 - Téléchargement parallèle des sources -> téléchargement parallèle des binaires à venir
 - Support des makedepends
+- Support de l'intégrité des paquets
+- Fonction changelog
+- Support des dépôts façon AUR
+- Support des dépendances à la suppression, taper sudo raw remove pkgname -f pour forcer
+- Détection automatique des dépendances runtime par scan du binaire
+- Hooks post-installation automatiques
 
 # Exemple de Pkgfile :
 ```bash
@@ -179,8 +212,8 @@ version=9.0
 release=1
 packager=alexis
 source=(https://www.nano-editor.org/dist/v9/nano-${version}.tar.xz)
-makedepends="htop" #Ceci est un exemple
-rundepends="kernel-headers libpng" #Ceci est un exemple pour montrer la syntaxe
+makedepends="htop" #This is an example
+rundepends="kernel-headers libpng" #This is an example to show the syntax
 build() {
 cd $name-$version
 ./configure --prefix=/usr     \
@@ -193,20 +226,30 @@ install -v -m644 doc/{nano.html,sample.nanorc} $PKG/usr/share/doc/nano-${version
 }
 ```
 
+# ATTENTION
+Raw détecte automatiquement si une fonction prepare ou package est présente dans le Pkgfile. Ne laissez cependant pas une fonction package, prepare ou build avec un '#' en début de ligne — raw ne la détectera pas, exécutera la fonction commentée et la compilation échouera.
+
 # Exemple de raw.conf
 ```bash
 alexis [ ~/Onyx ]$ cat /etc/raw.conf
 mode=binary
 
-root=/home/alexis/Onyx
+source=/home/alexis/Onyx
 
 url=https://remoterepo
+
+community=link
+
+local=true # Si tu veux activer un dépôt local
+
 alexis [ ~/Onyx ]$
 
 alexis [ ~/Onyx ]$ cat /etc/raw.conf
 mode=source
 
 root=/home/alexis/Onyx
+
+community=link
 alexis [ ~/Onyx ]$
 ```
 
@@ -214,6 +257,12 @@ alexis [ ~/Onyx ]$
 ```
 pkgname.post-install
 pkgname.pre-install
+```
+
+Exemple de nom de fichier post/pre-removal
+```
+pkgname.post-remove
+pkgname.pre-remove
 ```
 
 # Exemple de Pkgfile avec build=quelquechose :
@@ -251,9 +300,6 @@ build=make
 ```
 Dans ce cas, raw cherchera make, défini par build ici, dans le fichier /etc/raw.d/make.
 
-# ATTENTION
-Raw détecte automatiquement si une fonction prepare ou package est présente dans le Pkgfile. Ne laissez cependant pas une fonction package, prepare ou build avec un '#' en début de ligne — raw ne la détectera pas, exécutera la fonction commentée et la compilation échouera.
-
 # Comment le compiler ?
 Téléchargez la dernière release, décompressez l'archive et entrez dans le répertoire.
 Exécutez :
@@ -268,6 +314,7 @@ Vous êtes prêt !
 ```bash
 raw package # Compile un paquet en étant dans un répertoire contenant un Pkgfile valide
 sudo raw install htop.3.5.1#1.raw.tar.gz # Installe le paquet généré
+sudo raw remove package # Supprime le paquet
 raw info htop # Obtenir les informations de base
 raw query /usr/bin/htop # Savoir à qui appartient ce fichier
 raw libs htop # Lister toutes les bibliothèques appartenant à htop
@@ -279,12 +326,24 @@ raw build htop # Fonctionne peu importe le chemin et proposera d'installer/mettr
 sudo raw upgrade # Permet de mettre à jour vos paquets si vous utilisez un dépôt binaire distant
 sudo raw get htop # Installe des paquets depuis un dépôt binaire distant et gère les dépendances
 raw search htop # Recherche des paquets en mode binaire et source
+sudo raw bootstrap package path # Pour installer les binaires dans un dossier
+sudo raw community packagename # Pour installer un paquet depuis un dépôt façon AUR
+sudo raw rmcache # Pour supprimer les paquets en cache
+sudo raw orphans # Pour lister tous les paquets orphelins
 ```
 
 # Où trouver des Pkgfiles fonctionnels pour mon système LFS ?
 Jetez un œil à :
 <https://github.com/Delta-Azura/onyx>
 
+# Un petit récupérateur pour repérer les pkgfiles obsolètes :
+<https::/github.com/Delta-Azura/raw-fetch>
+
 # Si vous lisez ceci depuis git.great-os.org/alexis/raw
 Signalez les problèmes et ouvrez des pull requests uniquement sur :
 <https://github.com/Delta-Azura/raw>
+
+# Attention :
+Beaucoup de fonctionnalités n'ont pas encore été testées à fond.
+Les fonctions listées ci-dessus devraient fonctionner parfaitement dès qu'elles sont correctement testées, mais certaines comme le support des paquets locaux en mode binaire pourraient ne pas fonctionner correctement.
+La fonction changelog en mode binaire n'est pas encore testée.
