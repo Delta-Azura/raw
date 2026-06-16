@@ -104,7 +104,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
             println!("{} [!] : ERROR CHECK THE PKGFILE : {} {}", RED, e, RESET);
             std::process::exit(1)
         });
-    let stdout = String::from_utf8(output.stdout).unwrap();
+    let stdout = String::from_utf8(output.stdout).context("Failed to get variables from Pkgfile")?;
     let mut variables  = stdout.lines();
     let version = variables.next().context("The pkgfile may be missing something, check out for the version")?;
     let name = variables.next().context("The name or something else might be incorrect")?; 
@@ -113,7 +113,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let description = variables.next().context("Description or something else might not be valid")?;
     let depends = variables.next().context("Depends might not be correct, check your pkgfile")?;
     let source = variables.next().context("The source might not be correct, check your pkgfile")?;
-    let makedepends: Vec<String> = variables.next().unwrap().split_whitespace().map(|s| s.to_string()).collect();    //if makedepends == "none" {
+    let makedepends: Vec<String> = variables.next().context("Failed to get makedepends")?.split_whitespace().map(|s| s.to_string()).collect();    //if makedepends == "none" {
     let pkgfile = fs::read_to_string("Pkgfile").context("Package file doesn't exist")?;
     let keep_sources = "true";
     for i in pkgfile.lines() {
@@ -123,10 +123,10 @@ pub fn package(option: Option<&str>) -> Result<()> {
             "true"
         };
     }
-    let actual = std::env::current_dir().unwrap();
-    let col = actual.parent().unwrap().file_name().unwrap().to_str().unwrap().to_string();
-    let collection = std::env::current_dir().unwrap();
-    let _current = collection.file_name().unwrap().to_str().unwrap().to_string();
+    let actual = std::env::current_dir().context("Failed to get current dir")?;
+    let col = actual.parent().context("Failed to get current dir")?.file_name().context("Failed to get current dir")?.to_str().context("Failed to get current dir")?.to_string();
+    let collection = std::env::current_dir().context("Failed to get current dir")?;
+    let _current = collection.file_name().context("Failed to get current dir")?.to_str().context("Failed to get current dir")?.to_string();
     let collection = collection.display().to_string();
     println!("Setting collection as : {}", col);
     let mut meta = File::create("META").context("Failed to create META file")?;
@@ -134,14 +134,14 @@ pub fn package(option: Option<&str>) -> Result<()> {
     write!(meta, "{}", metadata).context("Failed to write metadata")?;
     if Path::new("work").exists() {
         println!("Removing work/");
-        fs::remove_dir_all("work/")?;
+        fs::remove_dir_all("work/").context("Failed to remove existing workdir")?;
     }
     if Path::new("pkg").exists() {
         println!("Removing pkg/");
-        fs::remove_dir_all("pkg/")?;
+        fs::remove_dir_all("pkg/").context("Failed to remove existing pkg directory")?;
     }
-    fs::create_dir("work")?;
-    fs::create_dir("pkg")?;
+    fs::create_dir("work").context("Failed to create work directory")?;
+    fs::create_dir("pkg").context("Failed to create pkg directory")?;
  
     if !makedepends.is_empty() {
         println!("{}Checking for makedepends: {:?}{}", YELLOW, makedepends, RESET);
@@ -149,17 +149,19 @@ pub fn package(option: Option<&str>) -> Result<()> {
             if Path::new(&format!("/var/lib/pkg/DB/{}", i)).exists() {
                 println!("{}{} is installed{}", GREEN, i, RESET)
             } else {
-                let (mode, trash, _url) = getconf().unwrap();
+                let Ok((mode, trash, _url)) = getconf() else {
+                    anyhow::bail!("Failed to get current configuration for raw");
+                };
                 if mode != "source" {
-                    get(&i)?;
+                    get(&i).context("Failed to get makedepends")?;
                 }
                 if mode == "source" {
                     env::set_current_dir(trash).context("Failed")?;
                     let index_raw = fs::read_to_string("index.raw").context("Index.raw doesn't exists, run raw index to create it")?;
                     let test = format!("/{}/", i);
                     let found = index_raw.lines().find(|line| line.contains(&test));
-                    let chrp = found.unwrap().split_once("Pkgfile").map(|(chrp, _)| chrp).unwrap();
-                    env::set_current_dir(format!("{}", chrp)).unwrap();
+                    let chrp = found.context("Failed to get correct path for selected makedepends")?.split_once("Pkgfile").map(|(chrp, _)| chrp).context("Failed to get correct path for selected makedepends")?;
+                    env::set_current_dir(format!("{}", chrp)).context("Failed to enter makedepends directory")?;
                     let collection = std::env::current_dir().unwrap();
                     let _current = collection.file_name().unwrap().to_str().unwrap().to_string();
                     let collection = collection.display().to_string();
@@ -171,19 +173,19 @@ pub fn package(option: Option<&str>) -> Result<()> {
                         println!("1");
                         let entry = entry?;
                         if entry.file_name().to_string_lossy().contains(".raw.") {
-                            let pkgver =  entry.file_name().to_string_lossy().split_once('.').map(|(_, pkgver)| pkgver).unwrap().split_once("#").map(|(pkgver, _)| pkgver).unwrap().to_string();
-                            let pkgrel = entry.file_name().to_string_lossy().split_once('#').map(|(_, pkgver)| pkgver).unwrap().split_once(".").map(|(pkgver, _)| pkgver).unwrap().to_string();
+                            let pkgver =  entry.file_name().to_string_lossy().split_once('.').map(|(_, pkgver)| pkgver).context("Failed to get package release")?.split_once("#").map(|(pkgver, _)| pkgver).context("Failed to get package release")?.to_string();
+                            let pkgrel = entry.file_name().to_string_lossy().split_once('#').map(|(_, pkgver)| pkgver).context("Failed to get package version")?.split_once(".").map(|(pkgver, _)| pkgver).context("Failed to get package version")?.to_string();
                             if !Path::new("Pkgfile").exists() {
-                                Command::new("sudo").args(["raw", "install", &i]).output().unwrap();
+                                Command::new("sudo").args(["raw", "install", &i]).output().context("Failed to install makedepend")?;
                             } else {
                                 let pkgfile_comp = fs::read_to_string("Pkgfile")?;
                                 let pkgverfile = pkgfile_comp.lines().find(|l| l.starts_with("version=")).context("No line found")?.split_once("version=").map(|(_, version)| version).context("no pkg version mentionned in pkgfile")?;
                                 let pkgrelfile = pkgfile_comp.lines().find(|l| l.starts_with("release=")).context("No line found")?.split_once("release=").map(|(_, version)| version).context("no pkg release mentionned in pkgfile")?;
                                 if pkgver == pkgverfile || pkgrel == pkgrelfile {
-                                    Command::new("sudo").args(["raw", "install", &i]).output().unwrap();
+                                    Command::new("sudo").args(["raw", "install", &i]).output().context("Failed to install makedepends")?;
                                 } else {
                                     package(None)?;
-                                    Command::new("sudo").args(["raw", "install", &i]).output().unwrap();
+                                    Command::new("sudo").args(["raw", "install", &i]).output().context("Failed to install makedepends")?;
                                 }
                             }
                         }
@@ -195,7 +197,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
         }
     }
     let building = format!("{}/work", collection);
-    env::set_current_dir(&collection).unwrap();
+    env::set_current_dir(&collection).context("Failed to get in the correct directory")?;
     println!("{}", collection);
     //println!("Switching to the work directory {}", building);
     if source.split_whitespace().count() > 1 {
@@ -304,7 +306,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
         }
     }
     env::set_current_dir(&collection)?;
-    let prepare = fs::read_to_string("Pkgfile").unwrap();
+    let prepare = fs::read_to_string("Pkgfile").context("Failed to build pkgfile")?;
     let cmd = match (prepare.contains("prepare()"), prepare.contains("package()"), prepare.contains("build()")) {
         (true, true, true) => {
             format!("fakeroot bash -eo pipefail -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && prepare && cd $SRC && build && cd $SRC && package'")
@@ -428,11 +430,11 @@ pub fn package(option: Option<&str>) -> Result<()> {
         }
     };
     if !Path::new(&format!("{}/.local/share/raw/", env::var("HOME").unwrap())).exists() {
-        fs::create_dir_all(format!("{}/.local/share/raw/", env::var("HOME").unwrap())).unwrap()
+        fs::create_dir_all(format!("{}/.local/share/raw/", env::var("HOME").unwrap())).context("Failed to create log path")?;
     }
     let log_path = format!("{}/.local/share/raw/raw.log", env::var("HOME").unwrap());
     if Path::new(&log_path).exists() {
-        fs::remove_file(&log_path).unwrap();
+        fs::remove_file(&log_path).context("Failed to remove current log file")?;
         File::create(&log_path).context("Failed to create log file")?;
     } else {
         File::create(&log_path).context("Failed to  create log file")?;
@@ -455,7 +457,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
         .context("Failed to open log file")?;
         writeln!(logfile, "{:#?}", log_file)?;
         env::set_current_dir(&collection)?;
-        fs::remove_dir_all("work").unwrap();
+        fs::remove_dir_all("work").context("Failed to remove the work directory")?;
     }
     Ok(s) => {
             // Don't ask
@@ -489,26 +491,26 @@ pub fn package(option: Option<&str>) -> Result<()> {
     }
     println!("Generating footprint and looking for changes");
     if Path::new(&format!("{}.footprint", name)).exists() {
-        let existing = fs::read_to_string(format!("{}.footprint", name)).unwrap();
-        fs::remove_file(format!("{}.footprint", name))?;
-        let mut footprint = File::create(format!("{}.footprint", name)).unwrap();
+        let existing = fs::read_to_string(format!("{}.footprint", name)).context("Failed to read footprint")?;
+        fs::remove_file(format!("{}.footprint", name)).context("Failed to remove footprint")?;
+        let mut footprint = File::create(format!("{}.footprint", name)).context("Failed to open footprint")?;
         for entry in WalkDir::new(&prepare).follow_links(false) {
             let entry = entry?;
             let foot = entry.path().display().to_string();
             let pathpkg = foot.split_once(&prepare).map(|(_,pathpkg)| pathpkg).context("Not found")?.to_string();
             if pathpkg.is_empty() { continue; }
-                let _list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
+                let _list = pathpkg.split_once('/').map(|(_,list)| list).context("Failed to generate footprint")?.to_string();
                 if entry.file_type().is_symlink() {
-                    let list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
+                    let list = pathpkg.split_once('/').map(|(_,list)| list).context("Failed to generate footprint")?.to_string();
                     let link = fs::read_link(entry.path())?;
                     writeln!(footprint, "{} -> {}", list, link.display())?;
                 } else {
-                    let list = pathpkg.split_once('/').map(|(_,list)| list).unwrap().to_string();
+                    let list = pathpkg.split_once('/').map(|(_,list)| list).context("Failed to generate footprint")?.to_string();
                 writeln!(footprint, "{}", list)?;
             }
 
         }
-        let footprint = fs::read_to_string(format!("{}.footprint", name)).unwrap();
+        let footprint = fs::read_to_string(format!("{}.footprint", name)).context("Footprint reading failed")?;
         if existing == footprint {
             println!("{}Footprint didn't change{}", YELLOW, RESET)
         } else {
@@ -525,7 +527,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
 
         }
     } else {
-        let mut footprint = File::create(format!("{}.footprint", name)).unwrap();
+        let mut footprint = File::create(format!("{}.footprint", name)).context("Failed to create footprint")?;
             for entry in WalkDir::new(&prepare).follow_links(false) {
                 let entry = entry?;
                 let foot = entry.path().display().to_string();
@@ -542,16 +544,16 @@ pub fn package(option: Option<&str>) -> Result<()> {
                     }
             }
     }
-    let footprint = fs::read_to_string(format!("{}.footprint", name))?;
+    let footprint = fs::read_to_string(format!("{}.footprint", name)).context("Failed to read footprint")?;
     println!("{}This package contains : {} files{}", YELLOW, footprint.lines().count(), RESET);
-    fs::copy("META", "pkg/META").unwrap();
+    fs::copy("META", "pkg/META").context("Failed to copy META file to prepare for compression")?;
     fs::remove_file("META").unwrap();
-    fs::copy(format!("{}.footprint", name), format!("pkg/{}.footprint", name)).unwrap();
+    fs::copy(format!("{}.footprint", name), format!("pkg/{}.footprint", name)).context("Failed to prepare footprint file for compression")?;
     if Path::new("automatic").exists() {
         fs::copy("automatic", "pkg/automatic")?;
     }
     if Path::new(&format!("{}/{}.pre-install", collection, name)).exists() {
-        fs::copy(format!("{}.pre-install", name), format!("pkg/{}.pre-install", name)).unwrap();
+        fs::copy(format!("{}.pre-install", name), format!("pkg/{}.pre-install", name)).context("Failed to package pre installation file")?;
     } else {
         println!("No need to prepare pre-installation");
     }
