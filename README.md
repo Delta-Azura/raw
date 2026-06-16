@@ -141,7 +141,10 @@ Take a look at :
 Report any issue and open a pull request only to : 
 <https://github.com/Delta-Azura/raw>
 
-
+# Warning : 
+There are a lot of functionnality that hasn't been tested so far. 
+The listed functions above should work perfectly has they are correctly tested, but some like local package support in binary mode might not work properly. 
+The changelog function in binary mode isn't tested yet.
 
 # Qu'est-ce que RAW
 Raw est un projet de gestionnaire de paquets from scratch pour Onyx.
