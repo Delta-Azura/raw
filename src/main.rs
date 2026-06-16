@@ -44,6 +44,8 @@ mod getlibs;
 mod changelog;
 mod sig;
 mod localpkg;
+mod community;
+use crate::community::community;
 use crate::sig::createsha;
 use crate::build::build;
 use crate::template::template;
@@ -105,6 +107,10 @@ fn main() -> Result<()> {
     if args[1] == "build" {
         build(&args[2])?;
         return Ok(());
+    }
+    if args[1] == "community" {
+        community(&args[2])?;
+        return Ok(())
     }
     if args[1] == "package" {
         if args.len() < 3 {
