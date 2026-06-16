@@ -62,6 +62,7 @@ use crate::install::install;
 use crate::info::info;
 use crate::query::query;
 use crate::remove::remove;
+use crate::changelog::changelog;
 use crate::update::update;
 use crate::package::package;
 use anyhow::{Result};
@@ -136,6 +137,11 @@ fn main() -> Result<()> {
             }
         }
         return Ok(());
+    }
+
+    if args[1] == "changelog" {
+        changelog()?;
+        return Ok(())
     }
 
     if args[1] == "info" {
