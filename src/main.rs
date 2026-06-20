@@ -76,144 +76,134 @@ const RESET: &str = "\x1b[0m";
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
-    if args.len() < 2 {
-        help();
-        std::process::exit(0)
+    match args.len() < 2 {
+        true => {help();}
+        false => {}
     }
-    if args[1] == "help" {
-        help();
-        std::process::exit(0)
-    
-    }
-    if args[1] == "--help" {
-        help();
-        std::process::exit(0)
-    }
-    if args[1] == "-help" {
-        help();
-        std::process::exit(0)
-    }
-    if args[1] == "h" {
-        help();
-        std::process::exit(0)
-    }
-    if args[1] == "template" {
-        if args.len() < 2 {
-            println!("Not pkgname specified")
-        } else {
-            template(&args[2])?;
-        }
-        return Ok(());
-    }
-    if args[1] == "build" {
-        build(&args[2])?;
-        return Ok(());
-    }
-    if args[1] == "community" {
-        community(&args[2])?;
-        return Ok(())
-    }
-    if args[1] == "package" {
-        if args.len() < 3 {
-            package(None)?;
-        } else {
-            if args[2] == "--clean" {
-                package(Some("--clean"))?;
-            } else {
-                println!("{}Unknown option, did you mean raw package --clean ? {}", RED, RESET);
+    match (args.len() > 1, args.len() > 2, args.len() > 3) {
+        (true, true, false) => {
+            if args[1] == "template" {
+                if args.len() < 2 {
+                    println!("Not pkgname specified")
+                } else {
+                    template(&args[2])?;
+                }
+                return Ok(());
+            }
+            if args[1] == "build" {
+                build(&args[2])?;
+                return Ok(());
+            }
+            if args[1] == "package" {
+                if args[2] == "--clean" {
+                    package(Some("--clean"))?;
+                } else {
+                    println!("{}Unknown option, did you mean raw package --clean ?{}", RED, RESET);
+                }
+            }
+            if args[1] == "community" {
+                community(&args[2])?;
+                return Ok(())
+            }
+            if args[1] == "install" {
+                let argument = format!("{}", args[2]);
+                println!("{}", argument);
+                if args.len() < 4 {
+                    install(&argument, false)?;
+                } else {
+                    if args[3] == "-f" {
+                        install(&argument, true)?;
+                    }
+                }
+                return Ok(());
+            }
+            if args[1] == "info" {
+                let argument = format!("{}", args[2]);
+                info(&argument)?;
+                return Ok(())
+            }
+            if args[1] == "remove" {
+                let argument = format!("{}", args[2]);
+                if args.len() < 4 {
+                    remove(&argument, false)?;
+                } else {
+                    if args[3] == "-f" {
+                        remove(&argument, true)?;
+                    }
+                }
+                return Ok(())
+            }
+            if args[1] == "query" {
+                let argument = format!("{}", args[2]);
+                query(&argument)?;
+                return Ok(())
+            }
+            if args[1] == "update" {
+                let argument = format!("{}", args[2]);
+                update(&argument)?;
+                return Ok(())
+            }
+            if args[1] == "files" {
+                let argument = format!("{}", args[2]);
+                files(&argument)?;
+                return Ok(())
+            } 
+            if args[1] == "list" {
+                list();
+                return Ok(())
+            } 
+            if args[1] == "libs" {
+                libs(&args[2], args.get(3).map(|s| s.as_str()))?;
+                return Ok(())
+            }
+            if args[1] == "get" {
+                get(&args[2])?;
+                return Ok(())
+            }
+            if args[1] == "search" {
+                search(&args[2])?;
+                return Ok(())
             }
         }
-        return Ok(());
-    } 
-
-    if args[1] == "install" {
-        let argument = format!("{}", args[2]);
-        println!("{}", argument);
-        if args.len() < 4 {
-            install(&argument, false)?;
-        } else {
-            if args[3] == "-f" {
-                install(&argument, true)?;
+        (true, false, false) => {
+            if args[1] == "changelog" {
+                changelog()?;
+                return Ok(())
             }
-        }
-        return Ok(());
-    }
-
-    if args[1] == "changelog" {
-        changelog()?;
-        return Ok(())
-    }
-
-    if args[1] == "info" {
-        let argument = format!("{}", args[2]);
-        info(&argument)?;
-        return Ok(())
-    }
-    if args[1] == "remove" {
-        let argument = format!("{}", args[2]);
-        if args.len() < 4 {
-            remove(&argument, false)?;
-        } else {
-            if args[3] == "-f" {
-                remove(&argument, true)?;
+            if args[1] == "index" {
+                index()?;
+                return Ok(())
             }
+            if args[1] == "upgrade" {
+                upgrade()?;
+                return Ok(())
+            }
+            if args[1] == "bootstrap" {
+                bootstrap(&args[2], &args[3])?;
+                return Ok(())
+            }
+            if args[1] == "rmcache" {
+                remove_cache()?;
+                return Ok(())
+            }
+            if args[1] == "orphans" {
+                orphans()?;
+                return Ok(())
+            }
+            if args[1] == "package" {
+                if args.len() < 3 {
+                    package(None)?;
+                }
+                return Ok(());
+            } 
+            
+
         }
-        return Ok(())
-    }
-    if args[1] == "query" {
-        let argument = format!("{}", args[2]);
-        query(&argument)?;
-        return Ok(())
-    }
-    if args[1] == "update" {
-        let argument = format!("{}", args[2]);
-        update(&argument)?;
-        return Ok(())
-    }
-    if args[1] == "files" {
-        let argument = format!("{}", args[2]);
-        files(&argument)?;
-        return Ok(())
-    } 
-    if args[1] == "list" {
-        list();
-        return Ok(())
-    } 
-    if args[1] == "libs" {
-        libs(&args[2], args.get(3).map(|s| s.as_str()))?;
-        return Ok(())
-    }
-    if args[1] == "getconf" {
-        println!("{:?}", getconf());
-        return Ok(())
-    }
-    if args[1] == "index" {
-        index()?;
-        return Ok(())
-    }
-    if args[1] == "get" {
-        get(&args[2])?;
-        return Ok(())
-    }
-    if args[1] == "upgrade" {
-        upgrade()?;
-        return Ok(())
-    }
-    if args[1] == "bootstrap" {
-        bootstrap(&args[2], &args[3])?;
-        return Ok(())
-    }
-    if args[1] == "search" {
-        search(&args[2])?;
-        return Ok(())
-    }
-    if args[1] == "rmcache" {
-        remove_cache()?;
-        return Ok(())
-    }
-    if args[1] == "orphans" {
-        orphans()?;
-        return Ok(())
+        (true, true, false) => {help();}
+        (true, true, true) => {help();}
+        (true, false, true) => {help();}
+        (false, _, _) => {help();}
+
     }
     return Ok(());
 }
