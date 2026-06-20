@@ -621,6 +621,6 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let mut gz = a.into_inner().context("Tar failed")?;
     gz.try_finish().context("Gzip flush failed")?;
     fs::remove_dir_all("pkg")?;
-    createsha(&format!("{}.{}#1.raw.tar.gz", name, version))?;
+    createsha(&format!("{}.{}#{}.raw.tar.gz", name, version, release))?;
     Ok(())
 }
