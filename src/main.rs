@@ -83,11 +83,7 @@ fn main() -> Result<()> {
     match (args.len() > 1, args.len() > 2, args.len() > 3) {
         (true, true, false) => {
             if args[1] == "template" {
-                if args.len() < 2 {
-                    println!("Not pkgname specified")
-                } else {
-                    template(&args[2])?;
-                }
+                template(&args[2])?;
                 return Ok(());
             }
             if args[1] == "build" {
@@ -153,6 +149,11 @@ fn main() -> Result<()> {
             }
         }
         (true, false, false) => {
+            if args[1] == "install" || args[1] == "get" || args[1] == "update" || args[1] == "remove" {
+                println!("{}Missing argument for raw {} <pkg> take a look at the help{}", RED, args[1], RESET);
+                help();
+                return Ok(());
+            }
             if args[1] == "changelog" {
                 changelog()?;
                 return Ok(())
@@ -191,11 +192,15 @@ fn main() -> Result<()> {
             if args[1] == "libs" {
                 if args[3] == "all" {
                     libs(&args[2], &args[3])?;
+                } else {
+                    libs(&args[2], "no")?;
                 }
             }
             if args[1] == "remove" {
                 if args[3] == "-f" {
                     remove(&args[2], true)?;
+                } else {
+                    remove(&args[2], false)?;
                 }
             }
             if args[1] == "install" {
