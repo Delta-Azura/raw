@@ -187,6 +187,11 @@ fn main() -> Result<()> {
 
         }
         (true, true, true) => {
+            if args[1] == "get" {
+                for i in args.iter().skip(2) {
+                    get(i)?;
+                }
+            }
             if args[1] == "libs" {
                 if args[3] == "all" {
                     libs(&args[2], &args[3])?;
@@ -199,7 +204,6 @@ fn main() -> Result<()> {
             }
             if args[1] == "install" {
                 for i in args.iter().skip(2) {
-                    println!("{}", i);
                     if i == "-f" {
                         continue;
                     }
