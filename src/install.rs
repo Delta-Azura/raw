@@ -167,8 +167,8 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
         if option == true {
             fs::remove_dir_all(format!("/var/lib/pkg/DB/{}", pkg))?;
         }
-        fs::create_dir(format!("/var/lib/pkg/DB/{}", pkg)).context(format!("/var/lib/pkg/DB/{} already exists", pkg))?;
     }
+    fs::create_dir(format!("/var/lib/pkg/DB/{}", pkg)).context(format!("/var/lib/pkg/DB/{} already exists", pkg))?;
     if Path::new(&format!("/{}.pre-remove", pkg)).exists() {
         fs::copy(format!("/{}.pre-remove", pkg), format!("/var/lib/pkg/DB/{}/{}.pre-remove", pkg, pkg))?;
     }
