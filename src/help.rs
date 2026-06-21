@@ -38,5 +38,12 @@ pub fn help() {
     println!("raw upgrade {}#to upgrade your system, only in binary mode{}", YELLOW, RESET);
     println!("raw query filename {}#to know who this file belongs to{}", GREEN, RESET);
     println!("raw package {}#to build the package being in the directory containing its pkgfile{}", GREEN, RESET);
-    println!("raw orphans {}to list every orphans remaining on the system and their number{}", GREEN, RESET);
+    println!("raw orphans {}#to list every orphans remaining on the system and their number{}", GREEN, RESET);
+    println!("raw community pkg {}#To download a pkgfile for an aur like repository{}", GREEN, RESET);
+    println!("raw template pkg{}#To create a directory containing a template of pkgfile{}", GREEN, RESET);
+    println!("raw bootstrap pkg /path{}#To install a package in a specific directory{}", GREEN, RESET);
+    println!("raw files pkg{}#To list the footprint of a selected package{}", GREEN, RESET);
+    println!("raw search pkg{}#To search a package in the database{}", GREEN, RESET);
+    println!("raw changelog {}#To list every upgradables packages{}", GREEN, RESET);
+
 }
