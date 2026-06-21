@@ -18,8 +18,8 @@
 use anyhow::{Result, Context};
 use std::fs;
 
-pub fn libs(pkg : &str,option: Option<&str>) -> Result<()> {
-    if option == Some("all") {
+pub fn libs(pkg : &str, option: &str) -> Result<()> {
+    if option == "all" {
         let libs = format!("/var/lib/pkg/DB/{}/files", pkg);
         let output = fs::read_to_string(libs).context("Package isn't installed")?;
         let mut output: Vec<&str> = output.lines().collect();

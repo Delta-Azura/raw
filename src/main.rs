@@ -108,13 +108,7 @@ fn main() -> Result<()> {
             if args[1] == "install" {
                 let argument = format!("{}", args[2]);
                 println!("{}", argument);
-                if args.len() < 4 {
-                    install(&argument, false)?;
-                } else {
-                    if args[3] == "-f" {
-                        install(&argument, true)?;
-                    }
-                }
+                install(&argument, false)?;
                 return Ok(());
             }
             if args[1] == "info" {
@@ -126,10 +120,6 @@ fn main() -> Result<()> {
                 let argument = format!("{}", args[2]);
                 if args.len() < 4 {
                     remove(&argument, false)?;
-                } else {
-                    if args[3] == "-f" {
-                        remove(&argument, true)?;
-                    }
                 }
                 return Ok(())
             }
@@ -153,7 +143,7 @@ fn main() -> Result<()> {
                 return Ok(())
             } 
             if args[1] == "libs" {
-                libs(&args[2], args.get(3).map(|s| s.as_str()))?;
+                libs(&args[2], "nothing")?;
                 return Ok(())
             }
             if args[1] == "get" {
@@ -199,8 +189,23 @@ fn main() -> Result<()> {
             
 
         }
-        (true, true, false) => {help();}
-        (true, true, true) => {help();}
+        (true, true, true) => {
+            if args[1] == "libs" {
+                if args[3] == "all" {
+                    libs(&args[2], &args[3])?;
+                }
+            }
+            if args[1] == "remove" {
+                if args[3] == "-f" {
+                    remove(&args[2], true)?;
+                }
+            }
+            if args[1] == "install" {
+                if args[3] == "-f" {
+                    install(&args[2], true)?;
+                }
+            }
+        }
         (true, false, true) => {help();}
         (false, _, _) => {help();}
 

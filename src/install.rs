@@ -37,7 +37,7 @@ const RESET: &str = "\x1b[0m";
 
 pub fn install(rawpkg: &String, option: bool) -> Result<()> {
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
-   let mut path = if Path::new("/etc/raw.conf").exists() {
+    let mut path = if Path::new("/etc/raw.conf").exists() {
         let conf = fs::read_to_string("/etc/raw.conf").context("Failed to open raw.conf file")?;
         let source = conf
             .lines()
@@ -71,6 +71,8 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
                     println!("{}", pkgname);
                     if option == true {
                         install(pkgname, true)?;
+                    } else {
+                        install(pkgname, false)?;
                     }
                     env::set_current_dir(saved)?;
                     let depends: Vec<String> = depends(rawpkg);
@@ -161,7 +163,12 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
     } else {
         println!("No post-installation required");
     }
-    fs::create_dir(format!("/var/lib/pkg/DB/{}", pkg)).context(format!("/var/lib/pkg/DB/{} already exists", pkg))?;
+    if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
+        if option == true {
+            fs::remove_dir_all(format!("/var/lib/pkg/DB/{}", pkg))?;
+        }
+        fs::create_dir(format!("/var/lib/pkg/DB/{}", pkg)).context(format!("/var/lib/pkg/DB/{} already exists", pkg))?;
+    }
     if Path::new(&format!("/{}.pre-remove", pkg)).exists() {
         fs::copy(format!("/{}.pre-remove", pkg), format!("/var/lib/pkg/DB/{}/{}.pre-remove", pkg, pkg))?;
     }
