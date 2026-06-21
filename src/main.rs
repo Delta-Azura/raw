@@ -165,10 +165,6 @@ fn main() -> Result<()> {
                 upgrade()?;
                 return Ok(())
             }
-            if args[1] == "bootstrap" {
-                bootstrap(&args[2], &args[3])?;
-                return Ok(())
-            }
             if args[1] == "rmcache" {
                 remove_cache()?;
                 return Ok(())
@@ -213,6 +209,10 @@ fn main() -> Result<()> {
                         install(i, false)?;
                     }
                 }
+            }
+            if args[1] == "bootstrap" {
+                bootstrap(&args[2], &args[3])?;
+                return Ok(())
             }
         }
         (true, false, true) => {help();}
