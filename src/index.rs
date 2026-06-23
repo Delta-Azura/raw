@@ -38,11 +38,12 @@ pub fn index() -> Result <()> {
         let mut rawfile = File::create("index.raw").context("This directory isn't usable as non-root, aborting")?;
         for entry in WalkDir::new(&path.trim()).min_depth(2) {
             let entries = entry.unwrap().path().display().to_string().split_once(&path.trim()).map(|(_, entries)| entries).unwrap().to_string();
-            let (version, release, sha) = if entries.contains("Pkgfile") {
+            let (version, release, sha, description) = if entries.contains("Pkgfile") {
                 let pkgfile = fs::read_to_string(&format!("{}{}", path, entries)).context("Pkgfile not found")?;
                 let content: Vec<String> = pkgfile.lines().map(|l| l.to_string()).collect();
                 let version = content.iter().find(|version| version.starts_with("version")).unwrap_or(&"version=unknown".to_string()).to_string().split_once("version=").map(|(_, version)| version).unwrap().to_string();
                 let release = content.iter().find(|release| release.starts_with("release")).unwrap_or(&"release=1".to_string()).to_string().split_once("release=").map(|(_, version)| version).unwrap().to_string();
+                let description = content.iter().find(|l| l.starts_with("description=")).unwrap_or(&"description=none".to_string()).to_string().split_once("description=").map(|(_, description)| description).context("Failed to get description")?.to_string();
                 let path = entries.split_once("/Pkgfile").map(|(path, _)| path).context("Failed to get path")?;
                 let mut sha = "none".to_string();
                 for check in fs::read_dir(path)? {
@@ -52,7 +53,7 @@ pub fn index() -> Result <()> {
                         sha = createsha(&checkraw)?
                     }
                 }
-                (version, release, sha)
+                (version, release, sha, description)
             } else {
                 continue;
             };
@@ -66,7 +67,7 @@ pub fn index() -> Result <()> {
             } else {
                 &release
             };
-            writeln!(rawfile, "{}", &format!("{}|{}|{}|{}", entries, version, release, sha))?;
+            writeln!(rawfile, "{}", &format!("{}|{}|{}|{}|{}", entries, version, release, sha, description))?;
         }
     }
     Ok(())

@@ -15,36 +15,56 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use anyhow::{Result};
 use std::env;
 use std::fs;
 use crate::download::download;
 use crate::getconf;
+use anyhow::{Result, Context};
 
 
-pub fn search(pkg: &str) -> Result<String> {
+
+pub fn search(pkg: &str) -> Result<()> {
     let (mode, path, url) = getconf().unwrap(); 
     if mode != "binary" {
         env::set_current_dir(path)?;
         let content = fs::read_to_string("index.raw")?.to_string();
         let file = content.lines();
+        let mut list: Vec<(&str, &str)> = Vec::new();
         for e in file {
             if e.contains(pkg) {
-                println!("Package found here : {}", e);
-                return Ok(e.to_string())
+                let name = e.split_once("/Pkgfile").map(|(name, _)| name).context("Failed to get name")?.rsplit_once("/").map(|(_, name)| name).context("Failed to get package name")?;
+                let found: Vec<&str> = e.split("|").collect();
+                let description = found.get(4).context("")?;
+                list.push((name, description));
             }
         }
-    return Err(anyhow::anyhow!("Package not found"));
+        if !list.is_empty() {
+            for (name, description) in list {
+                println!("Name: {}\nDescription: {}\n", name, description);
+            }
+        } else {
+            anyhow::bail!("No packages found");
+        }
     } else {
         let _index = download(&format!("{}/index.raw", url))?;
         let content = fs::read_to_string("index.raw")?.to_string();
         let file = content.lines();
+        let mut list: Vec<(&str, &str)> = Vec::new();
         for e in file {
             if e.contains(pkg) {
-                println!("Package found here : {}", e);
-                return Ok(e.to_string())
-            } 
+                let name = e.split_once("/Pkgfile").map(|(name, _)| name).context("Failed to get name")?.rsplit_once("/").map(|(_, name)| name).context("Failed to get package name")?;
+                let found: Vec<&str> = e.split("|").collect();
+                let description = found.get(4).context("")?;
+                list.push((name, description));
+            }
         }
-        return Err(anyhow::anyhow!("Package not found"));
+        if !list.is_empty() {
+            for (name, description) in list {
+                println!("Name: {}\nDescription: {}\n", name, description);
+            }
+        } else {
+            anyhow::bail!("No packages found");
+        }
     }
+    Ok(())
 }

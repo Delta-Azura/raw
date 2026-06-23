@@ -151,7 +151,7 @@ fn main() -> Result<()> {
             }
         }
         (true, false, false) => {
-            if args[1] == "install" || args[1] == "get" || args[1] == "update" || args[1] == "remove" {
+            if args[1] == "install" || args[1] == "get" || args[1] == "update" || args[1] == "remove" || args[1] == "diff" {
                 println!("{}Missing argument for raw {} <pkg> take a look at the help{}", RED, args[1], RESET);
                 help();
                 return Ok(());

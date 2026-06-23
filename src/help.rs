@@ -45,5 +45,5 @@ pub fn help() {
     println!("raw files pkg{}#To list the footprint of a selected package{}", GREEN, RESET);
     println!("raw search pkg{}#To search a package in the database{}", GREEN, RESET);
     println!("raw changelog {}#To list every upgradables packages{}", GREEN, RESET);
-
+    println!("raw diff package{}#To see if a specific package needs to be updated{}", GREEN, RESET);
 }
