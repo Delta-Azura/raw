@@ -58,6 +58,23 @@ pub fn check_binary(pkg: &str, conf: String) -> Result<()> {
                 println!("This package is up to date");
             }
         }
+    } else {
+        env::set_current_dir("/var/cache/").context("/var/cache/ doesn't exist, your system might be in pain")?;
+        url = conf.lines().find(|l| l.starts_with("url=")).context("Failed to get url variable")?.split_once("url=").map(|(_, url)| url).context("Failed to get url, check your raw.conf file")?.to_string();
+        if url.ends_with("/") {
+            url = url.rsplit_once("/").map(|(url, _)| url).context("Failed to format url to prepare for index.raw download")?.to_string();
+        }
+        download(&format!("{}/index.raw", url))?;
+        let index = fs::read_to_string("index.raw").context("There might be a problem with the download index.raw")?;
+        let line = index.lines().find(|l| l.contains(&format!("{}/Pkgfile", pkg))).context("This package isn't available in the repo")?;
+        let meta: Vec<&str> = line.split("|").collect();
+        let version = meta.get(1).context("Failed to get distant version")?.to_string();
+        let release = meta.get(2).context("Failed to get distant release")?.to_string();
+        if version != currentver || release != currentrel {
+            println!("Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}", version, release, currentver, currentrel);
+        } else {
+            println!("This package is up to date");
+        }
     }
     Ok(())
 }
