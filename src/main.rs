@@ -137,10 +137,6 @@ fn main() -> Result<()> {
                 files(&argument)?;
                 return Ok(())
             } 
-            if args[1] == "list" {
-                list();
-                return Ok(())
-            } 
             if args[1] == "libs" {
                 libs(&args[2], "nothing")?;
                 return Ok(())
@@ -160,6 +156,10 @@ fn main() -> Result<()> {
                 help();
                 return Ok(());
             }
+            if args[1] == "list" {
+                list()?;
+                return Ok(())
+            } 
             if args[1] == "changelog" {
                 changelog()?;
                 return Ok(())

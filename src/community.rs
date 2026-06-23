@@ -46,7 +46,7 @@ pub fn community(pkg: &str) -> Result<()> {
         }
         match builder.clone(&url, Path::new(pkg)) {
             Ok(repo) => repo,
-            Err(e) => panic!("failed to clone: {}", e),
+            Err(e) => anyhow::bail!("failed to clone: {}", e),
         };
         env::set_current_dir(pkg)?;
         package(None)?;
