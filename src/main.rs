@@ -45,6 +45,8 @@ mod changelog;
 mod sig;
 mod localpkg;
 mod community;
+mod diff;
+use crate::diff::diff;
 use crate::community::community;
 use crate::sig::createsha;
 use crate::build::build;
@@ -84,6 +86,10 @@ fn main() -> Result<()> {
         (true, true, false) => {
             if args[1] == "template" {
                 template(&args[2])?;
+                return Ok(());
+            }
+            if args[1] == "diff" {
+                diff(&args[2])?;
                 return Ok(());
             }
             if args[1] == "build" {

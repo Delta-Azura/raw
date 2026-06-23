@@ -614,6 +614,13 @@ pub fn package(option: Option<&str>) -> Result<()> {
         }
     }
     println!("Generating package");
+    for i in fs::read_dir(".")? {
+        let i = i?;
+        let i = i.file_name().to_string_lossy().to_string();
+        if i.contains(".raw.") {
+            fs::remove_file(i)?;
+        }
+    }
     let tar = File::create(format!("{}.{}#1.raw.tar.gz", name, version))?;
     let enc = GzEncoder::new(tar, Compression::default());
     let mut a = tar::Builder::new(enc);
