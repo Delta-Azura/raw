@@ -24,7 +24,8 @@ use crate::download::download;
 use std::collections::HashSet;
 use anyhow::{Result, Context};
 
-pub fn changelog() -> Result<()> {
+pub fn changelog() -> Result<(Vec<String>)> {
+    let mut upgrade = Vec::new();
     if Path::new("/etc/raw.conf").exists() {
         let checkmode = fs::read_to_string("/etc/raw.conf")?;
         if checkmode.contains("mode=binary") {
@@ -42,7 +43,6 @@ pub fn changelog() -> Result<()> {
                     packages.push(directory.to_string());
                 }
                 let set: HashSet<_> = packages.into_iter().collect();
-                let mut upgrade = Vec::new();
                 for s in index.lines() {
                     let name = s.split_once("/Pkgfile").map(|(name, _)| name).context("Failed to get name")?.rsplit_once("/").map(|(_, name)| name).context("Failed to get name")?;
                     if set.contains(name) {
@@ -53,7 +53,7 @@ pub fn changelog() -> Result<()> {
                         let distversion = meta.get(1).context("Failed to get distant version")?.to_string();
                         let distrelease = meta.get(2).context("Failed to get distant release")?.to_string();
                         if version != distversion || release != distrelease {
-                            upgrade.push(name);
+                            upgrade.push(name.to_string());
                         }
                     }
                     
@@ -75,5 +75,5 @@ pub fn changelog() -> Result<()> {
     } else {
         anyhow::bail!("/etc/raw.conf doesn't exist");
     }
-    Ok(())
+    Ok((upgrade))
 }
