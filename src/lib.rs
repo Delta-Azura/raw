@@ -45,8 +45,10 @@ pub mod getlibs;
 pub mod sig;
 pub mod localpkg;
 pub mod diff;
+pub mod changelog;
 
 #[allow(unused_imports)]
+pub use crate::changelog::changelog;
 pub use crate::getlibs::get_needed_libs;
 pub use crate::diff::diff;
 pub use crate::sig::createsha;
