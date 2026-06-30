@@ -448,7 +448,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
         .open(format!("{}/.local/share/raw/raw.log", env::var("HOME").unwrap()))
         .context("Failed to open log file")?;
         writeln!(logfile, "{:#?}", log_file)?;
-        std::process::exit(1);
+        anyhow::bail!("Build failed");
     }
     Err(e) => {
         let log_file = format!("{} [!] : ERROR The build failed {} {}", RED, e, RESET);
@@ -459,7 +459,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
         .open(format!("{}/.local/share/raw/raw.log", env::var("HOME").unwrap()))
         .context("Failed to open log file")?;
         writeln!(logfile, "{:#?}", log_file)?;
-        std::process::exit(1);
+        anyhow::bail!("Build failed");
     }
     };
     let prepare = format!("{}/pkg", collection);
