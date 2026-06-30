@@ -621,7 +621,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
             fs::remove_file(i)?;
         }
     }
-    let tar = File::create(format!("{}.{}#1.raw.tar.gz", name, version))?;
+    let tar = File::create(format!("{}.{}#{}.raw.tar.gz", name, version, release))?;
     let enc = GzEncoder::new(tar, Compression::default());
     let mut a = tar::Builder::new(enc);
     a.follow_symlinks(false);
