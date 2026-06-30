@@ -25,7 +25,7 @@ use std::process::Command;
 use crate::download::download;
 use crate::extract::extract;
 use walkdir::WalkDir;
-use anyhow::{Result, Context};
+use anyhow::{Result, Context, bail};
 use crate::getconf::getconf;
 use crate::get::get;
 use flate2::write::GzEncoder;
@@ -82,12 +82,10 @@ pub fn package(option: Option<&str>) -> Result<()> {
     match fs::exists("Pkgfile") {
         Ok(true) => println!("Starting to build"),
         Ok(false) => {
-            println!("Pkgfile doesn't exist.");
-            std::process::exit(1);
+            bail!("Pkgfile doesn't exist.");
         }
         Err(e) => {
-            println!("Error : {e}");
-            std::process::exit(1);
+            bail!("Error : {e}");
         }
     }
     let output = Command::new("bash")
@@ -317,26 +315,23 @@ pub fn package(option: Option<&str>) -> Result<()> {
             match prepare.contains("build=") {
                 true => {
                     let build_style = prepare.lines().find(|b| b.starts_with("build=")).unwrap();
-                    let style = build_style.split_once("=").map(|(_, style)| style).unwrap_or_else(|| {
-                        println!("Invalid build= line");
-                        std::process::exit(1)
-                    });
+                    let style = match build_style.split_once("=").map(|(_, style)| style) {
+                        Some(style) => style,
+                        None => bail!("Invalid build= line"),
+                    };
 
                     if Path::new(&format!("/etc/raw.d/{}", style)).exists() {
                         format!("fakeroot bash -eo pipefail -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && prepare && cd $SRC && source /etc/raw.d/{} && cd $SRC && package'", style)
                     } else {
-                        println!("No build style available for {}", build_style);
-                        std::process::exit(1)
+                        bail!("No build style available for {}", build_style);
                     }
-                }   
+                }
                 false => {
                     if Path::new("/etc/raw.d/build-default").exists() {
                         format!("fakeroot bash -eo pipefail -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && prepare && cd $SRC && source /etc/raw.d/build-default && cd $SRC && package'")
                     } else {
-                        println!("No default build style set in /etc/raw.d/build-default : aborting");
-                        std::process::exit(1)
+                        bail!("No default build style set in /etc/raw.d/build-default : aborting");
                     }
-   
                 }
             }
         }
@@ -344,26 +339,23 @@ pub fn package(option: Option<&str>) -> Result<()> {
             match prepare.contains("build=") {
                 true => {
                     let build_style = prepare.lines().find(|b| b.starts_with("build=")).unwrap();
-                    let style = build_style.split_once("=").map(|(_, style)| style).unwrap_or_else(|| {
-                        println!("Invalid build= line");
-                        std::process::exit(1)
-                    });
+                    let style = match build_style.split_once("=").map(|(_, style)| style) {
+                        Some(style) => style,
+                        None => bail!("Invalid build= line"),
+                    };
 
                     if Path::new(&format!("/etc/raw.d/{}", style)).exists() {
                         format!("fakeroot bash -eo pipefail -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && prepare && cd $SRC && source /etc/raw.d/{}'", style)
                     } else {
-                        println!("No build style available for {}", build_style);
-                        std::process::exit(1)
+                        bail!("No build style available for {}", build_style);
                     }
-                }   
+                }
                 false => {
                     if Path::new("/etc/raw.d/build-default").exists() {
-                        format!("fakeroot bash -eo pipefail -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && prepare && cd $SRC && source /etc/raw.d/build-default'")      
+                        format!("fakeroot bash -eo pipefail -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && prepare && cd $SRC && source /etc/raw.d/build-default'")
                     } else {
-                        println!("No default build style set in /etc/raw.d/build-default : aborting");
-                        std::process::exit(1)
+                        bail!("No default build style set in /etc/raw.d/build-default : aborting");
                     }
-   
                 }
             }
         }
@@ -371,27 +363,23 @@ pub fn package(option: Option<&str>) -> Result<()> {
             match prepare.contains("build=") {
                 true => {
                     let build_style = prepare.lines().find(|b| b.starts_with("build=")).unwrap();
-                    let style = build_style.split_once("=").map(|(_, style)| style).unwrap_or_else(|| {
-                        println!("Invalid build= line");
-                        std::process::exit(1)
-                    });
-                 
+                    let style = match build_style.split_once("=").map(|(_, style)| style) {
+                        Some(style) => style,
+                        None => bail!("Invalid build= line"),
+                    };
+
                     if Path::new(&format!("/etc/raw.d/{}", style)).exists() {
                         format!("fakeroot bash -eo pipefail -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && source /etc/raw.d/{} && cd $SRC && package'", style)
                     } else {
-                        println!("No build style available for {}", build_style);
-                        std::process::exit(1)
+                        bail!("No build style available for {}", build_style);
                     }
-                }   
+                }
                 false => {
                     if Path::new("/etc/raw.d/build-default").exists() {
                         format!("fakeroot bash -eo pipefail -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && source /etc/raw.d/build-default && cd $SRC && package'")
                     } else {
-                        println!("No default build style set");
-                        std::process::exit(1)
-                    }  
-                    
-   
+                        bail!("No default build style set");
+                    }
                 }
             }
         }
@@ -399,27 +387,25 @@ pub fn package(option: Option<&str>) -> Result<()> {
             match prepare.contains("build=") {
                 true => {
                     let build_style = prepare.lines().find(|b| b.starts_with("build=")).unwrap();
-                    let style = build_style.split_once("=").map(|(_, style)| style).unwrap_or_else(|| {
-                        println!("Invalid build= line");
-                        std::process::exit(1)
-                    });
+                    let style = match build_style.split_once("=").map(|(_, style)| style) {
+                        Some(style) => style,
+                        None => bail!("Invalid build= line"),
+                    };
 
                     if Path::new(&format!("/etc/raw.d/{}", style)).exists() {
                         format!("fakeroot bash -eo pipefail -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && source /etc/raw.d/{}'", style)
                     } else {
-                        println!("No build style available for {}", build_style);
-                        std::process::exit(1)
+                        bail!("No build style available for {}", build_style);
                     }
-                } 
+                }
                 false => {
                     if Path::new("/etc/raw.d/build-default").exists() {
                         format!("fakeroot bash -eo pipefail -c 'source Pkgfile && PKG=$(pwd)/pkg && SRC=$(pwd)/work && cd work && source /etc/raw.d/build-default'")
                     } else {
-                        println!("No default build style available");
-                        std::process::exit(1)
+                        bail!("No default build style available");
                     }
                 }
-            } 
+            }
         }
     };
     if !Path::new(&format!("{}/.local/share/raw/", env::var("HOME").unwrap())).exists() {
