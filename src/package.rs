@@ -106,12 +106,12 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let source = variables.next().context("The source might not be correct, check your pkgfile")?;
     let makedepends: Vec<String> = variables.next().context("Failed to get makedepends")?.split_whitespace().map(|s| s.to_string()).collect();    //if makedepends == "none" {
     let pkgfile = fs::read_to_string("Pkgfile").context("Package file doesn't exist")?;
-    let keep_sources = "true";
+    let mut keep_sources = true;
     for i in pkgfile.lines() {
-        let _keep_sources = if i.starts_with("RAW_KEEP_SOURCES=false") {
-            "false"
+        keep_sources = if i.starts_with("RAW_KEEP_SOURCES=false") {
+            false
         } else {
-            "true"
+            true
         };
     }
     let actual = std::env::current_dir().context("Failed to get current dir")?;
@@ -245,7 +245,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
                                 env::set_current_dir(&building)?;
                                 extract(&tarball.to_string())?;
                                 env::set_current_dir(&collection)?;
-                                if keep_sources != "true" {
+                                if keep_sources != true {
                                     fs::remove_file(&tarball).context("Unable to remove the downloaded archive")?;
                                 } else {
                                     println!("Skipping removal of the sources");
@@ -270,7 +270,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
                 env::set_current_dir(&building)?;
                 extract(&tarball)?;
                 env::set_current_dir(&collection)?;
-                if keep_sources != "true" {
+                if keep_sources != true {
                     fs::remove_file(tarball)?;
                 }
             }
