@@ -39,8 +39,7 @@ pub fn update(rawpkg: &String) -> Result<()> {
         }
 
     } else {
-        println!("Package isn't installed");
-        std::process::exit(1);
+        anyhow::bail!("Package isn't installed");
     }
     Ok(())
 

@@ -42,8 +42,7 @@ pub fn remove(rawpkg: &String, option: bool) -> Result<()> {
                 }
                 let meta = fs::read_to_string(meta)?;
                 if meta.contains(rawpkg) {
-                    println!("Impossible to remove this package as it's a necessary depend for {}", directory);
-                    std::process::exit(1)
+                    anyhow::bail!("Impossible to remove this package as it's a necessary depend for {}", directory);
                 }
             }
         }
@@ -92,8 +91,7 @@ pub fn remove(rawpkg: &String, option: bool) -> Result<()> {
             .unwrap();
         }
     } else {
-            println!("This package isn't installed, can't remove it");
-            std::process::exit(1);
+            anyhow::bail!("This package isn't installed, can't remove it");
     }
     env::set_current_dir(current)?;
     println!("{} successfully removed", rawpkg);

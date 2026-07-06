@@ -30,7 +30,7 @@ pub fn template(pkg: &str) -> Result<()> {
         Ok(_) => {
             println!("You are building as root !");
             fs::remove_file("/var/cache/raw.tmp")?;
-            std::process::exit(1)
+            anyhow::bail!("")
         }
         Err(_e) => {}
     }

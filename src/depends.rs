@@ -38,7 +38,6 @@ pub fn depends(pkg: &str) -> Vec<String> {
             } else {
                 let _ = get(&rawpkg);
             }
-            //std::process::exit(1)
         }
         let metafile = std::fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", rawpkg)).unwrap();
         let meta = metafile.lines().find(|l| l.starts_with("R")).unwrap().split_once('R').map(|(_, meta)| meta).unwrap();

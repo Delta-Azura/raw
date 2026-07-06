@@ -32,8 +32,7 @@ use crate::localpkg::localpkg;
 pub fn get(pkg: &str) -> Result<()> {
     let (mode, root, url) = getconf().unwrap();
     if mode != "binary" {
-        println!("Raw isn't used in binary mode, cannot connect to the repo");
-        std::process::exit(1);
+        anyhow::bail!("Raw isn't used in binary mode, cannot connect to the repo");
     }
     let (localpkg, localdata) = localpkg(pkg)?;
     env::set_current_dir("/var/cache/").unwrap();
@@ -42,8 +41,7 @@ pub fn get(pkg: &str) -> Result<()> {
     if index_raw.contains(&format!("{}", pkg)) {
         let rawpkg = index_raw.lines().any(|l| l.contains(&format!("/{}/", pkg)));
         if rawpkg != true {
-            println!("Package doesn't exists");
-            std::process::exit(1)
+            anyhow::bail!("Package doesn't exists");
         }
         let line = index_raw.lines().find(|l| l.contains(&format!("/{}/", pkg))).context("Failed to get pkgname")?;
         let data: Vec<&str> = line.split("|").collect();
@@ -79,8 +77,7 @@ pub fn get(pkg: &str) -> Result<()> {
             File::create(format!("/var/lib/pkg/DB/{}/automatic", i)).context("Failed to add automatic file for oprhans")?;
         }
     } else {
-        println!("Not found");
-        std::process::exit(1)
+        anyhow::bail!("Not found");
     }
 
     Ok(())

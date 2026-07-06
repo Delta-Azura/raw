@@ -66,7 +66,7 @@ pub fn conflict(rawpkg: &String) -> Result<()> {
                             if file_type(&test) == true {
                                 let test = test.split_once("/").map(|(_, test)| test).context("Failed to parse conflict search")?;
                                 let _owner = query(&test.to_string());
-                                std::process::exit(1)
+                                anyhow::bail!("");
                             }
                         }
 
@@ -85,8 +85,7 @@ pub fn conflict(rawpkg: &String) -> Result<()> {
             if r != "/usr/share/info/dir" {
                 if !r.starts_with("/etc")  {
                     if Path::new(&r).exists() {
-                        println!("File {} already present on the system", i);
-                        std::process::exit(1)
+                        anyhow::bail!("File {} already present on the system", i);
                     }
                 }
             }

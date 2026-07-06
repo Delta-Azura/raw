@@ -30,8 +30,7 @@ use anyhow::{Result, Context};
 pub fn upgrade() -> Result<()> {
     let (mode, _trash, url) = getconf().unwrap();
     if mode != "binary" {
-        println!("Raw isn't used in binary mode, cannot connect to the repo");
-        std::process::exit(1);
+        anyhow::bail!("Raw isn't used in binary mode, cannot connect to the repo");
     }
     env::set_current_dir("/var/cache/").unwrap();
     let metadata = download(&format!("{}/index.raw", url))?;

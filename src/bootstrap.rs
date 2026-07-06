@@ -38,8 +38,7 @@ pub fn bootstrap(rawpkg: &String, bootstrap_path: &str) -> Result<()> {
     if rawpkg.ends_with(".tar.gz") || rawpkg.ends_with(".tgz") {
         extract(rawpkg)?;
     } else {
-        println!("No package in the format required : ABORTING");
-        std::process::exit(1);
+        anyhow::bail!("No package in the format required : ABORTING");
     }
     let opts = CopyOptions {
         overwrite: true,

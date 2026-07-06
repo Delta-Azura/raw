@@ -93,6 +93,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
         .output()
         .unwrap_or_else(|e| {
             println!("{} [!] : ERROR CHECK THE PKGFILE : {} {}", RED, e, RESET);
+            //critical thing to correct
             std::process::exit(1)
         });
     let stdout = String::from_utf8(output.stdout).context("Failed to get variables from Pkgfile")?;
