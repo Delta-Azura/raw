@@ -53,7 +53,7 @@ pub fn check_binary(pkg: &str, conf: String) -> Result<()> {
             let version = meta.get(1).context("Failed to get distant version")?.to_string();
             let release = meta.get(2).context("Failed to get distant release")?.to_string();
             if version != currentver || release != currentrel {
-                println!("Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}", version, release, currentver, currentrel);
+                println!("Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}", currentver, currentrel, version, release);
             } else {
                 println!("This package is up to date");
             }
@@ -71,7 +71,7 @@ pub fn check_binary(pkg: &str, conf: String) -> Result<()> {
         let version = meta.get(1).context("Failed to get distant version")?.to_string();
         let release = meta.get(2).context("Failed to get distant release")?.to_string();
         if version != currentver || release != currentrel {
-            println!("Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}", version, release, currentver, currentrel);
+            println!("Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}", currentver, currentrel, version, release);
         } else {
             println!("This package is up to date");
         }
@@ -106,7 +106,7 @@ pub fn check_local(pkg: &str, conf: &String) -> Result<bool> {
         }
         let (currentver, currentrel) = parse_local_version(pkg)?; 
         if currentver != version || currentrel != release {
-            println!("Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}", version, release, currentver, currentrel);
+            println!("Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}", currentver, currentrel, version, release);
         } else {
             println!("This package is up to date");
         }
@@ -142,7 +142,7 @@ pub fn check_source(pkg: &str, conf: String) -> Result<()> {
         }
         let (currentver, currentrel) = parse_local_version(pkg)?; 
         if currentver != version || currentrel != release {
-            println!("Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}", version, release, currentver, currentrel);
+            println!("Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}", currentver, currentrel, version, release);
         } else {
             println!("This package is up to date");
         }
