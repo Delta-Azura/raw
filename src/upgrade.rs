@@ -51,17 +51,16 @@ pub fn upgrade() -> Result<()> {
                     install(&pkg.to_string(), false)?;     
                 }
             } else {
-                continue;
-            }
-            let file = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", pkg)).unwrap();
-            let content: Vec<String> = file.lines().map(|l| l.to_string()).collect();
-            let version_i = content.iter().find(|l| l.starts_with('V')).unwrap().to_string().split_once('V').map(|(_, version)| version).unwrap().to_string();
-            let release_i = content.iter().find(|r| r.starts_with('r')).unwrap().to_string().split_once('r').map(|(_, release)| release).unwrap().to_string();
-            if format!("{}{}", version, release) != format!("{}{}", version_i, release_i) {
-                remove(&pkg.to_string(), true)?;
-                get(pkg)?;
-            } else {
-                println!("Package already up to date");
+                let file = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", pkg)).unwrap();
+                let content: Vec<String> = file.lines().map(|l| l.to_string()).collect();
+                let version_i = content.iter().find(|l| l.starts_with('V')).unwrap().to_string().split_once('V').map(|(_, version)| version).unwrap().to_string();
+                let release_i = content.iter().find(|r| r.starts_with('r')).unwrap().to_string().split_once('r').map(|(_, release)| release).unwrap().to_string();
+                if format!("{}{}", version, release) != format!("{}{}", version_i, release_i) {
+                    remove(&pkg.to_string(), true)?;
+                    get(pkg)?;
+                } else {
+                    println!("Package already up to date");
+                }
             }
         } else {
             continue;
