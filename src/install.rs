@@ -50,7 +50,7 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
         source.or(root).context("No source path or root path defined in raw.conf")?
 
     } else {
-        println!("No need to check signature");
+        println!("No need to check package integrity");
         "none".to_string()
     };
 
@@ -103,9 +103,9 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
         let index = fs::read_to_string(format!("{}/index.raw", path)).context("Failed to open index.raw")?;
         let sha = index.lines().find(|l| l.contains(&format!("{}/Pkgfile", pkg))).context("Package not present in index.raw")?;
         let meta: Vec<&str> = sha.split("|").collect();
-        let sha = meta.get(3).context("Failed to get signature")?.to_string();
+        let sha = meta.get(3).context("Failed to get package checksum")?.to_string();
         if sha != hash {
-            anyhow::bail!("Signatures don't match, exiting !")
+            anyhow::bail!("Checksums don't match, exiting !")
         }
     }
     if Path::new(&format!("/tmp/{}", pkg)).exists() {

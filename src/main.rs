@@ -79,7 +79,7 @@ const RESET: &str = "\x1b[0m";
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
     match args.len() < 2 {
-        true => {help();}
+        true => {help(); return Ok(())}
         false => {}
     }
     match (args.len() > 1, args.len() > 2, args.len() > 3) {
@@ -99,9 +99,12 @@ fn main() -> Result<()> {
             if args[1] == "package" {
                 if args[2] == "--clean" {
                     package(Some("--clean"))?;
+                    return Ok(());
                 } else {
                     println!("{}Unknown option, did you mean raw package --clean ?{}", RED, RESET);
+                    return Ok(())
                 }
+
             }
             if args[1] == "community" {
                 community(&args[2])?;
@@ -149,6 +152,8 @@ fn main() -> Result<()> {
                 search(&args[2])?;
                 return Ok(())
             }
+            help();
+            return Ok(())
         }
         (true, false, false) => {
             if args[1] == "install" || args[1] == "get" || args[1] == "update" || args[1] == "remove" {
@@ -190,7 +195,8 @@ fn main() -> Result<()> {
                 }
                 return Ok(());
             } 
-            
+            help();
+            return Ok(())
 
         }
         (true, true, true) => {
@@ -198,19 +204,24 @@ fn main() -> Result<()> {
                 for i in args.iter().skip(2) {
                     get(i)?;
                 }
+                return Ok(())
             }
             if args[1] == "libs" {
                 if args[3] == "all" {
                     libs(&args[2], &args[3])?;
+                    return Ok(())
                 } else {
                     libs(&args[2], "no")?;
+                    return Ok(())
                 }
             }
             if args[1] == "remove" {
                 if args[3] == "-f" {
                     remove(&args[2], true)?;
+                    return Ok(())
                 } else {
                     remove(&args[2], false)?;
+                    return Ok(())
                 }
             }
             if args[1] == "install" {
@@ -220,8 +231,10 @@ fn main() -> Result<()> {
                     }
                     if args.contains(&"-f".to_string()) {
                         install(i, true)?;
+                        return Ok(())
                     } else {
                         install(i, false)?;
+                        return Ok(())
                     }
                 }
             }
@@ -229,9 +242,11 @@ fn main() -> Result<()> {
                 bootstrap(&args[2], &args[3])?;
                 return Ok(())
             }
+            help();
+            return Ok(())
         }
-        (true, false, true) => {help();}
-        (false, _, _) => {help();}
+        (true, false, true) => {help(); return Ok(())}
+        (false, _, _) => {help(); return Ok(())}
 
     }
     return Ok(());

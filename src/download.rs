@@ -28,7 +28,7 @@ pub fn download(url: &str) -> Result<String> {
     // Checking lenght of the answer
     // Setting the progress bar style (random settings)
     let client = reqwest::blocking::Client::builder()
-    .user_agent("raw/0.2.6")
+    .user_agent(env!("CARGO_PKG_VERSION"))
     .build()?;
     let mut answer = client.get(url).send()?;
     if !answer.status().is_success() {
