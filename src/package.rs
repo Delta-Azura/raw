@@ -109,10 +109,11 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let pkgfile = fs::read_to_string("Pkgfile").context("Package file doesn't exist")?;
     let mut keep_sources = true;
     for i in pkgfile.lines() {
-        keep_sources = if i.starts_with("RAW_KEEP_SOURCES=false") {
-            false
+        if i.starts_with("RAW_KEEP_SOURCES=false") {
+            keep_sources = false;
+            break;
         } else {
-            true
+            keep_sources = true
         };
     }
     let actual = std::env::current_dir().context("Failed to get current dir")?;
@@ -157,12 +158,9 @@ pub fn package(option: Option<&str>) -> Result<()> {
                     let collection = std::env::current_dir().unwrap();
                     let _current = collection.file_name().unwrap().to_str().unwrap().to_string();
                     let collection = collection.display().to_string();
-                    println!("{}", collection);
 
-                    println!("1");
                     File::create("automatic").context("Failed to create the automatic file, be careful while removing orphans")?;
                     for entry in fs::read_dir(collection)? {
-                        println!("1");
                         let entry = entry?;
                         if entry.file_name().to_string_lossy().contains(".raw.") {
                             let pkgver =  entry.file_name().to_string_lossy().split_once('.').map(|(_, pkgver)| pkgver).context("Failed to get package release")?.split_once("#").map(|(pkgver, _)| pkgver).context("Failed to get package release")?.to_string();
@@ -244,9 +242,17 @@ pub fn package(option: Option<&str>) -> Result<()> {
                             } else {
                                 println!("Skipping removal of the sources");
                             }
+                        } else {
+                            fs::copy(&tarball, format!("{}/{}", building, tarball))?;
+                            if keep_sources != true {
+                                fs::remove_file(tarball).context("Failed to remove source file")?;
+                            }
                         }
                     } else {
                         fs::copy(&tarball, format!("work/{}", tarball))?;
+                        if kee_sources != true {
+                            fs::remove_file(tarball).context("Failed to remove downloaded tarball")?;
+                        }
                     }
                 }
                 Ok::<(), anyhow::Error>(())
@@ -263,6 +269,11 @@ pub fn package(option: Option<&str>) -> Result<()> {
                 env::set_current_dir(&building)?;
                 extract(&tarball)?;
                 env::set_current_dir(&collection)?;
+                if keep_sources != true {
+                    fs::remove_file(&tarball)?;
+                }
+            } else {
+                fs::copy(&tarball, format!("work/{}", tarball))?;
                 if keep_sources != true {
                     fs::remove_file(tarball)?;
                 }
