@@ -56,7 +56,7 @@ pub enum ArchiveType {
     Unknown,
 }
 
-struct Signature {
+pub struct Signature {
     archive_type: ArchiveType, 
     magic: &'static [u8],
     offset: u64,
@@ -64,7 +64,7 @@ struct Signature {
 
 
 // list of signatures
-static SIGNATURES: &[Signature] = &[
+pub static SIGNATURES: &[Signature] = &[
     Signature { archive_type: ArchiveType::Zip, magic: &[0x50, 0x4B, 0x03, 0x04], offset: 0 },
     Signature { archive_type: ArchiveType::Zip, magic: &[0x50, 0x4B, 0x05, 0x06], offset: 0 },
     Signature { archive_type: ArchiveType::SevenZip, magic: &[0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C], offset: 0 },
@@ -200,18 +200,13 @@ pub fn package(option: Option<&str>) -> Result<()> {
                     let mut file = File::open(&src)?;
                     let mut buffer = [0u8; 512];
                     let bytes_read = file.read(&mut buffer)?;
-                    for sig in SIGNATURES {
-                        let start = sig.offset as usize;
-                        let end = start + sig.magic.len();
-                        if bytes_read >= end && &buffer[start..end] == sig.magic {
-                            env::set_current_dir(&building)?;
-                            extract(&src.to_string())?;
-                            env::set_current_dir(&collection)?;
-                        } else {
-                            fs::copy(src, format!("work/{}", src))?;
-                        }
-
-
+                    let is_archive = is_archive(bytes_read, &buffer)?;
+                    if is_archive == true {
+                        env::set_current_dir(&building)?;
+                        extract(&src.to_string())?;
+                        env::set_current_dir(&collection)?;
+                    } else {
+                        fs::copy(src, format!("work/{}", src))?;
                     }
                 } else {
                     fs::copy(src, format!("work/{}", src))?;
@@ -237,20 +232,17 @@ pub fn package(option: Option<&str>) -> Result<()> {
                         let mut file = File::open(&tarball)?;
                         let mut buffer = [0u8; 512];
                         let bytes_read = file.read(&mut buffer)?;
-                        for sig in SIGNATURES {
-                            let start = sig.offset as usize;
-                            let end = start + sig.magic.len();
-                            if bytes_read >= end && &buffer[start..end] == sig.magic {
-                                println!("{} {}", tarball, collection);
-                                fs::copy(&tarball, format!("{}/{}", building, tarball))?;
-                                env::set_current_dir(&building)?;
-                                extract(&tarball.to_string())?;
-                                env::set_current_dir(&collection)?;
-                                if keep_sources != true {
-                                    fs::remove_file(&tarball).context("Unable to remove the downloaded archive")?;
-                                } else {
-                                    println!("Skipping removal of the sources");
-                                }
+                        let is_archive = is_archive(bytes_read, &buffer)?;
+                        if is_archive == true {
+                            println!("{} {}", tarball, collection);
+                            fs::copy(&tarball, format!("{}/{}", building, tarball))?;
+                            env::set_current_dir(&building)?;
+                            extract(&tarball.to_string())?;
+                            env::set_current_dir(&collection)?;
+                            if keep_sources != true {
+                                fs::remove_file(&tarball).context("Unable to remove the downloaded archive")?;
+                            } else {
+                                println!("Skipping removal of the sources");
                             }
                         }
                     } else {
@@ -284,15 +276,12 @@ pub fn package(option: Option<&str>) -> Result<()> {
                 let mut file = File::open(src)?;
                 let mut buffer = [0u8; 512];
                 let bytes_read = file.read(&mut buffer)?;
-                for sig in SIGNATURES {
-                    let start = sig.offset as usize;
-                    let end = start + sig.magic.len();
-                    if bytes_read >= end && &buffer[start..end] == sig.magic {
-                        println!("{} {}", src, collection);
-                        env::set_current_dir(&building)?;
-                        extract(&src.to_string())?;
-                        env::set_current_dir(&collection)?;
-                    }
+                let is_archive = is_archive(bytes_read, &buffer)?;
+                if is_archive == true {
+                    println!("{} {}", src, collection);
+                    env::set_current_dir(&building)?;
+                    extract(&src.to_string())?;
+                    env::set_current_dir(&collection)?;
                 }
             }
         }
@@ -610,4 +599,19 @@ pub fn package(option: Option<&str>) -> Result<()> {
     fs::remove_dir_all("pkg")?;
     createsha(&format!("{}.{}#{}.raw.tar.gz", name, version, release))?;
     Ok(())
+}
+
+
+
+pub fn is_archive(bytes_read: usize, buffer: &[u8]) -> Result<(bool)> {
+    let mut is_archive = false;
+    for sig in SIGNATURES {
+        let start = sig.offset as usize;
+        let end = start + sig.magic.len();
+        if bytes_read >= end && &buffer[start..end] == sig.magic {
+            is_archive = true;
+            break;
+        }
+    }
+    return Ok(is_archive)
 }
