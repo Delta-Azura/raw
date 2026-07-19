@@ -250,7 +250,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
                         }
                     } else {
                         fs::copy(&tarball, format!("work/{}", tarball))?;
-                        if kee_sources != true {
+                        if keep_sources != true {
                             fs::remove_file(tarball).context("Failed to remove downloaded tarball")?;
                         }
                     }
