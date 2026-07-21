@@ -35,7 +35,7 @@ const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
 
 
-pub fn install(rawpkg: &String, option: bool) -> Result<()> {
+pub fn install(rawpkg: &String, option: bool, skip_verify: bool) -> Result<()> {
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
     let mut path = if Path::new("/etc/raw.conf").exists() {
         let conf = fs::read_to_string("/etc/raw.conf").context("Failed to open raw.conf file")?;
@@ -69,14 +69,14 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
                     let pkgname = content.iter().find(|l| l.contains(".raw.")).context("Failed to find raw package")?;
                     println!("{}", pkgname);
                     if option == true {
-                        install(pkgname, true)?;
+                        install(pkgname, true, false)?;
                     } else {
-                        install(pkgname, false)?;
+                        install(pkgname, false, false)?;
                     }
                     env::set_current_dir(saved)?;
                     let depends: Vec<String> = depends(rawpkg);
                     for i in depends {
-                        install(&i, false)?;
+                        install(&i, false, false)?;
                     }
                     return Ok(());
                 }
@@ -94,12 +94,9 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
     }
     
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).context("Failed to get pkgname")?;
-
-    //if path != "none" {
-    //    verifysha("source", Some(path), rawpkg)?;
-    //} else {
-    //    verifysha("binary", None, &format!("/var/cache/{}", rawpkg))?;
-    //}
+    if !skip_verify {
+        verifysha("source", Some(path), rawpkg)?;
+    }
     if Path::new(&format!("/tmp/{}", pkg)).exists() {
         env::set_current_dir(format!("/tmp/{}", pkg))?;
     } else {

@@ -71,7 +71,7 @@ pub fn get(pkg: &str) -> Result<()> {
             update(&tarball)?; 
         } else {
             verifysha("binary", None, &tarball)?;
-            install(&tarball, false)?;
+            install(&tarball, false, true)?;
         }
         let dependencies = depends(pkg);
         for i in &dependencies {

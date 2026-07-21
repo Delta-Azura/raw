@@ -115,7 +115,7 @@ fn main() -> Result<()> {
             if args[1] == "install" {
                 let argument = format!("{}", args[2]);
                 println!("{}", argument);
-                install(&argument, false)?;
+                install(&argument, false, false)?;
                 return Ok(());
             }
             if args[1] == "info" {
@@ -232,10 +232,10 @@ fn main() -> Result<()> {
                         continue;
                     }
                     if args.contains(&"-f".to_string()) {
-                        install(i, true)?;
+                        install(i, true, true)?;
                         return Ok(())
                     } else {
-                        install(i, false)?;
+                        install(i, false, false)?;
                         return Ok(())
                     }
                 }

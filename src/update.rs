@@ -37,11 +37,10 @@ pub fn update(rawpkg: &String) -> Result<()> {
         remove(&pkg, true)?;
         conflict(&rawpkg)?;
         println!("Installing the new one");
-        install(&rawpkg, false)?;
+        install(&rawpkg, false, true)?;
         if Path::new("/tmp/conflict").exists() {
             fs::remove_file("/tmp/conflict").context("Unable to remove /tmp/conflict,")?;
         }
-
     } else {
         anyhow::bail!("Package isn't installed");
     }

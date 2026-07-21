@@ -54,7 +54,7 @@ pub fn upgrade() -> Result<()> {
                 let (localver, localrel) = &localdata[0];
                 if localver != version || localrel != release {
                     remove(&pkg.to_string(), true)?;
-                    install(&pkg.to_string(), false)?;     
+                    install(&pkg.to_string(), false, false)?;     
                 }
             } else {
                 let file = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", pkg)).unwrap();
@@ -65,7 +65,7 @@ pub fn upgrade() -> Result<()> {
                     download(&format!("{link}/{pkg}"))?;
                     verifysha("binary", None, pkg)?;
                     remove(&pkg.to_string(), true)?;
-                    install(&format!("/var/cache/{pkg}"), false)?;
+                    install(&format!("/var/cache/{pkg}"), false, true)?;
                     //get(pkg)?;
                 } else {
                     println!("Package already up to date");
