@@ -29,7 +29,7 @@ use crate::file_type::file_type;
 use crate::getconf::getconf;
 use crate::depends::depends;
 use crate::extract::extract;
-use crate::createsha;
+use crate::verifysha::verifysha;
 
 const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
@@ -53,7 +53,6 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
         println!("No need to check package integrity");
         "none".to_string()
     };
-
     fs::remove_file("/var/cache/tmp.raw")?;
     if !rawpkg.contains(".raw.") {
         let (_mode, root, _trash) = getconf().unwrap();
@@ -95,18 +94,11 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
     }
     
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).context("Failed to get pkgname")?;
+
     if path != "none" {
-        let hash = createsha(&rawpkg)?;
-        if path.ends_with("/") {
-            path = path.rsplit_once("/").map(|(path, _)| path).context("Failed to get index.raw path")?.to_string();
-        }
-        let index = fs::read_to_string(format!("{}/index.raw", path)).context("Failed to open index.raw")?;
-        let sha = index.lines().find(|l| l.contains(&format!("{}/Pkgfile", pkg))).context("Package not present in index.raw")?;
-        let meta: Vec<&str> = sha.split("|").collect();
-        let sha = meta.get(3).context("Failed to get package checksum")?.to_string();
-        if sha != hash {
-            anyhow::bail!("Checksums don't match, exiting !")
-        }
+        verifysha("source", Some(path), rawpkg)?;
+    } else {
+        verifysha("binary", None, &format!("/var/cache/{}", rawpkg))?;
     }
     if Path::new(&format!("/tmp/{}", pkg)).exists() {
         env::set_current_dir(format!("/tmp/{}", pkg))?;

@@ -46,6 +46,7 @@ mod sig;
 mod localpkg;
 mod community;
 mod diff;
+mod verifysha;
 use crate::diff::diff;
 use crate::community::community;
 use crate::sig::createsha;
@@ -71,6 +72,7 @@ use anyhow::{Result};
 use crate::upgrade::upgrade;
 use crate::search::search;
 use crate::remove_cache::remove_cache;
+use crate::verifysha::verifysha;
 
 const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
