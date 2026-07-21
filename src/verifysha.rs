@@ -15,7 +15,7 @@ pub fn verifysha(mode: &str, path: Option<String>, package: &str) -> Result<()> 
     };
     let mut pkg = package;
     if pkg.contains(".raw.") {
-        pkg = package.split_once(".raw.").map(|(pkg, _)| pkg).context("Failed to isolated package name")?;
+        pkg = package.split_once(".").map(|(pkg, _)| pkg).context("Failed to isolated package name")?;
     }
     let sha = index.lines().find(|l| l.contains(&format!("{}/Pkgfile", pkg))).context("Package not present in index.raw")?;
     let meta: Vec<&str> = sha.split("|").collect();
