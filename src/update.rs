@@ -23,6 +23,7 @@ use crate::install::install;
 use crate::conflict::conflict;
 use anyhow::{Result};
 use anyhow::Context;
+use crate::verifysha;
 
 
 pub fn update(rawpkg: &String) -> Result<()> {
@@ -30,6 +31,9 @@ pub fn update(rawpkg: &String) -> Result<()> {
     if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
         File::create("/tmp/conflict").unwrap();
         println!("removing previous package");
+        let path = fs::read_to_string("/etc/raw.conf")?;
+        let path = path.lines().find(|l| l.starts_with("root=")).context("Failed to check for parent directory of index.raw")?.split_once("root=").map(|(_, path)| path).context("Failed to get path")?;
+        verifysha("source", Some(path.to_string()), rawpkg)?;
         remove(&pkg, true)?;
         conflict(&rawpkg)?;
         println!("Installing the new one");

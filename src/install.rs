@@ -95,11 +95,11 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
     
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).context("Failed to get pkgname")?;
 
-    if path != "none" {
-        verifysha("source", Some(path), rawpkg)?;
-    } else {
-        verifysha("binary", None, &format!("/var/cache/{}", rawpkg))?;
-    }
+    //if path != "none" {
+    //    verifysha("source", Some(path), rawpkg)?;
+    //} else {
+    //    verifysha("binary", None, &format!("/var/cache/{}", rawpkg))?;
+    //}
     if Path::new(&format!("/tmp/{}", pkg)).exists() {
         env::set_current_dir(format!("/tmp/{}", pkg))?;
     } else {

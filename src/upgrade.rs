@@ -25,6 +25,7 @@ use crate::remove::remove;
 use crate::install::install;
 use crate::localpkg::localpkg;
 use anyhow::{Result, Context};
+use crate::verifysha::verifysha;
 
 
 pub fn upgrade() -> Result<()> {
@@ -62,6 +63,7 @@ pub fn upgrade() -> Result<()> {
                 let release_i = content.iter().find(|r| r.starts_with('r')).unwrap().to_string().split_once('r').map(|(_, release)| release).unwrap().to_string();
                 if format!("{}{}", version, release) != format!("{}{}", version_i, release_i) {
                     download(&format!("{link}/{pkg}"))?;
+                    verifysha("binary", None, pkg)?;
                     remove(&pkg.to_string(), true)?;
                     install(&format!("/var/cache/{pkg}"), false)?;
                     //get(pkg)?;

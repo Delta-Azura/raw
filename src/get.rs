@@ -27,6 +27,8 @@ use crate::update::update;
 use std::fs::File;
 use std::process::Command;
 use crate::localpkg::localpkg;
+use crate::verifysha;
+
 
 
 pub fn get(pkg: &str) -> Result<()> {
@@ -68,7 +70,7 @@ pub fn get(pkg: &str) -> Result<()> {
         if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
             update(&tarball)?; 
         } else {
-            //fs::copy(tarball, )
+            verifysha("binary", None, &tarball)?;
             install(&tarball, false)?;
         }
         let dependencies = depends(pkg);
