@@ -64,10 +64,10 @@ pub fn upgrade() -> Result<()> {
                 let release_i = content.iter().find(|r| r.starts_with('r')).unwrap().to_string().split_once('r').map(|(_, release)| release).unwrap().to_string();
                 if format!("{}{}", version, release) != format!("{}{}", version_i, release_i) {
                     let url = format!("{}/{}/{}/{}.{}%23{}.raw.tar.gz", link, collection, pkg, pkg, version, release);
-                    download(&url)?;
-                    verifysha("binary", None, pkg)?;
+                    let tarball = download(&url)?;
+                    verifysha("binary", None, &tarball)?;
                     remove(&pkg.to_string(), true)?;
-                    install(&format!("/var/cache/{pkg}"), false, true)?;
+                    install(&format!("/var/cache/{tarball}"), false, true)?;
                     //get(pkg)?;
                 } else {
                     println!("Package already up to date");
