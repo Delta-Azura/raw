@@ -15,16 +15,14 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use std::env;
-use std::fs;
 use crate::download::download;
 use crate::getconf;
-use anyhow::{Result, Context};
-
-
+use anyhow::{Context, Result};
+use std::env;
+use std::fs;
 
 pub fn search(pkg: &str) -> Result<()> {
-    let (mode, path, url) = getconf().unwrap(); 
+    let (mode, path, url) = getconf().unwrap();
     if mode != "binary" {
         env::set_current_dir(path)?;
         let content = fs::read_to_string("index.raw")?.to_string();
@@ -32,7 +30,13 @@ pub fn search(pkg: &str) -> Result<()> {
         let mut list: Vec<(&str, &str)> = Vec::new();
         for e in file {
             if e.contains(pkg) {
-                let name = e.split_once("/Pkgfile").map(|(name, _)| name).context("Failed to get name")?.rsplit_once("/").map(|(_, name)| name).context("Failed to get package name")?;
+                let name = e
+                    .split_once("/Pkgfile")
+                    .map(|(name, _)| name)
+                    .context("Failed to get name")?
+                    .rsplit_once("/")
+                    .map(|(_, name)| name)
+                    .context("Failed to get package name")?;
                 let found: Vec<&str> = e.split("|").collect();
                 let description = found.get(4).context("")?;
                 list.push((name, description));
@@ -52,7 +56,13 @@ pub fn search(pkg: &str) -> Result<()> {
         let mut list: Vec<(&str, &str)> = Vec::new();
         for e in file {
             if e.contains(pkg) {
-                let name = e.split_once("/Pkgfile").map(|(name, _)| name).context("Failed to get name")?.rsplit_once("/").map(|(_, name)| name).context("Failed to get package name")?;
+                let name = e
+                    .split_once("/Pkgfile")
+                    .map(|(name, _)| name)
+                    .context("Failed to get name")?
+                    .rsplit_once("/")
+                    .map(|(_, name)| name)
+                    .context("Failed to get package name")?;
                 let found: Vec<&str> = e.split("|").collect();
                 let description = found.get(4).context("")?;
                 list.push((name, description));

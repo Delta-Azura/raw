@@ -15,14 +15,12 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-
-use std::path::Path;
-use std::fs;
-use anyhow::{Result};
-use anyhow::Context;
 use crate::download::download;
+use anyhow::Context;
+use anyhow::Result;
 use std::env;
-
+use std::fs;
+use std::path::Path;
 
 pub fn diff(pkg: &str) -> Result<()> {
     let conf = fs::read_to_string("/etc/raw.conf").context("Raw.conf doesn't exist")?;
@@ -34,44 +32,93 @@ pub fn diff(pkg: &str) -> Result<()> {
     Ok(())
 }
 
-
 pub fn check_binary(pkg: &str, conf: String) -> Result<()> {
     let mut url = String::new();
     let (currentver, currentrel) = parse_local_version(pkg)?;
     if conf.contains("local=true") {
         let result = check_local(pkg, &conf)?;
         if result == false {
-            env::set_current_dir("/var/cache/").context("/var/cache/ doesn't exist, your system might be in pain")?;
-            url = conf.lines().find(|l| l.starts_with("url=")).context("Failed to get url variable")?.split_once("url=").map(|(_, url)| url).context("Failed to get url, check your raw.conf file")?.to_string();
+            env::set_current_dir("/var/cache/")
+                .context("/var/cache/ doesn't exist, your system might be in pain")?;
+            url = conf
+                .lines()
+                .find(|l| l.starts_with("url="))
+                .context("Failed to get url variable")?
+                .split_once("url=")
+                .map(|(_, url)| url)
+                .context("Failed to get url, check your raw.conf file")?
+                .to_string();
             if url.ends_with("/") {
-                url = url.rsplit_once("/").map(|(url, _)| url).context("Failed to format url to prepare for index.raw download")?.to_string();
+                url = url
+                    .rsplit_once("/")
+                    .map(|(url, _)| url)
+                    .context("Failed to format url to prepare for index.raw download")?
+                    .to_string();
             }
             download(&format!("{}/index.raw", url))?;
-            let index = fs::read_to_string("index.raw").context("There might be a problem with the download index.raw")?;
-            let line = index.lines().find(|l| l.contains(&format!("{}/Pkgfile", pkg))).context("This package isn't available in the repo")?;
+            let index = fs::read_to_string("index.raw")
+                .context("There might be a problem with the download index.raw")?;
+            let line = index
+                .lines()
+                .find(|l| l.contains(&format!("{}/Pkgfile", pkg)))
+                .context("This package isn't available in the repo")?;
             let meta: Vec<&str> = line.split("|").collect();
-            let version = meta.get(1).context("Failed to get distant version")?.to_string();
-            let release = meta.get(2).context("Failed to get distant release")?.to_string();
+            let version = meta
+                .get(1)
+                .context("Failed to get distant version")?
+                .to_string();
+            let release = meta
+                .get(2)
+                .context("Failed to get distant release")?
+                .to_string();
             if version != currentver || release != currentrel {
-                println!("Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}", currentver, currentrel, version, release);
+                println!(
+                    "Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}",
+                    currentver, currentrel, version, release
+                );
             } else {
                 println!("This package is up to date");
             }
         }
     } else {
-        env::set_current_dir("/var/cache/").context("/var/cache/ doesn't exist, your system might be in pain")?;
-        url = conf.lines().find(|l| l.starts_with("url=")).context("Failed to get url variable")?.split_once("url=").map(|(_, url)| url).context("Failed to get url, check your raw.conf file")?.to_string();
+        env::set_current_dir("/var/cache/")
+            .context("/var/cache/ doesn't exist, your system might be in pain")?;
+        url = conf
+            .lines()
+            .find(|l| l.starts_with("url="))
+            .context("Failed to get url variable")?
+            .split_once("url=")
+            .map(|(_, url)| url)
+            .context("Failed to get url, check your raw.conf file")?
+            .to_string();
         if url.ends_with("/") {
-            url = url.rsplit_once("/").map(|(url, _)| url).context("Failed to format url to prepare for index.raw download")?.to_string();
+            url = url
+                .rsplit_once("/")
+                .map(|(url, _)| url)
+                .context("Failed to format url to prepare for index.raw download")?
+                .to_string();
         }
         download(&format!("{}/index.raw", url))?;
-        let index = fs::read_to_string("index.raw").context("There might be a problem with the download index.raw")?;
-        let line = index.lines().find(|l| l.contains(&format!("{}/Pkgfile", pkg))).context("This package isn't available in the repo")?;
+        let index = fs::read_to_string("index.raw")
+            .context("There might be a problem with the download index.raw")?;
+        let line = index
+            .lines()
+            .find(|l| l.contains(&format!("{}/Pkgfile", pkg)))
+            .context("This package isn't available in the repo")?;
         let meta: Vec<&str> = line.split("|").collect();
-        let version = meta.get(1).context("Failed to get distant version")?.to_string();
-        let release = meta.get(2).context("Failed to get distant release")?.to_string();
+        let version = meta
+            .get(1)
+            .context("Failed to get distant version")?
+            .to_string();
+        let release = meta
+            .get(2)
+            .context("Failed to get distant release")?
+            .to_string();
         if version != currentver || release != currentrel {
-            println!("Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}", currentver, currentrel, version, release);
+            println!(
+                "Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}",
+                currentver, currentrel, version, release
+            );
         } else {
             println!("This package is up to date");
         }
@@ -79,18 +126,36 @@ pub fn check_binary(pkg: &str, conf: String) -> Result<()> {
     Ok(())
 }
 
-
 pub fn check_local(pkg: &str, conf: &String) -> Result<bool> {
     let mut version = String::new();
     let mut release = String::new();
     let mut result = true;
-    let root = conf.lines().find(|l| l.starts_with("root=")).context("Failed to get root= line")?.split_once("root=").map(|(_, path)| path).context("Root variable isn't available")?;
+    let root = conf
+        .lines()
+        .find(|l| l.starts_with("root="))
+        .context("Failed to get root= line")?
+        .split_once("root=")
+        .map(|(_, path)| path)
+        .context("Root variable isn't available")?;
     println!("{}index.raw", root);
-    let index = fs::read_to_string(&format!("{}/index.raw", root)).context("Please run raw index first")?;
-    if index.lines().any(|l| l.contains(&format!("{}/Pkgfile", pkg))) {
-        let path = index.lines().find(|l| l.contains(&format!("{}/Pkgfile", pkg))).context("Failed to get path")?.split_once("/Pkgfile").map(|(path, _)| path).context("Failed")?;
+    let index =
+        fs::read_to_string(&format!("{}/index.raw", root)).context("Please run raw index first")?;
+    if index
+        .lines()
+        .any(|l| l.contains(&format!("{}/Pkgfile", pkg)))
+    {
+        let path = index
+            .lines()
+            .find(|l| l.contains(&format!("{}/Pkgfile", pkg)))
+            .context("Failed to get path")?
+            .split_once("/Pkgfile")
+            .map(|(path, _)| path)
+            .context("Failed")?;
         println!("{}/{}", root, path);
-        let entries: Vec<String> = fs::read_dir(format!("{}/{}", root, path))?.filter_map(|e| e.ok()).map(|e| e.file_name().to_string_lossy().to_string()).collect();
+        let entries: Vec<String> = fs::read_dir(format!("{}/{}", root, path))?
+            .filter_map(|e| e.ok())
+            .map(|e| e.file_name().to_string_lossy().to_string())
+            .collect();
         if !entries.iter().any(|e| e.contains(".raw.")) {
             anyhow::bail!("No package has been generated");
         } else {
@@ -98,15 +163,32 @@ pub fn check_local(pkg: &str, conf: &String) -> Result<bool> {
                 if !i.contains(".raw.") {
                     continue;
                 } else {
-                    version = i.split_once(".").map(|(_, version)| version).context("Failed to get version")?.split_once("#").map(|(version, _)| version).context("Failed to get version")?.to_string();
-                    release = i.split_once("#").map(|(_, release)| release).context("Failed to get release")?.split_once(".raw").map(|(release, _)| release).context("Failed to get release")?.to_string();
+                    version = i
+                        .split_once(".")
+                        .map(|(_, version)| version)
+                        .context("Failed to get version")?
+                        .split_once("#")
+                        .map(|(version, _)| version)
+                        .context("Failed to get version")?
+                        .to_string();
+                    release = i
+                        .split_once("#")
+                        .map(|(_, release)| release)
+                        .context("Failed to get release")?
+                        .split_once(".raw")
+                        .map(|(release, _)| release)
+                        .context("Failed to get release")?
+                        .to_string();
                     break;
                 }
             }
         }
-        let (currentver, currentrel) = parse_local_version(pkg)?; 
+        let (currentver, currentrel) = parse_local_version(pkg)?;
         if currentver != version || currentrel != release {
-            println!("Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}", currentver, currentrel, version, release);
+            println!(
+                "Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}",
+                currentver, currentrel, version, release
+            );
         } else {
             println!("This package is up to date");
         }
@@ -116,17 +198,35 @@ pub fn check_local(pkg: &str, conf: &String) -> Result<bool> {
     Ok(result)
 }
 
-
 pub fn check_source(pkg: &str, conf: String) -> Result<()> {
     let mut version = String::new();
     let mut release = String::new();
-    let root = conf.lines().find(|l| l.starts_with("root=")).context("Failed to get root= line")?.split_once("root=").map(|(_, path)| path).context("Root variable isn't available")?;
+    let root = conf
+        .lines()
+        .find(|l| l.starts_with("root="))
+        .context("Failed to get root= line")?
+        .split_once("root=")
+        .map(|(_, path)| path)
+        .context("Root variable isn't available")?;
     println!("{}index.raw", root);
-    let index = fs::read_to_string(&format!("{}/index.raw", root)).context("Please run raw index first")?;
-    if index.lines().any(|l| l.contains(&format!("{}/Pkgfile", pkg))) {
-        let path = index.lines().find(|l| l.contains(&format!("{}/Pkgfile", pkg))).context("Failed to get path")?.split_once("/Pkgfile").map(|(path, _)| path).context("Failed")?;
+    let index =
+        fs::read_to_string(&format!("{}/index.raw", root)).context("Please run raw index first")?;
+    if index
+        .lines()
+        .any(|l| l.contains(&format!("{}/Pkgfile", pkg)))
+    {
+        let path = index
+            .lines()
+            .find(|l| l.contains(&format!("{}/Pkgfile", pkg)))
+            .context("Failed to get path")?
+            .split_once("/Pkgfile")
+            .map(|(path, _)| path)
+            .context("Failed")?;
         println!("{}/{}", root, path);
-        let entries: Vec<String> = fs::read_dir(format!("{}/{}", root, path))?.filter_map(|e| e.ok()).map(|e| e.file_name().to_string_lossy().to_string()).collect();
+        let entries: Vec<String> = fs::read_dir(format!("{}/{}", root, path))?
+            .filter_map(|e| e.ok())
+            .map(|e| e.file_name().to_string_lossy().to_string())
+            .collect();
         if !entries.iter().any(|e| e.contains(".raw.")) {
             anyhow::bail!("No package has been generated");
         } else {
@@ -134,15 +234,32 @@ pub fn check_source(pkg: &str, conf: String) -> Result<()> {
                 if !i.contains(".raw.") {
                     continue;
                 } else {
-                    version = i.split_once(".").map(|(_, version)| version).context("Failed to get version")?.split_once("#").map(|(version, _)| version).context("Failed to get version")?.to_string();
-                    release = i.split_once("#").map(|(_, release)| release).context("Failed to get release")?.split_once(".raw").map(|(release, _)| release).context("Failed to get release")?.to_string();
+                    version = i
+                        .split_once(".")
+                        .map(|(_, version)| version)
+                        .context("Failed to get version")?
+                        .split_once("#")
+                        .map(|(version, _)| version)
+                        .context("Failed to get version")?
+                        .to_string();
+                    release = i
+                        .split_once("#")
+                        .map(|(_, release)| release)
+                        .context("Failed to get release")?
+                        .split_once(".raw")
+                        .map(|(release, _)| release)
+                        .context("Failed to get release")?
+                        .to_string();
                     break;
                 }
             }
         }
-        let (currentver, currentrel) = parse_local_version(pkg)?; 
+        let (currentver, currentrel) = parse_local_version(pkg)?;
         if currentver != version || currentrel != release {
-            println!("Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}", currentver, currentrel, version, release);
+            println!(
+                "Version or release do not match.\nCurrent version and release = {}-{}.\nFound version and release = {}-{}",
+                currentver, currentrel, version, release
+            );
         } else {
             println!("This package is up to date");
         }
@@ -154,9 +271,24 @@ pub fn parse_local_version(pkg: &str) -> Result<(String, String)> {
     let mut currentver = String::new();
     let mut currentrel = String::new();
     if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
-            let meta = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", pkg)).context("This package informations are not available")?;
-            currentver = meta.lines().find(|l| l.starts_with("V")).context("Failed to get current version")?.split_once("V").map(|(_, version)| version).context("Failed to get current version")?.to_string();
-            currentrel = meta.lines().find(|l| l.starts_with("r")).context("Fauled to get current release")?.split_once("r").map(|(_, release)| release).context("Failed to get current release")?.to_string();
+        let meta = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", pkg))
+            .context("This package informations are not available")?;
+        currentver = meta
+            .lines()
+            .find(|l| l.starts_with("V"))
+            .context("Failed to get current version")?
+            .split_once("V")
+            .map(|(_, version)| version)
+            .context("Failed to get current version")?
+            .to_string();
+        currentrel = meta
+            .lines()
+            .find(|l| l.starts_with("r"))
+            .context("Fauled to get current release")?
+            .split_once("r")
+            .map(|(_, release)| release)
+            .context("Failed to get current release")?
+            .to_string();
     } else {
         anyhow::bail!("This package isn't installed");
     }

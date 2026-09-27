@@ -15,33 +15,73 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use std::fs;
-use std::env;
-use anyhow::{Result};
 use anyhow::Context;
+use anyhow::Result;
+use std::env;
+use std::fs;
 use std::path::Path;
 
-
 pub fn info(rawpkg: &String) -> Result<()> {
-    env::set_current_dir(format!("/var/lib/pkg/DB/{}", rawpkg)).context("Package isn't installed")?;
+    env::set_current_dir(format!("/var/lib/pkg/DB/{}", rawpkg))
+        .context("Package isn't installed")?;
 
-    let file = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", rawpkg)).context("Package might be corrupted")?;
+    let file = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", rawpkg))
+        .context("Package might be corrupted")?;
     // Adding vect to be able to read properly, without this it would be unable to read if the order isn't respected
     let content: Vec<String> = file.lines().map(|l| l.to_string()).collect();
-    let name = content.iter().find(|l| l.starts_with('N')).context("Failed to get pkgname")?.split_once('N').map(|(_, name)| name).context("Failed to get pkgname")?.to_string();
+    let name = content
+        .iter()
+        .find(|l| l.starts_with('N'))
+        .context("Failed to get pkgname")?
+        .split_once('N')
+        .map(|(_, name)| name)
+        .context("Failed to get pkgname")?
+        .to_string();
     println!("Name : {}", name);
-    let version = content.iter().find(|l| l.starts_with('V')).unwrap_or(&"".to_string()).to_string().split_once('V').map(|(_, version)| version).unwrap_or(&"Failed to get version".to_string()).to_string();
+    let version = content
+        .iter()
+        .find(|l| l.starts_with('V'))
+        .unwrap_or(&"".to_string())
+        .to_string()
+        .split_once('V')
+        .map(|(_, version)| version)
+        .unwrap_or(&"Failed to get version".to_string())
+        .to_string();
     println!("Version = {}", version);
-    let description = content.iter().find(|l| l.starts_with('D')).unwrap_or(&"".to_string()).to_string().split_once('D').map(|(_, description)| description).unwrap_or(&"Failed to get the description".to_string()).to_string();
+    let description = content
+        .iter()
+        .find(|l| l.starts_with('D'))
+        .unwrap_or(&"".to_string())
+        .to_string()
+        .split_once('D')
+        .map(|(_, description)| description)
+        .unwrap_or(&"Failed to get the description".to_string())
+        .to_string();
     println!("Description = {}", description);
-    let packager = content.iter().find(|l| l.starts_with('P')).unwrap_or(&"".to_string()).to_string().split_once('P').map(|(_, packager)| packager).unwrap_or(&"Failed to get packager name".to_string()).to_string();
+    let packager = content
+        .iter()
+        .find(|l| l.starts_with('P'))
+        .unwrap_or(&"".to_string())
+        .to_string()
+        .split_once('P')
+        .map(|(_, packager)| packager)
+        .unwrap_or(&"Failed to get packager name".to_string())
+        .to_string();
     println!("Packager = {}", packager);
-    let collection = content.iter().find(|l| l.starts_with('c')).unwrap_or(&"".to_string()).to_string().split_once('c').map(|(_, collection)| collection).unwrap_or(&"Failed to get collection".to_string()).to_string();
+    let collection = content
+        .iter()
+        .find(|l| l.starts_with('c'))
+        .unwrap_or(&"".to_string())
+        .to_string()
+        .split_once('c')
+        .map(|(_, collection)| collection)
+        .unwrap_or(&"Failed to get collection".to_string())
+        .to_string();
     println!("Collection = {}", collection);
     if Path::new(&format!("/var/lib/pkg/DB/{}/automatic", rawpkg)).exists() {
         println!("Manual Installation : NO");
     } else {
         println!("Manual Installation : YES");
     }
-    Ok(()) 
+    Ok(())
 }

@@ -15,73 +15,75 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-mod install;
+mod bootstrap;
+mod build;
+mod changelog;
+mod community;
 mod conflict;
-mod info;
-mod query;
-mod remove;
-mod update;
-mod package;
+mod depends;
+mod diff;
 mod download;
 mod extract;
 mod file_type;
 mod files;
-mod list;
-mod librs;
-mod getconf;
-mod index;
 mod get;
-mod depends;
-mod upgrade;
-mod bootstrap;
-mod search;
-mod remove_cache;
-mod help;
-mod orphans;
-mod template;
-mod build;
+mod getconf;
 mod getlibs;
-mod changelog;
-mod sig;
+mod help;
+mod index;
+mod info;
+mod install;
+mod librs;
+mod list;
 mod localpkg;
-mod community;
-mod diff;
+mod orphans;
+mod package;
+mod query;
+mod remove;
+mod remove_cache;
+mod search;
+mod sig;
+mod template;
+mod update;
+mod upgrade;
 mod verifysha;
-use crate::diff::diff;
-use crate::community::community;
-use crate::sig::createsha;
-use crate::build::build;
-use crate::template::template;
-use crate::orphans::orphans;
-use crate::help::help;
 use crate::bootstrap::bootstrap;
+use crate::build::build;
+use crate::changelog::changelog;
+use crate::community::community;
+use crate::diff::diff;
+use crate::files::files;
 use crate::get::get;
-use crate::index::index;
 use crate::getconf::getconf;
+use crate::help::help;
+use crate::index::index;
+use crate::info::info;
+use crate::install::install;
 use crate::librs::libs;
 use crate::list::list;
-use crate::files::files;
-use crate::install::install;
-use crate::info::info;
+use crate::orphans::orphans;
+use crate::package::package;
 use crate::query::query;
 use crate::remove::remove;
-use crate::changelog::changelog;
-use crate::update::update;
-use crate::package::package;
-use anyhow::{Result};
-use crate::upgrade::upgrade;
-use crate::search::search;
 use crate::remove_cache::remove_cache;
+use crate::search::search;
+use crate::sig::createsha;
+use crate::template::template;
+use crate::update::update;
+use crate::upgrade::upgrade;
 use crate::verifysha::verifysha;
+use anyhow::Result;
 
 const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
 
-
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
     match args.len() < 2 {
-        true => {help(); return Ok(())}
+        true => {
+            help();
+            return Ok(());
+        }
         false => {}
     }
     match (args.len() > 1, args.len() > 2, args.len() > 3) {
@@ -103,14 +105,16 @@ fn main() -> Result<()> {
                     package(Some("--clean"))?;
                     return Ok(());
                 } else {
-                    println!("{}Unknown option, did you mean raw package --clean ?{}", RED, RESET);
-                    return Ok(())
+                    println!(
+                        "{}Unknown option, did you mean raw package --clean ?{}",
+                        RED, RESET
+                    );
+                    return Ok(());
                 }
-
             }
             if args[1] == "community" {
                 community(&args[2])?;
-                return Ok(())
+                return Ok(());
             }
             if args[1] == "install" {
                 let argument = format!("{}", args[2]);
@@ -121,109 +125,115 @@ fn main() -> Result<()> {
             if args[1] == "info" {
                 let argument = format!("{}", args[2]);
                 info(&argument)?;
-                return Ok(())
+                return Ok(());
             }
             if args[1] == "remove" {
                 remove(&args[2], false)?;
-                return Ok(())
+                return Ok(());
             }
             if args[1] == "query" {
                 let argument = format!("{}", args[2]);
                 query(&argument)?;
-                return Ok(())
+                return Ok(());
             }
             if args[1] == "update" {
                 let argument = format!("{}", args[2]);
                 update(&argument)?;
-                return Ok(())
+                return Ok(());
             }
             if args[1] == "files" {
                 let argument = format!("{}", args[2]);
                 files(&argument)?;
-                return Ok(())
-            } 
+                return Ok(());
+            }
             if args[1] == "libs" {
                 libs(&args[2], "nothing")?;
-                return Ok(())
+                return Ok(());
             }
             if args[1] == "get" {
                 get(&args[2])?;
-                return Ok(())
+                return Ok(());
             }
             if args[1] == "search" {
                 search(&args[2])?;
-                return Ok(())
+                return Ok(());
             }
             help();
-            return Ok(())
+            return Ok(());
         }
         (true, false, false) => {
-            if args[1] == "install" || args[1] == "get" || args[1] == "update" || args[1] == "remove" {
-                println!("{}Missing argument for raw {} <pkg> take a look at the help{}", RED, args[1], RESET);
+            if args[1] == "install"
+                || args[1] == "get"
+                || args[1] == "update"
+                || args[1] == "remove"
+            {
+                println!(
+                    "{}Missing argument for raw {} <pkg> take a look at the help{}",
+                    RED, args[1], RESET
+                );
                 help();
                 return Ok(());
             }
             if args[1] == "list" {
                 list()?;
-                return Ok(())
-            } 
+                return Ok(());
+            }
             if args[1] == "diff" {
                 changelog()?;
-                return Ok(())
+                return Ok(());
             }
             if args[1] == "changelog" {
                 changelog()?;
-                return Ok(())
+                return Ok(());
             }
             if args[1] == "index" {
                 index()?;
-                return Ok(())
+                return Ok(());
             }
             if args[1] == "upgrade" {
                 upgrade()?;
-                return Ok(())
+                return Ok(());
             }
             if args[1] == "rmcache" {
                 remove_cache()?;
-                return Ok(())
+                return Ok(());
             }
             if args[1] == "orphans" {
                 orphans()?;
-                return Ok(())
+                return Ok(());
             }
             if args[1] == "package" {
                 if args.len() < 3 {
                     package(None)?;
                 }
                 return Ok(());
-            } 
+            }
             help();
-            return Ok(())
-
+            return Ok(());
         }
         (true, true, true) => {
             if args[1] == "get" {
                 for i in args.iter().skip(2) {
                     get(i)?;
                 }
-                return Ok(())
+                return Ok(());
             }
             if args[1] == "libs" {
                 if args[3] == "all" {
                     libs(&args[2], &args[3])?;
-                    return Ok(())
+                    return Ok(());
                 } else {
                     libs(&args[2], "no")?;
-                    return Ok(())
+                    return Ok(());
                 }
             }
             if args[1] == "remove" {
                 if args[3] == "-f" {
                     remove(&args[2], true)?;
-                    return Ok(())
+                    return Ok(());
                 } else {
                     remove(&args[2], false)?;
-                    return Ok(())
+                    return Ok(());
                 }
             }
             if args[1] == "install" {
@@ -233,24 +243,28 @@ fn main() -> Result<()> {
                     }
                     if args.contains(&"-f".to_string()) {
                         install(i, true, true)?;
-                        return Ok(())
+                        return Ok(());
                     } else {
                         install(i, false, false)?;
-                        return Ok(())
+                        return Ok(());
                     }
                 }
             }
             if args[1] == "bootstrap" {
                 bootstrap(&args[2], &args[3])?;
-                return Ok(())
+                return Ok(());
             }
             help();
-            return Ok(())
+            return Ok(());
         }
-        (true, false, true) => {help(); return Ok(())}
-        (false, _, _) => {help(); return Ok(())}
-
+        (true, false, true) => {
+            help();
+            return Ok(());
+        }
+        (false, _, _) => {
+            help();
+            return Ok(());
+        }
     }
     return Ok(());
 }
-

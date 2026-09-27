@@ -15,25 +15,24 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use std::path::Path;
-use std::fs;
-use std::process::Command;
-use std::env;
-use recursive_copy::{copy_recursive, CopyOptions};
 use crate::conflict::conflict;
-use anyhow::{Result};
-use anyhow::Context;
-use std::fs::File;
-use walkdir::WalkDir;
-use crate::file_type::file_type;
-use crate::getconf::getconf;
 use crate::depends::depends;
 use crate::extract::extract;
+use crate::file_type::file_type;
+use crate::getconf::getconf;
 use crate::verifysha::verifysha;
+use anyhow::Context;
+use anyhow::Result;
+use recursive_copy::{CopyOptions, copy_recursive};
+use std::env;
+use std::fs;
+use std::fs::File;
+use std::path::Path;
+use std::process::Command;
+use walkdir::WalkDir;
 
 const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
-
 
 pub fn install(rawpkg: &String, option: bool, skip_verify: bool) -> Result<()> {
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
@@ -47,8 +46,9 @@ pub fn install(rawpkg: &String, option: bool, skip_verify: bool) -> Result<()> {
             .lines()
             .find(|l| l.starts_with("root="))
             .and_then(|l| l.split_once("root=").map(|(_, p)| p.to_string()));
-        source.or(root).context("No source path or root path defined in raw.conf")?
-
+        source
+            .or(root)
+            .context("No source path or root path defined in raw.conf")?
     } else {
         println!("No need to check package integrity");
         "none".to_string()
@@ -60,13 +60,27 @@ pub fn install(rawpkg: &String, option: bool, skip_verify: bool) -> Result<()> {
         env::set_current_dir(root)?;
         let index = fs::read_to_string("index.raw")?;
         if index.lines().any(|l| l.contains(&format!("/{}/", rawpkg))) {
-            let path_to_pkgfile = index.lines().find(|l| l.contains(&format!("/{}/", rawpkg))).ok_or("Didn't find");
-            let path = path_to_pkgfile.unwrap().split_once("/Pkgfile").map(|(path, _)| path).ok_or("Failed");
+            let path_to_pkgfile = index
+                .lines()
+                .find(|l| l.contains(&format!("/{}/", rawpkg)))
+                .ok_or("Didn't find");
+            let path = path_to_pkgfile
+                .unwrap()
+                .split_once("/Pkgfile")
+                .map(|(path, _)| path)
+                .ok_or("Failed");
             env::set_current_dir(path.unwrap())?;
-            let content: Vec<String> = fs::read_dir(".").unwrap().filter_map(|e| e.ok()).filter_map(|e| e.file_name().into_string().ok()).collect();
+            let content: Vec<String> = fs::read_dir(".")
+                .unwrap()
+                .filter_map(|e| e.ok())
+                .filter_map(|e| e.file_name().into_string().ok())
+                .collect();
             if content.iter().any(|f| f.contains(".raw.")) {
                 if content.iter().any(|f| f.contains(rawpkg)) {
-                    let pkgname = content.iter().find(|l| l.contains(".raw.")).context("Failed to find raw package")?;
+                    let pkgname = content
+                        .iter()
+                        .find(|l| l.contains(".raw."))
+                        .context("Failed to find raw package")?;
                     println!("{}", pkgname);
                     if option == true {
                         install(pkgname, true, false)?;
@@ -92,8 +106,11 @@ pub fn install(rawpkg: &String, option: bool, skip_verify: bool) -> Result<()> {
             conflict(&rawpkg).context("Conflict checking failed")?;
         }
     }
-    
-    let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).context("Failed to get pkgname")?;
+
+    let pkg = rawpkg
+        .split_once('.')
+        .map(|(pkg, _)| pkg)
+        .context("Failed to get pkgname")?;
     if !skip_verify {
         verifysha("source", Some(path), rawpkg)?;
     }
@@ -103,8 +120,10 @@ pub fn install(rawpkg: &String, option: bool, skip_verify: bool) -> Result<()> {
         fs::create_dir(format!("/tmp/{}", pkg))?;
         env::set_current_dir(format!("/tmp/{}", pkg))?;
         extract(rawpkg).context("Didn't find the archive to unpack")?;
-        println!("{}Conflict Detection might not have been executed be careful{}", RED, RESET);
-        
+        println!(
+            "{}Conflict Detection might not have been executed be careful{}",
+            RED, RESET
+        );
     }
     env::set_current_dir(format!("/tmp/{}", pkg))?;
     let opts = match option {
@@ -127,27 +146,28 @@ pub fn install(rawpkg: &String, option: bool, skip_verify: bool) -> Result<()> {
         let pre_install = format!("chmod u+x {}.pre-install && ./{}.pre-install", pkg, pkg);
         println!("Starting pre-installation.");
         Command::new("bash")
-        .args(["-c", &pre_install])
-        .status()
-        .context("Pre-installation failed")?;
-        fs::remove_file(format!("{}.pre-install", pkg)).context("Unable to remove pre-installation file")?;
+            .args(["-c", &pre_install])
+            .status()
+            .context("Pre-installation failed")?;
+        fs::remove_file(format!("{}.pre-install", pkg))
+            .context("Unable to remove pre-installation file")?;
     } else {
         println!("No pre-installation required");
     }
     copy_recursive(Path::new("."), Path::new("/"), &opts).unwrap();
     println!("running ldconfig.....");
     Command::new("bash")
-    .args(["-c", "ldconfig"])
-    .status()
-    .context("Failed to run ldconfig")?;
+        .args(["-c", "ldconfig"])
+        .status()
+        .context("Failed to run ldconfig")?;
     let automatic = Path::new("automatic").exists();
     if Path::new(&format!("{}.post-install", pkg)).exists() {
         let post_install = format!("chmod u+x {}.post-install && ./{}.post-install", pkg, pkg);
         println!("Starting post-installation.");
         Command::new("bash")
-        .args(["-c", &post_install])
-        .status()
-        .context("Failed to run post-install")?;
+            .args(["-c", &post_install])
+            .status()
+            .context("Failed to run post-install")?;
         fs::remove_file(format!("{}.post-install", pkg))?;
     } else {
         println!("No post-installation required");
@@ -157,18 +177,28 @@ pub fn install(rawpkg: &String, option: bool, skip_verify: bool) -> Result<()> {
             fs::remove_dir_all(format!("/var/lib/pkg/DB/{}", pkg))?;
         }
     }
-    fs::create_dir(format!("/var/lib/pkg/DB/{}", pkg)).context(format!("/var/lib/pkg/DB/{} already exists", pkg))?;
+    fs::create_dir(format!("/var/lib/pkg/DB/{}", pkg))
+        .context(format!("/var/lib/pkg/DB/{} already exists", pkg))?;
     if Path::new(&format!("/{}.pre-remove", pkg)).exists() {
-        fs::copy(format!("/{}.pre-remove", pkg), format!("/var/lib/pkg/DB/{}/{}.pre-remove", pkg, pkg))?;
+        fs::copy(
+            format!("/{}.pre-remove", pkg),
+            format!("/var/lib/pkg/DB/{}/{}.pre-remove", pkg, pkg),
+        )?;
     }
     if Path::new(&format!("/{}.post-remove", pkg)).exists() {
-        fs::copy(format!("/{}.post-remove", pkg), format!("/var/lib/pkg/DB/{}/{}.post-remove", pkg, pkg))?;
+        fs::copy(
+            format!("/{}.post-remove", pkg),
+            format!("/var/lib/pkg/DB/{}/{}.post-remove", pkg, pkg),
+        )?;
     }
     if automatic == true {
         fs::copy("/automatic", format!("/var/lib/pkg/DB/{}/automatic", pkg))?;
     }
     fs::copy("/META", format!("/var/lib/pkg/DB/{}/META", pkg))?;
-    fs::copy(format!("/{}.footprint", pkg), format!("/var/lib/pkg/DB/{}/files", pkg))?;
+    fs::copy(
+        format!("/{}.footprint", pkg),
+        format!("/var/lib/pkg/DB/{}/files", pkg),
+    )?;
     fs::remove_file("/META")?;
     fs::remove_file(format!("/{}.footprint", pkg))?;
     fs::remove_file(format!("/{}", rawpkg))?;
@@ -182,9 +212,9 @@ pub fn install(rawpkg: &String, option: bool, skip_verify: bool) -> Result<()> {
     if content.contains(".desktop") {
         if Path::new("/usr/bin/gtk-update-icon-cache").exists() {
             Command::new("bash")
-            .args(["-c", "glib-compile-schemas /usr/share/glib-2.0/schemas"])
-            .status()
-            .context("Failed to recompile schemas")?;
+                .args(["-c", "glib-compile-schemas /usr/share/glib-2.0/schemas"])
+                .status()
+                .context("Failed to recompile schemas")?;
             println!("Compiling gschemas")
         }
         if Path::new("/usr/bin/gtk-update-icon-cache").exists() {
@@ -195,12 +225,11 @@ pub fn install(rawpkg: &String, option: bool, skip_verify: bool) -> Result<()> {
                     env::set_current_dir(&foot).unwrap();
                     let directory = format!("/usr/bin/gtk-update-icon-cache -f -t {}", foot);
                     Command::new("bash")
-                    .args(["-c", &directory])
-                    .status()
-                    .context("Failed to update icon cache")?;
+                        .args(["-c", &directory])
+                        .status()
+                        .context("Failed to update icon cache")?;
                     println!("Updating icon cache");
                 }
-                
             }
         }
     }

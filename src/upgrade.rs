@@ -15,18 +15,17 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use std::fs;
-use std::path::Path;
-use crate::get::get;
 use crate::download::download;
-use std::env;
+use crate::get::get;
 use crate::getconf::getconf;
-use crate::remove::remove;
 use crate::install::install;
 use crate::localpkg::localpkg;
-use anyhow::{Result, Context};
+use crate::remove::remove;
 use crate::verifysha::verifysha;
-
+use anyhow::{Context, Result};
+use std::env;
+use std::fs;
+use std::path::Path;
 
 pub fn upgrade() -> Result<()> {
     let (mode, _trash, url) = getconf().unwrap();
@@ -34,18 +33,38 @@ pub fn upgrade() -> Result<()> {
         anyhow::bail!("Raw isn't used in binary mode, cannot connect to the repo");
     }
     let link = fs::read_to_string("/etc/raw.conf")?;
-    let mut link = link.lines().find(|l| l.starts_with("url=")).context("Failed to get repository url")?.split_once("url=").map(|(_, url)| url).context("Failed to get url from raw.conf")?;
+    let mut link = link
+        .lines()
+        .find(|l| l.starts_with("url="))
+        .context("Failed to get repository url")?
+        .split_once("url=")
+        .map(|(_, url)| url)
+        .context("Failed to get url from raw.conf")?;
     if link.ends_with("/") {
-        link = link.rsplit_once("/").map(|(url, _)| url).context("Failed to parse url")?;
-    } 
+        link = link
+            .rsplit_once("/")
+            .map(|(url, _)| url)
+            .context("Failed to parse url")?;
+    }
     env::set_current_dir("/var/cache/").unwrap();
     let metadata = download(&format!("{}/index.raw", url))?;
     let index_raw = fs::read_to_string(metadata).context("Download failed")?;
     for i in index_raw.lines() {
         let i = i.trim();
-        if i.is_empty() { continue; }
-        let mut collection = i.split_once('/').map(|(collection, _)| collection).context("Failed to get package name")?;
-        let pkg = i.split_once("/Pkgfile").map(|(pkg, _)| pkg).context("Failed to get package name")?.rsplit_once("/").map(|(_, name)| name).context("Failed to get package name")?;
+        if i.is_empty() {
+            continue;
+        }
+        let mut collection = i
+            .split_once('/')
+            .map(|(collection, _)| collection)
+            .context("Failed to get package name")?;
+        let pkg = i
+            .split_once("/Pkgfile")
+            .map(|(pkg, _)| pkg)
+            .context("Failed to get package name")?
+            .rsplit_once("/")
+            .map(|(_, name)| name)
+            .context("Failed to get package name")?;
         let meta: Vec<&str> = i.split("|").collect();
         let mut version = meta.get(1).context("Failed to get version")?;
         let mut release = meta.get(2).context("Failed to get release")?;
@@ -55,15 +74,34 @@ pub fn upgrade() -> Result<()> {
                 let (localver, localrel) = &localdata[0];
                 if localver != version || localrel != release {
                     remove(&pkg.to_string(), true)?;
-                    install(&pkg.to_string(), false, false)?;     
+                    install(&pkg.to_string(), false, false)?;
                 }
             } else {
                 let file = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", pkg)).unwrap();
                 let content: Vec<String> = file.lines().map(|l| l.to_string()).collect();
-                let version_i = content.iter().find(|l| l.starts_with('V')).unwrap().to_string().split_once('V').map(|(_, version)| version).unwrap().to_string();
-                let release_i = content.iter().find(|r| r.starts_with('r')).unwrap().to_string().split_once('r').map(|(_, release)| release).unwrap().to_string();
+                let version_i = content
+                    .iter()
+                    .find(|l| l.starts_with('V'))
+                    .unwrap()
+                    .to_string()
+                    .split_once('V')
+                    .map(|(_, version)| version)
+                    .unwrap()
+                    .to_string();
+                let release_i = content
+                    .iter()
+                    .find(|r| r.starts_with('r'))
+                    .unwrap()
+                    .to_string()
+                    .split_once('r')
+                    .map(|(_, release)| release)
+                    .unwrap()
+                    .to_string();
                 if format!("{}{}", version, release) != format!("{}{}", version_i, release_i) {
-                    let url = format!("{}/{}/{}/{}.{}%23{}.raw.tar.gz", link, collection, pkg, pkg, version, release);
+                    let url = format!(
+                        "{}/{}/{}/{}.{}%23{}.raw.tar.gz",
+                        link, collection, pkg, pkg, version, release
+                    );
                     let tarball = download(&url)?;
                     verifysha("binary", None, &tarball)?;
                     remove(&pkg.to_string(), true)?;

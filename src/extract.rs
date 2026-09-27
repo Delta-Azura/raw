@@ -15,14 +15,11 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-
-
-use std::fs::File;
-use compress_tools::*;
-use std::path::Path;
-use anyhow::{Result};
 use anyhow::Context;
-
+use anyhow::Result;
+use compress_tools::*;
+use std::fs::File;
+use std::path::Path;
 
 pub fn extract(tarball: &String) -> Result<()> {
     //let source = File::open(tarball).unwrap();

@@ -15,15 +15,14 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use std::fs::OpenOptions;
-use anyhow::{Result, Context};
-use std::io::Write;
-use std::fs::File;
+use crate::getconf;
+use anyhow::{Context, Result};
 use std::env;
 use std::fs;
-use crate::getconf;
+use std::fs::File;
+use std::fs::OpenOptions;
+use std::io::Write;
 use std::path::Path;
-
 
 pub fn template(pkg: &str) -> Result<()> {
     match File::create("/var/cache/raw.tmp") {
@@ -40,21 +39,24 @@ pub fn template(pkg: &str) -> Result<()> {
         println!("Creating in binary mode");
     } else {
         if pwd.to_string_lossy().to_string() != root {
-            println!("You are not creating the template in your directory set in your raw.conf, it will not work with raw index and raw build");
+            println!(
+                "You are not creating the template in your directory set in your raw.conf, it will not work with raw index and raw build"
+            );
             env::set_current_dir(pwd).context("Failed to change directory")?;
         }
     }
     if Path::new(pkg).exists() {
         fs::remove_dir_all(pkg)?;
     }
-    fs::create_dir(pkg).context("Needs to be root, cannot initiate as packages needs to be built as non-root")?;
+    fs::create_dir(pkg)
+        .context("Needs to be root, cannot initiate as packages needs to be built as non-root")?;
     env::set_current_dir(pkg).context("Invalid directory")?;
     File::create("Pkgfile").context("Failed to create PKgfile")?;
-    let mut pkgfile = OpenOptions::new().append(true).write(true).open("Pkgfile")?;
+    let mut pkgfile = OpenOptions::new()
+        .append(true)
+        .write(true)
+        .open("Pkgfile")?;
     let content_pkgfile = "description=\nname=\nrelease=\nversion=\nmakedepends=\nrundepends=\nsource=\nbuild() {\n\n}\n";
     writeln!(pkgfile, "{}", content_pkgfile).context("Failed to write pkgfile")?;
     Ok(())
 }
-
-
-

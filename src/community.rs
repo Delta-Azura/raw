@@ -15,11 +15,11 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use std::env;
-use std::path::Path;
-use std::fs;
-use anyhow::{Context, Result};
 use crate::package;
+use anyhow::{Context, Result};
+use std::env;
+use std::fs;
+use std::path::Path;
 
 pub fn community(pkg: &str) -> Result<()> {
     if !Path::new("/etc/raw.conf").exists() {
@@ -27,9 +27,18 @@ pub fn community(pkg: &str) -> Result<()> {
     }
     let conf = fs::read_to_string("/etc/raw.conf")?;
     if conf.lines().any(|l| l.starts_with("community=")) {
-        let mut url = conf.lines().find(|l| l.starts_with("community=")).context("Failed to read community line")?.split_once("community=").map(|(_, community)| community).context("Failed to get community git")?;
+        let mut url = conf
+            .lines()
+            .find(|l| l.starts_with("community="))
+            .context("Failed to read community line")?
+            .split_once("community=")
+            .map(|(_, community)| community)
+            .context("Failed to get community git")?;
         if url.ends_with("/") {
-            url = url.rsplit_once("/").map(|(url, _)| url).context("Failed to adapt url")?;
+            url = url
+                .rsplit_once("/")
+                .map(|(url, _)| url)
+                .context("Failed to adapt url")?;
         }
         let url = format!("{}/{}", url, pkg);
         let mut opt = git2::FetchOptions::new();
@@ -42,7 +51,10 @@ pub fn community(pkg: &str) -> Result<()> {
             fs::remove_dir_all(pkg)?;
         }
         if Path::new(pkg).exists() {
-            fs::remove_dir_all(pkg).context(format!("Failed to remove {} in the home user directory", pkg))?;
+            fs::remove_dir_all(pkg).context(format!(
+                "Failed to remove {} in the home user directory",
+                pkg
+            ))?;
         }
         match builder.clone(&url, Path::new(pkg)) {
             Ok(repo) => repo,

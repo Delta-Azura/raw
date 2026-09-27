@@ -15,15 +15,13 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-
-use anyhow::{Result};
 use anyhow::Context;
+use anyhow::Result;
 use std::fs;
-
 
 pub fn files(pkg: &str) -> Result<()> {
     let footprint = format!("/var/lib/pkg/DB/{}/files", pkg);
     let output = fs::read_to_string(footprint).context("Package isn't installed")?;
     println!("{}", output);
-    Ok (())
+    Ok(())
 }

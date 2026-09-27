@@ -15,26 +15,38 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-
-use std::path::Path;
-use std::fs;
-use std::env;
-use recursive_copy::{copy_recursive, CopyOptions};
-use anyhow::{Result};
-use anyhow::Context;
-use std::fs::File;
 use crate::extract::extract;
-
+use anyhow::Context;
+use anyhow::Result;
+use recursive_copy::{CopyOptions, copy_recursive};
+use std::env;
+use std::fs;
+use std::fs::File;
+use std::path::Path;
 
 pub fn bootstrap(rawpkg: &String, bootstrap_path: &str) -> Result<()> {
-    println!("\x1b[31;1m[WARN] Please use this function only to install base packages, it will not run any post installation nor ldconfig !\x1b[0m");
+    println!(
+        "\x1b[31;1m[WARN] Please use this function only to install base packages, it will not run any post installation nor ldconfig !\x1b[0m"
+    );
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
     fs::remove_file("/var/cache/tmp.raw").context("Failed to remove tmp.raw")?;
-    let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).context("Splitting failed")?;
-    fs::create_dir_all(format!("{}/var/lib/pkg/DB/{}/", bootstrap_path, pkg)).context("Potential corruption in database")?;
-    println!("Copying {} to /var/lib/pkg/DB/{}/ in bootstrap directory", rawpkg, pkg);
-    fs::copy(rawpkg, format!("{}/var/lib/pkg/DB/{}/{}", bootstrap_path, pkg, rawpkg)).context("Impossible to copy the package to the required destination")?;
-    env::set_current_dir(format!("{}/var/lib/pkg/DB/{}", bootstrap_path, pkg)).context("Package not found in the database")?;
+    let pkg = rawpkg
+        .split_once('.')
+        .map(|(pkg, _)| pkg)
+        .context("Splitting failed")?;
+    fs::create_dir_all(format!("{}/var/lib/pkg/DB/{}/", bootstrap_path, pkg))
+        .context("Potential corruption in database")?;
+    println!(
+        "Copying {} to /var/lib/pkg/DB/{}/ in bootstrap directory",
+        rawpkg, pkg
+    );
+    fs::copy(
+        rawpkg,
+        format!("{}/var/lib/pkg/DB/{}/{}", bootstrap_path, pkg, rawpkg),
+    )
+    .context("Impossible to copy the package to the required destination")?;
+    env::set_current_dir(format!("{}/var/lib/pkg/DB/{}", bootstrap_path, pkg))
+        .context("Package not found in the database")?;
     if rawpkg.ends_with(".tar.gz") || rawpkg.ends_with(".tgz") {
         extract(rawpkg)?;
     } else {
@@ -47,11 +59,21 @@ pub fn bootstrap(rawpkg: &String, bootstrap_path: &str) -> Result<()> {
         content_only: false,
         ..Default::default()
     };
-    copy_recursive(Path::new("."), Path::new(bootstrap_path), &opts).context("Unable to copy the package")?;
-    fs::remove_dir_all(format!("{}/var/lib/pkg/DB/{}", bootstrap_path, pkg)).context("Package doesn't exist in database")?;
+    copy_recursive(Path::new("."), Path::new(bootstrap_path), &opts)
+        .context("Unable to copy the package")?;
+    fs::remove_dir_all(format!("{}/var/lib/pkg/DB/{}", bootstrap_path, pkg))
+        .context("Package doesn't exist in database")?;
     fs::create_dir(format!("{}/var/lib/pkg/DB/{}", bootstrap_path, pkg)).unwrap();
-    fs::copy(format!("{}/META", bootstrap_path), format!("{}/var/lib/pkg/DB/{}/META", bootstrap_path, pkg)).context("Unable to locate META file")?;
-    fs::copy(format!("{}/{}.footprint", bootstrap_path, pkg), format!("{}/var/lib/pkg/DB/{}/files", bootstrap_path, pkg)).context("Unable to locate the footprint")?;
+    fs::copy(
+        format!("{}/META", bootstrap_path),
+        format!("{}/var/lib/pkg/DB/{}/META", bootstrap_path, pkg),
+    )
+    .context("Unable to locate META file")?;
+    fs::copy(
+        format!("{}/{}.footprint", bootstrap_path, pkg),
+        format!("{}/var/lib/pkg/DB/{}/files", bootstrap_path, pkg),
+    )
+    .context("Unable to locate the footprint")?;
     fs::remove_file(format!("{}/META", bootstrap_path))?;
     fs::remove_file(format!("{}/{}.footprint", bootstrap_path, pkg))?;
     fs::remove_file(format!("{}/{}", bootstrap_path, rawpkg))?;

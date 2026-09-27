@@ -15,19 +15,16 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use std::fs;
-use std::env;
 use anyhow::Result;
-
-
-
+use std::env;
+use std::fs;
 
 pub fn query(path: &String) -> Result<Vec<String>> {
     let actual = std::env::current_dir().unwrap();
     env::set_current_dir("/var/lib/pkg/DB/").unwrap();
     let mut result = Vec::new();
     for e in fs::read_dir(".").unwrap().filter_map(|e| e.ok()) {
-        let directory_tmp = e.file_name(); 
+        let directory_tmp = e.file_name();
         let directory = directory_tmp.to_str().unwrap();
         let compare = fs::read_to_string(format!("/var/lib/pkg/DB/{}/files", directory)).unwrap();
         for line in compare.lines() {

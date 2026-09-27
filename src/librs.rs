@@ -15,10 +15,10 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use std::fs;
 
-pub fn libs(pkg : &str, option: &str) -> Result<()> {
+pub fn libs(pkg: &str, option: &str) -> Result<()> {
     if option == "all" {
         let libs = format!("/var/lib/pkg/DB/{}/files", pkg);
         let output = fs::read_to_string(libs).context("Package isn't installed")?;
@@ -48,5 +48,5 @@ pub fn libs(pkg : &str, option: &str) -> Result<()> {
             }
         }
     }
-    Ok (())
+    Ok(())
 }

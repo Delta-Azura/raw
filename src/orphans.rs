@@ -15,17 +15,20 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-
 use anyhow::Result;
-use std::path::Path;
 use std::fs;
+use std::path::Path;
 const RESET: &str = "\x1b[0m";
 const GREEN: &str = "\x1b[0;32m";
 
 pub fn orphans() -> Result<()> {
     let mut orphans_list: Vec<String> = Vec::new();
     let mut required = std::collections::HashSet::new();
-    let packages: Vec<String> = fs::read_dir("/var/lib/pkg/DB").unwrap().filter_map(|e| e.ok()).filter_map(|e| e.file_name().into_string().ok()).collect();
+    let packages: Vec<String> = fs::read_dir("/var/lib/pkg/DB")
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .filter_map(|e| e.file_name().into_string().ok())
+        .collect();
     for i in &packages {
         let infos = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", i)).unwrap();
         let lines = infos.lines();

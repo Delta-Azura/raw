@@ -15,14 +15,13 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use std::fs;
-use anyhow::Context;
-use std::path::Path;
 use crate::get::get;
 use crate::install;
+use anyhow::Context;
+use std::fs;
+use std::path::Path;
 
-
-pub fn depends(pkg: &str) -> Vec<String> {  
+pub fn depends(pkg: &str) -> Vec<String> {
     let mut stack = vec![pkg.to_string()];
     let mut visited = std::collections::HashSet::new();
     while let Some(rawpkg) = stack.pop() {
@@ -32,7 +31,9 @@ pub fn depends(pkg: &str) -> Vec<String> {
         println!("{}", rawpkg);
         if !Path::new(&format!("/var/lib/pkg/DB/{}/META", rawpkg)).exists() {
             println!("{} isn't installed", rawpkg);
-            let configuration = fs::read_to_string("/etc/raw.conf").context("Raw.conf doesn't exist").unwrap();
+            let configuration = fs::read_to_string("/etc/raw.conf")
+                .context("Raw.conf doesn't exist")
+                .unwrap();
             if configuration.contains("mode=source") {
                 let _ = install(&rawpkg, false, false);
             } else {
@@ -40,17 +41,21 @@ pub fn depends(pkg: &str) -> Vec<String> {
             }
         }
         let metafile = std::fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", rawpkg)).unwrap();
-        let meta = metafile.lines().find(|l| l.starts_with("R")).unwrap().split_once('R').map(|(_, meta)| meta).unwrap();
-        let dependencies : Vec<&str> =  meta.split_whitespace().collect();
+        let meta = metafile
+            .lines()
+            .find(|l| l.starts_with("R"))
+            .unwrap()
+            .split_once('R')
+            .map(|(_, meta)| meta)
+            .unwrap();
+        let dependencies: Vec<&str> = meta.split_whitespace().collect();
         for i in dependencies.iter() {
             if !visited.contains(*i) {
                 println!("{}", i);
                 stack.push(i.to_string());
             }
-
         }
-
     }
 
-    return stack
+    return stack;
 }

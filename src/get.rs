@@ -15,21 +15,19 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use crate::getconf::getconf;
-use anyhow::{Result, Context};
-use crate::download::download;
-use crate::install::install;
-use std::fs;
-use std::env;
 use crate::depends::depends;
-use std::path::Path;
-use crate::update::update;
-use std::fs::File;
-use std::process::Command;
+use crate::download::download;
+use crate::getconf::getconf;
+use crate::install::install;
 use crate::localpkg::localpkg;
+use crate::update::update;
 use crate::verifysha;
-
-
+use anyhow::{Context, Result};
+use std::env;
+use std::fs;
+use std::fs::File;
+use std::path::Path;
+use std::process::Command;
 
 pub fn get(pkg: &str) -> Result<()> {
     let (mode, root, url) = getconf().unwrap();
@@ -45,7 +43,10 @@ pub fn get(pkg: &str) -> Result<()> {
         if rawpkg != true {
             anyhow::bail!("Package doesn't exists");
         }
-        let line = index_raw.lines().find(|l| l.contains(&format!("/{}/", pkg))).context("Failed to get pkgname")?;
+        let line = index_raw
+            .lines()
+            .find(|l| l.contains(&format!("/{}/", pkg)))
+            .context("Failed to get pkgname")?;
         let data: Vec<&str> = line.split("|").collect();
         let version = data.get(1).context("Missing version")?;
         let release = data.get(2).context("Missing release")?;
@@ -54,21 +55,31 @@ pub fn get(pkg: &str) -> Result<()> {
             if localver != version || localrel != release {
                 if localpkg == true {
                     if localver != version || localrel != release {
-                        println!("Be aware that the version/release don't match between distant and local");
+                        println!(
+                            "Be aware that the version/release don't match between distant and local"
+                        );
                     }
-                    Command::new("sudo").args(["raw", "install", pkg]).status()?;
+                    Command::new("sudo")
+                        .args(["raw", "install", pkg])
+                        .status()?;
                     return Ok(());
                 }
             }
         }
-        let collection = line.split_once('/').map(|(collection, _)| collection).context("Failed to get package name")?;
+        let collection = line
+            .split_once('/')
+            .map(|(collection, _)| collection)
+            .context("Failed to get package name")?;
         // %23 = #
-        let path = format!("{}/{}/{}/{}.{}%23{}.raw.tar.gz", url, collection, pkg, pkg, version, release);
+        let path = format!(
+            "{}/{}/{}/{}.{}%23{}.raw.tar.gz",
+            url, collection, pkg, pkg, version, release
+        );
         println!("{}", path);
         env::set_current_dir(root).context("Failed to change to the download directory")?;
         let tarball = download(&path)?;
         if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
-            update(&tarball)?; 
+            update(&tarball)?;
         } else {
             verifysha("binary", None, &tarball)?;
             install(&tarball, false, true)?;
@@ -76,12 +87,12 @@ pub fn get(pkg: &str) -> Result<()> {
         let dependencies = depends(pkg);
         for i in &dependencies {
             get(i)?;
-            File::create(format!("/var/lib/pkg/DB/{}/automatic", i)).context("Failed to add automatic file for oprhans")?;
+            File::create(format!("/var/lib/pkg/DB/{}/automatic", i))
+                .context("Failed to add automatic file for oprhans")?;
         }
     } else {
         anyhow::bail!("Not found");
     }
 
     Ok(())
-
 }

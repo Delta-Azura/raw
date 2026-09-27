@@ -15,21 +15,20 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use anyhow::{Result};
-use std::fs;
 use crate::file_type::file_type;
+use anyhow::Result;
+use std::fs;
 
 const RESET: &str = "\x1b[0m";
 const GREEN: &str = "\x1b[0;32m";
 const YELLOW: &str = "\x1b[33m";
 
-
 pub fn remove_cache() -> Result<()> {
     let cache: Vec<String> = fs::read_dir("/var/lib/pkg/")
-    .unwrap()
-    .filter_map(|e| e.ok())
-    .filter_map(|e| e.file_name().into_string().ok())
-    .collect();
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .filter_map(|e| e.file_name().into_string().ok())
+        .collect();
     for i in cache {
         let full_path = format!("/var/lib/pkg/{}", i);
         if file_type(&full_path) == true {
@@ -37,8 +36,11 @@ pub fn remove_cache() -> Result<()> {
             fs::remove_file(&full_path)?;
             println!("{}Successfully removed {}{}", GREEN, i, RESET);
         } else {
-            println!("{}{} is not a package to remove, continue....{}", YELLOW, i, RESET);
-            continue
+            println!(
+                "{}{} is not a package to remove, continue....{}",
+                YELLOW, i, RESET
+            );
+            continue;
         }
     }
     Ok(())

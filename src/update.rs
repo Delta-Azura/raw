@@ -15,24 +15,33 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use std::fs::File;
-use std::fs;
-use crate::remove;
-use std::path::Path;
-use crate::install::install;
 use crate::conflict::conflict;
-use anyhow::{Result};
-use anyhow::Context;
+use crate::install::install;
+use crate::remove;
 use crate::verifysha;
-
+use anyhow::Context;
+use anyhow::Result;
+use std::fs;
+use std::fs::File;
+use std::path::Path;
 
 pub fn update(rawpkg: &String) -> Result<()> {
-    let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap().to_string();
+    let pkg = rawpkg
+        .split_once('.')
+        .map(|(pkg, _)| pkg)
+        .unwrap()
+        .to_string();
     if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
         File::create("/tmp/conflict").unwrap();
         println!("removing previous package");
         let path = fs::read_to_string("/etc/raw.conf")?;
-        let path = path.lines().find(|l| l.starts_with("root=")).context("Failed to check for parent directory of index.raw")?.split_once("root=").map(|(_, path)| path).context("Failed to get path")?;
+        let path = path
+            .lines()
+            .find(|l| l.starts_with("root="))
+            .context("Failed to check for parent directory of index.raw")?
+            .split_once("root=")
+            .map(|(_, path)| path)
+            .context("Failed to get path")?;
         verifysha("source", Some(path.to_string()), rawpkg)?;
         remove(&pkg, true)?;
         conflict(&rawpkg)?;
@@ -45,5 +54,4 @@ pub fn update(rawpkg: &String) -> Result<()> {
         anyhow::bail!("Package isn't installed");
     }
     Ok(())
-
 }

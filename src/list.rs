@@ -15,16 +15,20 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use std::fs;
 use anyhow::{Context, Result};
-
+use std::fs;
 
 pub fn list() -> Result<()> {
-    let entries = fs::read_dir("/var/lib/pkg/DB/").unwrap().filter_map(|e| e.ok());
+    let entries = fs::read_dir("/var/lib/pkg/DB/")
+        .unwrap()
+        .filter_map(|e| e.ok());
     let mut number = 0;
     for i in entries {
-        println!("{}", i.file_name().to_str().context("Failed to get the entry")?);
-        number = number+1;
+        println!(
+            "{}",
+            i.file_name().to_str().context("Failed to get the entry")?
+        );
+        number = number + 1;
     }
     println!("Packages installed : {}", number);
     Ok(())

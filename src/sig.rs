@@ -15,8 +15,8 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use sha2::{Sha256, Digest};
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
+use sha2::{Digest, Sha256};
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
@@ -29,7 +29,9 @@ pub fn createsha(package: &str) -> Result<String> {
 
     loop {
         let n = reader.read(&mut buffer)?;
-        if n == 0 { break; }
+        if n == 0 {
+            break;
+        }
         hasher.update(&buffer[..n]);
     }
     let hash = hex::encode(hasher.finalize());

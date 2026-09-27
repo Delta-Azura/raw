@@ -15,14 +15,13 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use std::env;
-use std::fs;
-use std::path::Path;
-use std::env::current_dir;
 use anyhow::Result;
+use std::env;
+use std::env::current_dir;
+use std::fs;
 use std::fs::File;
+use std::path::Path;
 use std::process::Command;
-
 
 pub fn remove(rawpkg: &String, option: bool) -> Result<()> {
     File::create("/var/cache/raw.tmp")?;
@@ -32,7 +31,10 @@ pub fn remove(rawpkg: &String, option: bool) -> Result<()> {
 
     if Path::new(&check).exists() {
         if option == false {
-            for e in fs::read_dir("/var/lib/pkg/DB/.").unwrap().filter_map(|e| e.ok()) {
+            for e in fs::read_dir("/var/lib/pkg/DB/.")
+                .unwrap()
+                .filter_map(|e| e.ok())
+            {
                 let directory = e.file_name();
                 let directory = directory.to_str().unwrap();
                 let meta = format!("/var/lib/pkg/DB/{}/META", directory);
@@ -42,7 +44,10 @@ pub fn remove(rawpkg: &String, option: bool) -> Result<()> {
                 }
                 let meta = fs::read_to_string(meta)?;
                 if meta.contains(rawpkg) {
-                    anyhow::bail!("Impossible to remove this package as it's a necessary depend for {}", directory);
+                    anyhow::bail!(
+                        "Impossible to remove this package as it's a necessary depend for {}",
+                        directory
+                    );
                 }
             }
         }
@@ -51,16 +56,28 @@ pub fn remove(rawpkg: &String, option: bool) -> Result<()> {
             let pre_remove = format!("chmod u+x {}.pre-remove && ./{}.pre-remove", rawpkg, rawpkg);
             println!("Starting pre-removal.");
             Command::new("bash")
-            .args(["-c", &pre_remove])
-            .status()
-            .unwrap();
+                .args(["-c", &pre_remove])
+                .status()
+                .unwrap();
         } else {
             println!("No pre-removal required");
         }
-        let post_remove = match Path::new(&format!("/var/lib/pkg/DB/{}/{}.post-remove", rawpkg, rawpkg)).exists() {
+        let post_remove = match Path::new(&format!(
+            "/var/lib/pkg/DB/{}/{}.post-remove",
+            rawpkg, rawpkg
+        ))
+        .exists()
+        {
             true => {
-                fs::copy(format!("/var/lib/pkg/DB/{}/{}.post-remove", rawpkg, rawpkg), format!("/tmp/{}.post-remove", rawpkg)).unwrap();
-                format!("chmod u+x {}.post-remove && ./{}.post-remove", rawpkg, rawpkg)
+                fs::copy(
+                    format!("/var/lib/pkg/DB/{}/{}.post-remove", rawpkg, rawpkg),
+                    format!("/tmp/{}.post-remove", rawpkg),
+                )
+                .unwrap();
+                format!(
+                    "chmod u+x {}.post-remove && ./{}.post-remove",
+                    rawpkg, rawpkg
+                )
             }
             false => {
                 println!("no post removal required");
@@ -86,12 +103,12 @@ pub fn remove(rawpkg: &String, option: bool) -> Result<()> {
         if post_remove != "no" {
             println!("Executing post-remove trigger");
             Command::new("bash")
-            .args(["-c", &post_remove])
-            .status()
-            .unwrap();
+                .args(["-c", &post_remove])
+                .status()
+                .unwrap();
         }
     } else {
-            anyhow::bail!("This package isn't installed, can't remove it");
+        anyhow::bail!("This package isn't installed, can't remove it");
     }
     env::set_current_dir(current)?;
     println!("{} successfully removed", rawpkg);

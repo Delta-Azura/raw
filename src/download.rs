@@ -15,12 +15,11 @@
 //    with this program; if not, write to the Free Software Foundation, Inc.,
 //    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-
-use indicatif::{ProgressBar, ProgressStyle};
-use std::io::Read;
-use std::fs::File;
-use std::io::Write;
 use anyhow::Result;
+use indicatif::{ProgressBar, ProgressStyle};
+use std::fs::File;
+use std::io::Read;
+use std::io::Write;
 
 pub fn download(url: &str) -> Result<String> {
     // Personnal notes :
@@ -28,21 +27,21 @@ pub fn download(url: &str) -> Result<String> {
     // Checking lenght of the answer
     // Setting the progress bar style (random settings)
     let client = reqwest::blocking::Client::builder()
-    .user_agent(env!("CARGO_PKG_VERSION"))
-    .build()?;
+        .user_agent(env!("CARGO_PKG_VERSION"))
+        .build()?;
     let mut answer = client.get(url).send()?;
     if !answer.status().is_success() {
-       anyhow::bail!("ERROR {} while downloading {}", answer.status(), url);
+        anyhow::bail!("ERROR {} while downloading {}", answer.status(), url);
     }
     let progress = answer.content_length().unwrap_or(0);
     let pb = ProgressBar::new(progress);
-     pb.set_style(
+    pb.set_style(
         ProgressStyle::default_bar()
             .template("{msg} [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")
             .unwrap()
             .progress_chars("##"),
     );
-    // init buf size, 8192 is the most used one 
+    // init buf size, 8192 is the most used one
     let mut buf = [0u8; 8192];
     //let bytes = answer.bytes().unwrap();
     let tarball = url.split('/').last().unwrap();
@@ -51,19 +50,18 @@ pub fn download(url: &str) -> Result<String> {
     // We write into the file we are downloading and we move the progress bar forward.
     loop {
         let n = answer.read(&mut buf).unwrap();
-        if n == 0 { break; }
+        if n == 0 {
+            break;
+        }
         source.write_all(&buf[..n]).unwrap();
         pb.inc(n as u64);
     }
-    //giving back file name or the error 
-    return Ok(tarball.to_string())
+    //giving back file name or the error
+    return Ok(tarball.to_string());
 }
 
-
 pub async fn download_parallel(url: &str) -> Result<String> {
-    let client = reqwest::Client::builder()
-        .user_agent("raw/0.2.6")
-        .build()?;
+    let client = reqwest::Client::builder().user_agent("raw/0.2.6").build()?;
 
     let mut answer = client.get(url).send().await?;
     if !answer.status().is_success() {
