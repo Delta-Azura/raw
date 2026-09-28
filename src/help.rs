@@ -22,6 +22,7 @@ const GREEN: &str = "\x1b[0;32m";
 const YELLOW: &str = "\x1b[33m";
 
 
+// FIXME(#15): out of date (`build -y` doesn't exist, several commands are missing).
 pub fn help() {
     println!("{}WELCOME TO RAW ! Here are a little set of tips for you :{}", YELLOW, RESET);
     println!("raw install packagename {}#to install a package{}", GREEN, RESET);

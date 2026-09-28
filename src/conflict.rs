@@ -26,6 +26,12 @@ use crate::extract::extract;
 use anyhow::{Result, Context};
 use std::collections::HashSet;
 
+/// Checks that installing `rawpkg` won't overwrite anything, and exits the
+/// process with code 1 on the first conflict found.
+///
+/// Side effect used by install(): the archive is extracted into /tmp/<name> and
+/// the current directory is left there.
+/// Files under /etc and /usr/share/info/dir are never considered as conflicts.
 pub fn conflict(rawpkg: &String) -> Result<()> {
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap().to_string();
     if Path::new(&format!("/tmp/{}", pkg)).exists() {
@@ -40,6 +46,8 @@ pub fn conflict(rawpkg: &String) -> Result<()> {
     let compare = fs::read_to_string(format!("/tmp/{}/{}.footprint", pkg, pkg)).context("Failed to read footprint")?;
     let compare_set: HashSet<&str> = compare.lines().filter_map(|l| l.split_whitespace().next()).collect();
     //let compare = binding.split_whitespace().next().unwrap();
+    // Package conflict: a regular file of the new package is already listed in the
+    // footprint of an installed package.
     for e in fs::read_dir("/var/lib/pkg/DB/.").unwrap().filter_map(|e| e.ok()) {
         let directory_tmp = e.file_name();
         let directory = directory_tmp.to_str().unwrap();
@@ -77,7 +85,7 @@ pub fn conflict(rawpkg: &String) -> Result<()> {
             }
         }
     }
-// File conflict
+// File conflict: the file exists on the system but no package owns it.
     for i in compare.lines() {
         let i = i.split_whitespace().next().unwrap_or("");
         let r = format!("/{}", i);

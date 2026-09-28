@@ -25,6 +25,10 @@ use anyhow::{Result};
 use anyhow::Context;
 
 
+/// Replaces an installed package with the archive `rawpkg` (`raw update`).
+///
+/// The /tmp/conflict flag tells install() that conflict() was already run here.
+/// FIXME(#9): the old version is removed before the new one is validated.
 pub fn update(rawpkg: &String) -> Result<()> {
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).unwrap().to_string();
     if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {

@@ -25,6 +25,12 @@ use std::fs;
 use crate::createsha;
 
 
+/// Generates index.raw at the repository root (`raw index`).
+///
+/// One line per Pkgfile found at depth >= 2 (<collection>/<pkg>/Pkgfile):
+/// `<collection>/<pkg>/Pkgfile|version|release|sha256`
+/// where sha256 is the hash of the built archive next to it, or `none`.
+/// This file is what the remote repository serves for get/upgrade/search.
 pub fn index() -> Result <()> {
     if let Ok((_mode, path, _trash)) = getconf() {
         let path = if !path.ends_with("/") {
@@ -56,6 +62,7 @@ pub fn index() -> Result <()> {
             } else {
                 continue;
             };
+            // Strip the quotes of `version="1.0"` style assignments.
             let version = if version.contains("\"") {
                 version.split_once("\"").map(|(_, version)| version).unwrap().split_once("\"").map(|(version, _)| version).unwrap()
             } else {

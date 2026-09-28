@@ -24,6 +24,7 @@ use anyhow::{Result};
 use anyhow::Context;
 
 
+/// Extracts any archive supported by libarchive into the current directory.
 pub fn extract(tarball: &String) -> Result<()> {
     //let source = File::open(tarball).unwrap();
     let mut source = File::open(tarball).context("Failed to open source file to extract")?;

@@ -22,6 +22,10 @@ use crate::get::get;
 use crate::install;
 
 
+/// Walks the dependency tree of `pkg` (R line of each META, depth-first) and
+/// installs any dependency that is missing.
+/// FIXME(#5): the returned Vec is always empty (the loop only ends once `stack`
+/// is empty), and the source mode test below never matches `mode=source`.
 pub fn depends(pkg: &str) -> Vec<String> {  
     let mut stack = vec![pkg.to_string()];
     let mut visited = std::collections::HashSet::new();

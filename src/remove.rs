@@ -24,13 +24,21 @@ use std::fs::File;
 use std::process::Command;
 
 
+/// Removes an installed package (`raw remove`).
+///
+/// Unless `option` (-f) is set, refuses to remove a package another package depends on.
+/// Runs the pre-remove hook, deletes every file of the footprint (except /etc and a few
+/// protected paths), then runs the post-remove hook.
 pub fn remove(rawpkg: &String, option: bool) -> Result<()> {
+    // Root check: only root can create a file in /var/cache.
     File::create("/var/cache/raw.tmp")?;
     fs::remove_file("/var/cache/raw.tmp")?;
     let current = current_dir()?;
     let check = format!("/var/lib/pkg/DB/{}", rawpkg);
 
     if Path::new(&check).exists() {
+        // Reverse dependency check.
+        // FIXME(#7): both tests are substring matches (on the path, then on the whole META).
         if option == false {
             for e in fs::read_dir("/var/lib/pkg/DB/.").unwrap().filter_map(|e| e.ok()) {
                 let directory = e.file_name();
@@ -58,6 +66,8 @@ pub fn remove(rawpkg: &String, option: bool) -> Result<()> {
         } else {
             println!("No pre-removal required");
         }
+        // The DB directory is deleted before the files, so the post-remove hook is
+        // copied to /tmp first and run from there at the end.
         let post_remove = match Path::new(&format!("/var/lib/pkg/DB/{}/{}.post-remove", rawpkg, rawpkg)).exists() {
             true => {
                 fs::copy(format!("/var/lib/pkg/DB/{}/{}.post-remove", rawpkg, rawpkg), format!("/tmp/{}.post-remove", rawpkg)).unwrap();
@@ -73,6 +83,10 @@ pub fn remove(rawpkg: &String, option: bool) -> Result<()> {
         env::set_current_dir("/tmp")?;
         fs::remove_dir_all(format!("/var/lib/pkg/DB/{}", rawpkg))?;
         let protected = vec!["bin", "lib", "lib64", "sbin", "usr/share/info/dir"];
+        // Each footprint entry is tried as a file then as an (empty) directory;
+        // errors are ignored so shared directories stay in place.
+        // FIXME(#7): directories come before their content in the footprint, so
+        // remove_dir() always fails and empty directories are left behind.
         for i in content {
             let to_remove = i.split_whitespace().next().unwrap();
             if !protected.contains(&to_remove) {

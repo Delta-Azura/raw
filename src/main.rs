@@ -74,6 +74,10 @@ const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
 
 
+// Entry point: a simple dispatcher on the first argument (the subcommand).
+// Every subcommand lives in its own module, see the `mod` list above.
+// FIXME(#1): most branches index args[2]/args[3] without checking args.len(),
+// and unknown subcommands silently exit with code 0.
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
@@ -98,6 +102,7 @@ fn main() -> Result<()> {
         std::process::exit(0)
     }
     if args[1] == "template" {
+        // FIXME(#1): always false here, should be `< 3`.
         if args.len() < 2 {
             println!("Not pkgname specified")
         } else {
@@ -126,6 +131,8 @@ fn main() -> Result<()> {
         return Ok(());
     } 
 
+    // `install`, `remove`: args[2] is an archive (install) or a package name,
+    // the optional `-f` forces the operation (overwrite files / ignore reverse deps).
     if args[1] == "install" {
         let argument = format!("{}", args[2]);
         println!("{}", argument);

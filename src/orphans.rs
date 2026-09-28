@@ -22,6 +22,8 @@ use std::fs;
 const RESET: &str = "\x1b[0m";
 const GREEN: &str = "\x1b[0;32m";
 
+/// Lists orphan packages (`raw orphans`): packages installed as a dependency
+/// (with an `automatic` marker in their DB entry) that no other package requires.
 pub fn orphans() -> Result<()> {
     let mut orphans_list: Vec<String> = Vec::new();
     let mut required = std::collections::HashSet::new();

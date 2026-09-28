@@ -29,6 +29,12 @@ use std::process::Command;
 use crate::localpkg::localpkg;
 
 
+/// Installs or updates `pkg` from the remote binary repository (`raw get`).
+///
+/// Downloads index.raw from `url`, builds the archive URL
+/// `<url>/<collection>/<pkg>/<pkg>.<version>#<release>.raw.tar.gz` from the matching
+/// line, downloads it into `source=` and installs it. When `local=true` and a local
+/// archive exists, the local one is installed instead.
 pub fn get(pkg: &str) -> Result<()> {
     let (mode, root, url) = getconf().unwrap();
     if mode != "binary" {
@@ -46,6 +52,7 @@ pub fn get(pkg: &str) -> Result<()> {
             std::process::exit(1)
         }
         let line = index_raw.lines().find(|l| l.contains(&format!("/{}/", pkg))).context("Failed to get pkgname")?;
+        // index.raw line: <collection>/<pkg>/Pkgfile|version|release|sha256
         let data: Vec<&str> = line.split("|").collect();
         let version = data.get(1).context("Missing version")?;
         let release = data.get(2).context("Missing release")?;
@@ -73,6 +80,8 @@ pub fn get(pkg: &str) -> Result<()> {
             //fs::copy(tarball, )
             install(&tarball, false)?;
         }
+        // FIXME(#5): depends() always returns an empty Vec, so dependencies never get
+        // the `automatic` marker and are invisible to `raw orphans`.
         let dependencies = depends(pkg);
         for i in &dependencies {
             get(i)?;

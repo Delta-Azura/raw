@@ -1,6 +1,10 @@
 use std::fs;
 use anyhow::{Result, Context};
 
+/// Local repository support (`local=true` in raw.conf).
+///
+/// Looks for built archives of `pkg` in its directory under `root=` and returns
+/// `(found, [(version, release), ...])`, parsed from `name.version#release.raw.tar.gz`.
 pub fn localpkg(pkg: &str) -> Result<(bool, Vec<(String, String)>)> {
     let conf = fs::read_to_string("/etc/raw.conf").context("Failed to open raw.conf file")?;
     let mut localdata: Vec<(String, String)> = Vec::new(); 

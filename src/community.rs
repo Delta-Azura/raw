@@ -21,6 +21,9 @@ use std::fs;
 use anyhow::{Context, Result};
 use crate::package;
 
+/// AUR-like repository support (`raw community`): shallow-clones
+/// `<community=>/<pkg>` into $HOME/<pkg> and builds it with package().
+/// The resulting archive still has to be installed with `raw install`.
 pub fn community(pkg: &str) -> Result<()> {
     if !Path::new("/etc/raw.conf").exists() {
         anyhow::bail!("/etc/raw.conf doesn't exist");

@@ -8,6 +8,8 @@ use crate::getconf;
 use std::path::Path;
 
 
+/// Creates `<pkg>/Pkgfile` with empty fields in the current directory (`raw template`).
+/// Must not be run as root. Warning: an existing `<pkg>` directory is deleted.
 pub fn template(pkg: &str) -> Result<()> {
     match File::create("/var/cache/raw.tmp") {
         Ok(_) => {

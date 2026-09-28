@@ -35,8 +35,19 @@ const RED: &str = "\x1b[1;31m";
 const RESET: &str = "\x1b[0m";
 
 
+/// Installs a package (`raw install`).
+///
+/// `rawpkg` is either an archive `name.version#release.raw.tar.gz` or a package name,
+/// in which case the archive is looked up through index.raw. `option` is `-f`:
+/// skip conflict detection and overwrite existing files.
+///
+/// The archive is extracted into /tmp/<name>, copied over `/`, then its META,
+/// footprint and remove hooks are moved to /var/lib/pkg/DB/<name>/.
 pub fn install(rawpkg: &String, option: bool) -> Result<()> {
+    // Root check: only root can create a file in /var/cache.
     File::create("/var/cache/tmp.raw").context("Not running as root, aborting")?;
+    // Directory holding index.raw (source= or root= from raw.conf), used to verify
+    // the sha256 of the archive. "none" disables the check.
    let mut path = if Path::new("/etc/raw.conf").exists() {
         let conf = fs::read_to_string("/etc/raw.conf").context("Failed to open raw.conf file")?;
         let source = conf
@@ -55,6 +66,8 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
     };
 
     fs::remove_file("/var/cache/tmp.raw")?;
+    // A package name was given instead of an archive: find its directory in index.raw
+    // and install the archive built there, then its dependencies.
     if !rawpkg.contains(".raw.") {
         let (_mode, root, _trash) = getconf().unwrap();
         let saved = env::current_dir()?;
@@ -69,10 +82,12 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
                 if content.iter().any(|f| f.contains(rawpkg)) {
                     let pkgname = content.iter().find(|l| l.contains(".raw.")).context("Failed to find raw package")?;
                     println!("{}", pkgname);
+                    // FIXME(#6): without -f the package itself is never installed.
                     if option == true {
                         install(pkgname, true)?;
                     }
                     env::set_current_dir(saved)?;
+                    // FIXME(#5): depends() always returns an empty Vec.
                     let depends: Vec<String> = depends(rawpkg);
                     for i in depends {
                         install(&i, false)?;
@@ -83,6 +98,8 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
         }
     }
 
+    // conflict() extracts the archive into /tmp/<name> and exits on any conflict.
+    // /tmp/conflict is a flag set by update(), which already ran conflict() itself.
     if option == false {
         eprintln!("Checking conflict for rawpkg: {:?}", rawpkg);
         if Path::new("/tmp/conflict").exists() {
@@ -92,7 +109,10 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
         }
     }
     
+    // FIXME(#14): breaks for package names containing a dot.
     let pkg = rawpkg.split_once('.').map(|(pkg, _)| pkg).context("Failed to get pkgname")?;
+    // Integrity: compare the sha256 of the archive with the 4th field of its
+    // index.raw line (path|version|release|sha256).
     if path != "none" {
         let hash = createsha(&rawpkg)?;
         if path.ends_with("/") {
@@ -106,6 +126,9 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
             anyhow::bail!("Signatures don't match, exiting !")
         }
     }
+    // /tmp/<name> normally comes from conflict(); otherwise (-f) extract here.
+    // FIXME(#6): a stale /tmp/<name> is reused as is, and `rawpkg` is a relative
+    // path that does not exist inside /tmp/<name>.
     if Path::new(&format!("/tmp/{}", pkg)).exists() {
         env::set_current_dir(format!("/tmp/{}", pkg))?;
     } else {
@@ -116,6 +139,7 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
         
     }
     env::set_current_dir(format!("/tmp/{}", pkg))?;
+    // -f overwrites existing files, otherwise existing files are kept (e.g. /etc configs).
     let opts = match option {
         true => CopyOptions {
             overwrite: true,
@@ -143,6 +167,8 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
     } else {
         println!("No pre-installation required");
     }
+    // Copy the whole extracted tree to `/`. META, the footprint, the hooks and the
+    // archive itself land at the root too and are moved/cleaned up just below.
     copy_recursive(Path::new("."), Path::new("/"), &opts).unwrap();
     println!("running ldconfig.....");
     Command::new("bash")
@@ -161,6 +187,8 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
     } else {
         println!("No post-installation required");
     }
+    // Register the package in the database:
+    // /var/lib/pkg/DB/<name>/{META, files, automatic?, <name>.pre-remove?, <name>.post-remove?}
     fs::create_dir(format!("/var/lib/pkg/DB/{}", pkg)).context(format!("/var/lib/pkg/DB/{} already exists", pkg))?;
     if Path::new(&format!("/{}.pre-remove", pkg)).exists() {
         fs::copy(format!("/{}.pre-remove", pkg), format!("/var/lib/pkg/DB/{}/{}.pre-remove", pkg, pkg))?;
@@ -182,8 +210,10 @@ pub fn install(rawpkg: &String, option: bool) -> Result<()> {
     if Path::new(&format!("/{}.post-install", pkg)).exists() {
         fs::remove_file(format!("/{}.post-install", pkg))?;
     }
+    // Post-installation hooks for desktop packages: gsettings schemas and icon caches.
     let content = fs::read_to_string(format!("/var/lib/pkg/DB/{}/files", pkg))?;
     if content.contains(".desktop") {
+        // FIXME(#15): should check for glib-compile-schemas, not gtk-update-icon-cache.
         if Path::new("/usr/bin/gtk-update-icon-cache").exists() {
             Command::new("bash")
             .args(["-c", "glib-compile-schemas /usr/share/glib-2.0/schemas"])

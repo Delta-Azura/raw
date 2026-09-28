@@ -27,6 +27,8 @@ use crate::localpkg::localpkg;
 use anyhow::{Result, Context};
 
 
+/// Upgrades every installed package whose version or release differs from the
+/// remote index.raw (`raw upgrade`, binary mode only).
 pub fn upgrade() -> Result<()> {
     let (mode, _trash, url) = getconf().unwrap();
     if mode != "binary" {
@@ -44,6 +46,9 @@ pub fn upgrade() -> Result<()> {
         let version = meta.get(1).context("Failed to get version")?;
         let release = meta.get(2).context("Failed to get release")?;
         if Path::new(&format!("/var/lib/pkg/DB/{}", pkg)).exists() {
+            // Local repository (local=true): reinstall from the locally built archive.
+            // FIXME(#10): no `continue` after this branch, the code below then reads the
+            // META of a package that was just removed and panics.
             let (localpkg, localdata) = localpkg(pkg)?;
             if localpkg == true {
                 let (localver, localrel) = &localdata[0];
@@ -54,6 +59,7 @@ pub fn upgrade() -> Result<()> {
             } else {
                 continue;
             }
+            // Compare the installed version/release (META V and r lines) with the index.
             let file = fs::read_to_string(format!("/var/lib/pkg/DB/{}/META", pkg)).unwrap();
             let content: Vec<String> = file.lines().map(|l| l.to_string()).collect();
             let version_i = content.iter().find(|l| l.starts_with('V')).unwrap().to_string().split_once('V').map(|(_, version)| version).unwrap().to_string();

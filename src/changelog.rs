@@ -24,6 +24,8 @@ use crate::download::download;
 use std::collections::HashSet;
 use anyhow::{Result, Context};
 
+/// Lists the installed packages that have a different version/release in the
+/// remote index.raw (`raw changelog`, binary mode). Read-only counterpart of upgrade().
 pub fn changelog() -> Result<()> {
     if Path::new("/etc/raw.conf").exists() {
         let checkmode = fs::read_to_string("/etc/raw.conf")?;

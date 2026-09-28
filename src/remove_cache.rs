@@ -24,6 +24,8 @@ const GREEN: &str = "\x1b[0;32m";
 const YELLOW: &str = "\x1b[33m";
 
 
+/// Deletes every regular file directly under /var/lib/pkg/ (`raw rmcache`).
+/// Directories, including the DB, are left untouched.
 pub fn remove_cache() -> Result<()> {
     let cache: Vec<String> = fs::read_dir("/var/lib/pkg/")
     .unwrap()

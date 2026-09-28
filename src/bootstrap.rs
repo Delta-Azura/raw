@@ -26,6 +26,9 @@ use std::fs::File;
 use crate::extract::extract;
 
 
+/// Installs an archive into another root (`raw bootstrap <archive> <path>`), e.g. to
+/// populate a new system. The package is registered in `<path>/var/lib/pkg/DB`, but
+/// no conflict check, hook or ldconfig is run.
 pub fn bootstrap(rawpkg: &String, bootstrap_path: &str) -> Result<()> {
     println!("\x1b[31;1m[WARN] Please use this function only to install base packages, it will not run any post installation nor ldconfig !\x1b[0m");
     //let pkg_name = rawpkg.split_once(".raw").map(|(name, _)| name).unwrap_or(rawpkg);
@@ -49,6 +52,8 @@ pub fn bootstrap(rawpkg: &String, bootstrap_path: &str) -> Result<()> {
         content_only: false,
         ..Default::default()
     };
+    // The archive is extracted inside its own DB directory, copied to the target root,
+    // then the DB directory is recreated with only META and files.
     copy_recursive(Path::new("."), Path::new(bootstrap_path), &opts).context("Unable to copy the package")?;
     fs::remove_dir_all(format!("{}/var/lib/pkg/DB/{}", bootstrap_path, pkg)).context("Package doesn't exist in database")?;
     fs::create_dir(format!("{}/var/lib/pkg/DB/{}", bootstrap_path, pkg)).unwrap();

@@ -42,6 +42,8 @@ const GREEN: &str = "\x1b[0;32m";
 const YELLOW: &str = "\x1b[33m";
 use std::io::Read;
 
+// Archive formats recognised when deciding whether a source must be extracted
+// into work/ or simply copied there.
 #[derive(Debug, PartialEq, Eq)]
 pub enum ArchiveType {
     Zip,
@@ -62,7 +64,7 @@ struct Signature {
 }
 
 
-// list of signatures
+// list of signatures (magic bytes found at `offset` in the first 512 bytes of the file)
 static SIGNATURES: &[Signature] = &[
     Signature { archive_type: ArchiveType::Zip, magic: &[0x50, 0x4B, 0x03, 0x04], offset: 0 },
     Signature { archive_type: ArchiveType::Zip, magic: &[0x50, 0x4B, 0x05, 0x06], offset: 0 },
@@ -77,7 +79,21 @@ static SIGNATURES: &[Signature] = &[
 ];
 
 
+/// Builds a package from the Pkgfile of the current directory (`raw package`).
+///
+/// Steps:
+/// 1. refuse to run as root (the build runs under fakeroot),
+/// 2. read the Pkgfile variables and write the META file,
+/// 3. install missing makedepends,
+/// 4. fetch/copy the sources and extract archives into work/,
+/// 5. run prepare()/build()/package() (or a /etc/raw.d build style) with $PKG=pkg/,
+/// 6. generate the footprint and diff it with the previous one,
+/// 7. detect runtime dependencies from the ELF files and append them to META,
+/// 8. create `name.version#release.raw.tar.gz` and print its sha256.
+///
+/// `option` is `Some("--clean")` to remove the makedepends afterwards.
 pub fn package(option: Option<&str>) -> Result<()> {
+    // Root check: only root can create a file in /var/cache.
         match File::create("/var/cache/raw.tmp") {
         Ok(_) => {
             println!("You are building as root !");
@@ -97,6 +113,9 @@ pub fn package(option: Option<&str>) -> Result<()> {
             std::process::exit(1);
         }
     }
+    // Let bash evaluate the Pkgfile and print one variable per line, in this order:
+    // version, name, packager, release, description, rundepends, sources, makedepends.
+    // An empty variable still prints an empty line, so the order is preserved.
     let output = Command::new("bash")
         .args(["-c", "set -e && source Pkgfile && echo $version && echo $name && echo $packager && echo $release && echo $description && echo $rundepends && echo ${source[@]} && echo ${makedepends[@]}"])
         .output()
@@ -115,6 +134,8 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let source = variables.next().context("The source might not be correct, check your pkgfile")?;
     let makedepends: Vec<String> = variables.next().context("Failed to get makedepends")?.split_whitespace().map(|s| s.to_string()).collect();    //if makedepends == "none" {
     let pkgfile = fs::read_to_string("Pkgfile").context("Package file doesn't exist")?;
+    // FIXME(#2): `_keep_sources` below is a new variable scoped to the loop,
+    // so `keep_sources` always stays "true" and sources are never removed.
     let keep_sources = "true";
     for i in pkgfile.lines() {
         let _keep_sources = if i.starts_with("RAW_KEEP_SOURCES=false") {
@@ -123,12 +144,16 @@ pub fn package(option: Option<&str>) -> Result<()> {
             "true"
         };
     }
+    // The collection is the name of the parent directory (e.g. Onyx/<collection>/<pkg>/Pkgfile).
     let actual = std::env::current_dir().context("Failed to get current dir")?;
     let col = actual.parent().context("Failed to get current dir")?.file_name().context("Failed to get current dir")?.to_str().context("Failed to get current dir")?.to_string();
     let collection = std::env::current_dir().context("Failed to get current dir")?;
     let _current = collection.file_name().context("Failed to get current dir")?.to_str().context("Failed to get current dir")?.to_string();
     let collection = collection.display().to_string();
     println!("Setting collection as : {}", col);
+    // META format: one field per line, the first character is the key:
+    // N=name, V=version, r=release, c=collection, D=description, P=packager,
+    // R=rundepends (space separated). It ends up in /var/lib/pkg/DB/<name>/META.
     let mut meta = File::create("META").context("Failed to create META file")?;
     let metadata = format!("N{}\nV{}\nr{}\nc{}\nD{}\nP{}\nR{}\n", name, version, release, col, description, packager, depends);
     write!(meta, "{}", metadata).context("Failed to write metadata")?;
@@ -140,9 +165,13 @@ pub fn package(option: Option<&str>) -> Result<()> {
         println!("Removing pkg/");
         fs::remove_dir_all("pkg/").context("Failed to remove existing pkg directory")?;
     }
+    // work/ = $SRC, where sources are extracted and built.
+    // pkg/  = $PKG, the fake root the package is installed into (DESTDIR).
     fs::create_dir("work").context("Failed to create work directory")?;
     fs::create_dir("pkg").context("Failed to create pkg directory")?;
  
+    // Makedepends: in binary mode they are fetched from the remote repo with get(),
+    // in source mode they are located through index.raw, built if needed and installed.
     if !makedepends.is_empty() {
         println!("{}Checking for makedepends: {:?}{}", YELLOW, makedepends, RESET);
         for i in &makedepends {
@@ -168,6 +197,8 @@ pub fn package(option: Option<&str>) -> Result<()> {
                     println!("{}", collection);
 
                     println!("1");
+                    // The `automatic` marker ends up in the DB and lets `raw orphans` know
+                    // the package was not installed explicitly by the user.
                     File::create("automatic").context("Failed to create the automatic file, be careful while removing orphans")?;
                     for entry in fs::read_dir(collection)? {
                         println!("1");
@@ -175,12 +206,16 @@ pub fn package(option: Option<&str>) -> Result<()> {
                         if entry.file_name().to_string_lossy().contains(".raw.") {
                             let pkgver =  entry.file_name().to_string_lossy().split_once('.').map(|(_, pkgver)| pkgver).context("Failed to get package release")?.split_once("#").map(|(pkgver, _)| pkgver).context("Failed to get package release")?.to_string();
                             let pkgrel = entry.file_name().to_string_lossy().split_once('#').map(|(_, pkgver)| pkgver).context("Failed to get package version")?.split_once(".").map(|(pkgver, _)| pkgver).context("Failed to get package version")?.to_string();
+                            // Same logic as build(): reuse the existing archive if it is up to date,
+                            // otherwise rebuild it first.
+                            // FIXME(#6): `raw install <name>` without -f installs nothing.
                             if !Path::new("Pkgfile").exists() {
                                 Command::new("sudo").args(["raw", "install", &i]).output().context("Failed to install makedepend")?;
                             } else {
                                 let pkgfile_comp = fs::read_to_string("Pkgfile")?;
                                 let pkgverfile = pkgfile_comp.lines().find(|l| l.starts_with("version=")).context("No line found")?.split_once("version=").map(|(_, version)| version).context("no pkg version mentionned in pkgfile")?;
                                 let pkgrelfile = pkgfile_comp.lines().find(|l| l.starts_with("release=")).context("No line found")?.split_once("release=").map(|(_, version)| version).context("no pkg release mentionned in pkgfile")?;
+                                // FIXME(#4): should be `&&`, a new version with the same release is seen as up to date.
                                 if pkgver == pkgverfile || pkgrel == pkgrelfile {
                                     Command::new("sudo").args(["raw", "install", &i]).output().context("Failed to install makedepends")?;
                                 } else {
@@ -200,7 +235,11 @@ pub fn package(option: Option<&str>) -> Result<()> {
     env::set_current_dir(&collection).context("Failed to get in the correct directory")?;
     println!("{}", collection);
     //println!("Switching to the work directory {}", building);
+    // Sources: URLs are downloaded, archives are extracted into work/,
+    // other files (patches...) are copied into work/.
+    // FIXME(#13): the three branches below handle non-archive sources differently.
     if source.split_whitespace().count() > 1 {
+        // Several sources: local files first, then all URLs downloaded in parallel.
         for src in source.split_whitespace() {
             if !src.contains("http") {
                 if !src.contains(".patch.gz") {
@@ -208,6 +247,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
                     let mut file = File::open(&src)?;
                     let mut buffer = [0u8; 512];
                     let bytes_read = file.read(&mut buffer)?;
+                    // FIXME(#13): the copy happens once per non-matching signature.
                     for sig in SIGNATURES {
                         let start = sig.offset as usize;
                         let end = start + sig.magic.len();
@@ -269,6 +309,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
             })?;
 
     } else {
+        // Single source: blocking download (with a progress bar) or local copy.
         let src = source.trim();
         if src.contains("http") {
             env::set_current_dir(&collection)?;
@@ -306,6 +347,11 @@ pub fn package(option: Option<&str>) -> Result<()> {
         }
     }
     env::set_current_dir(&collection)?;
+    // Build the shell command according to the functions defined in the Pkgfile:
+    // (prepare(), package(), build()). Without build(), the build step is taken from
+    // /etc/raw.d/<style> when `build=<style>` is set, else from /etc/raw.d/build-default.
+    // Everything runs under fakeroot with `-eo pipefail` so any failing command stops the build.
+    // Note: detection is a plain `contains`, so a commented function is still detected (see README).
     let prepare = fs::read_to_string("Pkgfile").context("Failed to build pkgfile")?;
     let cmd = match (prepare.contains("prepare()"), prepare.contains("package()"), prepare.contains("build()")) {
         (true, true, true) => {
@@ -429,6 +475,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
             } 
         }
     };
+    // The build output is duplicated to ~/.local/share/raw/raw.log (overwritten on each build).
     if !Path::new(&format!("{}/.local/share/raw/", env::var("HOME").unwrap())).exists() {
         fs::create_dir_all(format!("{}/.local/share/raw/", env::var("HOME").unwrap())).context("Failed to create log path")?;
     }
@@ -440,6 +487,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
         File::create(&log_path).context("Failed to  create log file")?;
     }
     let cmd = format!("{} 2>&1 | tee -a {}/.local/share/raw/raw.log", cmd, env::var("HOME").unwrap());
+    // MAKEFLAGS uses every available core, CFLAGS/CXXFLAGS are fixed to -O2 -pipe.
     let _output_build = match Command::new("bash")
     .args(["-eo", "pipefail", "-c", &cmd])
     .env("MAKEFLAGS", format!("-j{}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)))
@@ -485,10 +533,16 @@ pub fn package(option: Option<&str>) -> Result<()> {
     };
     let prepare = format!("{}/pkg", collection);
 
+    // FIXME(#3): this name misses the release and the `.` before `raw`, it never matches
+    // the archive created at the end of this function.
     if Path::new(&format!("{}.{}#raw.tar.gz", name, version)).exists() {
         println!("Removing the previous generated package");
         fs::remove_file(format!("{}.{}#raw.tar.gz", name, version))?;
     }
+    // Footprint: every path of pkg/ relative to the root, without leading slash
+    // (e.g. `usr/bin/htop`), symlinks as `path -> target`. Directories are listed
+    // before their content. It becomes /var/lib/pkg/DB/<name>/files once installed.
+    // If a footprint already exists, the differences with the new one are printed.
     println!("Generating footprint and looking for changes");
     if Path::new(&format!("{}.footprint", name)).exists() {
         let existing = fs::read_to_string(format!("{}.footprint", name)).context("Failed to read footprint")?;
@@ -546,6 +600,8 @@ pub fn package(option: Option<&str>) -> Result<()> {
     }
     let footprint = fs::read_to_string(format!("{}.footprint", name)).context("Failed to read footprint")?;
     println!("{}This package contains : {} files{}", YELLOW, footprint.lines().count(), RESET);
+    // Metadata and hooks are stored at the root of the archive; install() moves
+    // them to the database after extraction.
     fs::copy("META", "pkg/META").context("Failed to copy META file to prepare for compression")?;
     fs::remove_file("META").unwrap();
     fs::copy(format!("{}.footprint", name), format!("pkg/{}.footprint", name)).context("Failed to prepare footprint file for compression")?;
@@ -572,6 +628,7 @@ pub fn package(option: Option<&str>) -> Result<()> {
     } else {
         println!("No need to prepare post-remove");
     }
+    // FIXME(#12): also removes makedepends that were installed before this build.
     if option == Some("--clean") {
         println!("{}Removing makedepends{}", YELLOW, RESET);
         for i in &makedepends {
@@ -583,6 +640,9 @@ pub fn package(option: Option<&str>) -> Result<()> {
     let building = building.split_once("/work").map(|(building, _)| building).context("Failed to find pkg/")?;
     let building = format!("{}/pkg", building);
     println!("{}", building);
+    // Runtime dependencies: collect the DT_NEEDED libraries of every ELF file in pkg/,
+    // find which installed packages own them and append those packages to the R line of META.
+    // FIXME(#8): query() uses substring matching, the package can end up depending on itself.
     let libs = scan_pkg_dir(Path::new(&building));
     println!("{}Runtime libraries found : {:?}{}", GREEN, libs, RESET);
     let mut pkgdeps = Vec::new();
@@ -613,6 +673,8 @@ pub fn package(option: Option<&str>) -> Result<()> {
         }
     }
     println!("Generating package");
+    // Archive name: name.version#release.raw.tar.gz, symlinks are stored as symlinks.
+    // FIXME(#3): the release is hardcoded to 1 here and in createsha() below.
     let tar = File::create(format!("{}.{}#1.raw.tar.gz", name, version))?;
     let enc = GzEncoder::new(tar, Compression::default());
     let mut a = tar::Builder::new(enc);

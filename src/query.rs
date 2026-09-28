@@ -22,6 +22,9 @@ use anyhow::Result;
 
 
 
+/// Returns the installed packages whose footprint contains `path` (`raw query`).
+/// FIXME(#8): footprints have no leading `/`, so absolute paths never match, and
+/// the match is a substring match.
 pub fn query(path: &String) -> Result<Vec<String>> {
     let actual = std::env::current_dir().unwrap();
     env::set_current_dir("/var/lib/pkg/DB/").unwrap();

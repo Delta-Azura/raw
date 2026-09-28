@@ -21,6 +21,12 @@ use std::fs;
 use std::env;
 
 
+/// Reads /etc/raw.conf and returns `(mode, path, url)`:
+/// - binary mode: `("binary", source=, url=)`
+/// - source mode: `("source", root=, "")`
+///
+/// Side effect: the current directory is changed to `path`.
+/// FIXME(#11): panics if a key is missing and matches commented lines.
 pub fn getconf() ->  Result<(String, String, String), String> {
     match Path::new("/etc/raw.conf").exists() {
         true => {

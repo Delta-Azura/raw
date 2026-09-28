@@ -22,6 +22,9 @@ use crate::download::download;
 use crate::getconf;
 
 
+/// Prints and returns the first index.raw line containing `pkg` (`raw search`).
+/// Source mode uses the local index, binary mode downloads the remote one into
+/// the current directory (set by getconf() to `source=`).
 pub fn search(pkg: &str) -> Result<String> {
     let (mode, path, url) = getconf().unwrap(); 
     if mode != "binary" {

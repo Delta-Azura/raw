@@ -21,6 +21,8 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
 
+/// Computes (and prints) the hex sha256 of a file. Used to sign archives in
+/// index.raw and to verify them before installation.
 pub fn createsha(package: &str) -> Result<String> {
     let file = File::open(package).context("Failed to open newly generated archive")?;
     let mut reader = BufReader::new(file);

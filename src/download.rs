@@ -22,6 +22,8 @@ use std::fs::File;
 use std::io::Write;
 use anyhow::Result;
 
+/// Downloads `url` into the current directory with a progress bar and returns
+/// the file name (last URL segment).
 pub fn download(url: &str) -> Result<String> {
     // Personnal notes :
     // Setting up the first variable to get the answer
@@ -60,6 +62,8 @@ pub fn download(url: &str) -> Result<String> {
 }
 
 
+/// Async version of download(), used to fetch several sources at once from package().
+/// The file is written to the current directory, named after the last URL segment.
 pub async fn download_parallel(url: &str) -> Result<String> {
     let client = reqwest::Client::builder()
         .user_agent("raw/0.2.6")

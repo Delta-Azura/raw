@@ -23,12 +23,19 @@ use crate::getconf;
 use std::process::Command;
 use std::path::Path;
 
+/// Builds and installs `pkg` from anywhere (`raw build`).
+///
+/// The package directory is found through index.raw; an existing archive is
+/// reinstalled if it matches the Pkgfile version, otherwise the package is rebuilt.
 pub fn build(pkg: &str) -> Result<()> {
+    // getconf() moves into the repository root, where index.raw lives.
     getconf().unwrap();
     let path = fs::read_to_string("index.raw").context("index.raw doesn't exist, please run raw index")?;
     let path = path.lines().find(|l| l.contains(&format!("{}/", pkg))).context("This package doesn't exists on the index")?.split_once("/Pkgfile").map(|(path, _)| path).unwrap().to_string();
     println!("{}", path);
     println!("current path is {}", path);
+    // FIXME(#4): the `else` branch runs for every file that is not an archive
+    // (Pkgfile, footprint, patches...), building the package several times.
     for entry in fs::read_dir(&path)? {
         let entry = entry?;
         if entry.file_name().to_string_lossy().contains(".raw.") {
@@ -43,6 +50,7 @@ pub fn build(pkg: &str) -> Result<()> {
                 let pkgfile_comp = fs::read_to_string("Pkgfile")?;
                 let pkgverfile = pkgfile_comp.lines().find(|l| l.starts_with("version=")).context("No line found")?.split_once("version=").map(|(_, version)| version).context("no pkg version mentionned in pkgfile")?;
                 let pkgrelfile = pkgfile_comp.lines().find(|l| l.starts_with("release=")).context("No line found")?.split_once("release=").map(|(_, version)| version).context("no pkg release mentionned in pkgfile")?;
+                // FIXME(#4): should be `&&`.
                 if pkgver == pkgverfile || pkgrel == pkgrelfile {
                     Command::new("sudo").args(["raw", "install", &potential_package]).status()?;
                 } else {
